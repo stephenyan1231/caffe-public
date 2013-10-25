@@ -3,9 +3,9 @@ layers {
   layer {
     name: "data"
     type: "data"
-    source: "/home/jiayq/caffe-train-leveldb"
-    meanfile: "/home/jiayq/ilsvrc2012_mean.binaryproto"
-    batchsize: 256
+    source: "/tscratch/tmp/jiayq/ilsvrc2012_train_leveldb"
+    meanfile: "/tscratch/tmp/jiayq/ilsvrc2012_mean.binaryproto"
+    batchsize: 128
     cropsize: 227
     mirror: true
   }

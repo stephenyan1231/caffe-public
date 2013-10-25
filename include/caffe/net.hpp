@@ -10,6 +10,7 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
+#include "caffe/layer_register.hpp"
 #include "caffe/proto/caffe.pb.h"
 
 using std::map;

@@ -71,5 +71,7 @@ Dtype Im2colLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 }
 
 INSTANTIATE_CLASS(Im2colLayer);
+REGISTER_LAYER("im2col", Im2colLayer);
+
 
 }  // namespace caffe

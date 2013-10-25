@@ -120,4 +120,9 @@ INSTANTIATE_CLASS(MultinomialLogisticLossLayer);
 INSTANTIATE_CLASS(EuclideanLossLayer);
 INSTANTIATE_CLASS(AccuracyLayer);
 
+REGISTER_LAYER("multinomial_logistic_loss", MultinomialLogisticLossLayer);
+REGISTER_LAYER("euclidean_loss", EuclideanLossLayer);
+REGISTER_LAYER("accuracy", AccuracyLayer);
+
+
 }  // namespace caffe

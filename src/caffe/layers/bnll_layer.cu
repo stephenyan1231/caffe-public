@@ -1,6 +1,5 @@
 // Copyright 2013 Yangqing Jia
 
-#include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
 #include <algorithm>
 
@@ -85,6 +84,7 @@ Dtype BNLLLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 }
 
 INSTANTIATE_CLASS(BNLLLayer);
+REGISTER_LAYER("bnll", BNLLLayer);
 
 
 }  // namespace caffe
