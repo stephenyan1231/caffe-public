@@ -484,6 +484,57 @@ class AccuracyLayer : public Layer<Dtype> {
   }
 };
 
+// Cascadable Cross Channel Parameteric (CCCP) Pooling Layer is a layer that 
+// performs cross feature map parameteric pooling on the feature maps.
+// It is equivalent to the mlpconv in the paper "Network In Network".
+
+// The following adds parameters needed for CCCP Pooling Layer.
+// The mlpconv has shared mode and unshared mode. Correspondingly the CCCP Layer 
+// has only one group and multiple groups. The group parameter can be borrowed 
+// from the convolutional layer.
+// The number of outputs num_output can also be borrowed from the inner product 
+// layer. Which specifies how many nodes come out from each group.
+// biasterm, weight_filler and bias_filler can all be borrowed from the inner 
+// product layer.
+// If the underlying layer of this layer is a convolutional layer, then the feature 
+// maps are divided evenly into groups of size "group". Each group of feature map 
+// perform cross channel parameteric pooling and generates "num_output" new feature 
+// maps. So in total this layer outputs group x num_output feature maps.
+// If the underlying layer of this layer is another CCCP, then this layer ignores 
+// the grouping of the previous layer and treat all the feature maps from the 
+// previous layer as a whole, and redo grouping according to its own group parameter.
+// To respect the grouping from previous layer, just set the group parameter to the 
+// same value as the previous layer, which is equivalent to the unshared mdoe of 
+// mlpconv.
+// CCCP Pooling layer is very flexible in creating shared, unshared, partially shared
+// types of mlpconv layers.
+template <typename Dtype>
+class CCCPPoolingLayer : public Layer<Dtype> {
+ public:
+  explicit CCCPPoolingLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+ protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual Dtype Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual Dtype Backward_gpu(const vector<Blob<Dtype>*>& top,
+     const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  int GROUP_;
+  int NUM_OUTPUT_;
+  int CHANNEL_;
+  int REST_;
+  int biasterm_;
+  int NUM_;
+  shared_ptr<SyncedMemory> bias_multiplier_;
+};
+
 }  // namespace caffe
 
 #endif  // CAFFE_VISION_LAYERS_HPP_
