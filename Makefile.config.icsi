@@ -1,0 +1,26 @@
+# define third-party library paths
+# CHANGE YOUR CUDA PATH IF IT IS NOT THIS
+CUDA_DIR := /u/vis/software/cuda-5.5
+# CHANGE YOUR CUDA ARCH IF IT IS NOT THIS
+CUDA_ARCH := -gencode arch=compute_20,code=sm_20 \
+    -gencode arch=compute_20,code=sm_21 \
+    -gencode arch=compute_30,code=sm_30 \
+    -gencode arch=compute_35,code=sm_35
+# CHANGE YOUR MKL PATH IF IT IS NOT THIS
+MKL_DIR := /u/vis/software/dist/intel/composerxe-2011.3.174/mkl
+# CHANGE YOUR MATLAB PATH IF IT IS NOT THIS
+# your mex binary should be located at $(MATLAB_DIR)/bin/mex
+MATLAB_DIR := /usr/local/lang/matlab-R2012a
+# PUT ALL OTHER INCLUDE AND LIB DIRECTORIES HERE
+INCLUDE_DIRS := /u/vis/software/include /u/user/anaconda/include \
+	/u/user/anaconda/lib/python2.7/site-packages/numpy/core/include \
+	/u/user/anaconda/include/python2.7 \
+  /usr/local/include
+LIBRARY_DIRS := /u/vis/jonlong/boost_1_55_0/stage/lib /usr/lib /u/vis/software/lib /u/user/anaconda/lib \
+	/usr/local/lib
+
+# DEFINE THE CXX PATH
+CXX=/usr/bin/g++
+
+BUILD_DIR=build
+DISTRIBUTE_DIR=distribute
