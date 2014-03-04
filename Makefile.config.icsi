@@ -1,26 +1,40 @@
-# define third-party library paths
-# CHANGE YOUR CUDA PATH IF IT IS NOT THIS
+## Refer to http://caffe.berkeleyvision.org/installation.html
+# Contributions simplifying and improving our build system are welcome!
+
+# CUDA directory contains bin/ and lib/ directories that we need.
 CUDA_DIR := /u/vis/software/cuda-5.5
-# CHANGE YOUR CUDA ARCH IF IT IS NOT THIS
+
+# CUDA architecture setting: going with all of them.
 CUDA_ARCH := -gencode arch=compute_20,code=sm_20 \
     -gencode arch=compute_20,code=sm_21 \
     -gencode arch=compute_30,code=sm_30 \
     -gencode arch=compute_35,code=sm_35
-# CHANGE YOUR MKL PATH IF IT IS NOT THIS
+
+# MKL directory contains include/ and lib/ directions that we need.
 MKL_DIR := /u/vis/software/dist/intel/composerxe-2011.3.174/mkl
-# CHANGE YOUR MATLAB PATH IF IT IS NOT THIS
-# your mex binary should be located at $(MATLAB_DIR)/bin/mex
+
+# This is required only if you will compile the matlab interface.
+# MATLAB directory should contain the mex binary in /bin.
 MATLAB_DIR := /usr/local/lang/matlab-R2012a
-# PUT ALL OTHER INCLUDE AND LIB DIRECTORIES HERE
-INCLUDE_DIRS := /u/vis/software/include /u/user/anaconda/include \
-	/u/user/anaconda/lib/python2.7/site-packages/numpy/core/include \
-	/u/user/anaconda/include/python2.7 \
-  /usr/local/include
-LIBRARY_DIRS := /u/vis/jonlong/boost_1_55_0/stage/lib /usr/lib /u/vis/software/lib /u/user/anaconda/lib \
-	/usr/local/lib
 
-# DEFINE THE CXX PATH
-CXX=/usr/bin/g++
+# NOTE: this is required only if you will compile the python interface.
+# We need to be able to find Python.h and numpy/arrayobject.h.
+PYTHON_INCLUDES := /u/sergeyk/anaconda/include \
+	/u/sergeyk/anaconda/lib/python2.7/site-packages/numpy/core/include \
+	/u/sergeyk/anaconda/include/python2.7 \
 
-BUILD_DIR=build
-DISTRIBUTE_DIR=distribute
+# We need to be able to find libpythonX.X.so or .dylib.
+PYTHON_LIB := /u/sergeyk/anaconda/lib
+
+CXX := /usr/bin/g++
+# For OS X, use clang++.
+# CXX := /usr/bin/clang++
+# For OS X 10.9, use libstdc++ instead of libc++ for CUDA compatibility.
+# CXXFLAGS := -stdlib=libstdc++
+
+# Whatever else you find you need goes here.
+INCLUDE_DIRS := $(PYTHON_INCLUDES) /u/vis/software/include /usr/local/include
+LIBRARY_DIRS := $(PYTHON_LIB) /u/vis/jonlong/boost_1_55_0/stage/lib /usr/lib /u/vis/software/lib /usr/local/lib
+
+BUILD_DIR := build
+DISTRIBUTE_DIR := distribute
