@@ -45,7 +45,7 @@
 <pre><code>&quot;All your braincells are belong to us.&quot;
     - Caffeine</code></pre>
 
-<p>We are going to describe a reference implementation for the approach first proposed by Krizhevsky, Sutskever, and Hinton in their <a href="http://books.nips.cc/papers/files/nips25/NIPS2012_0534.pdf">NIPS 2012 paper</a>. Since training the whole model takes some time and energy, we provide a model, trained in the same way as we describe here, to help fight global warming. If you would like to simply use the pretrained model, check out the <a href="imagenet_pretrained.html">Pretrained ImageNet</a> page. <em>Note that the pretrained model is for academic research / non-commercial use only</em>.</p>
+<p>We are going to describe a reference implementation for the approach first proposed by Krizhevsky, Sutskever, and Hinton in their <a href="http://books.nips.cc/papers/files/nips25/NIPS2012_0534.pdf">NIPS 2012 paper</a>. Since training the whole model takes some time and energy, we provide a model, trained in the same way as we describe here, to help fight global warming. If you would like to simply use the pretrained model, check out the <a href="getting_pretrained_models.html">Pretrained ImageNet</a> page. <em>Note that the pretrained model is for academic research / non-commercial use only</em>.</p>
 
 <p>To clarify, by ImageNet we actually mean the ILSVRC12 challenge, but you can easily train on the whole of ImageNet as well, just with more disk space, and a little longer training time.</p>
 
@@ -88,7 +88,7 @@ done</code></pre>
 <p>The network definition follows strictly the one in Krizhevsky et al. You can find the detailed definition at <code>examples/imagenet/imagenet_train.prototxt</code>. Note the paths in the data layer - if you have not followed the exact paths in this guide you will need to change the following lines:</p>
 
 <pre><code>source: &quot;ilvsrc12_train_leveldb&quot;
-meanfile: &quot;../../data/ilsvrc12/imagenet_mean.binaryproto&quot;</code></pre>
+mean_file: &quot;../../data/ilsvrc12/imagenet_mean.binaryproto&quot;</code></pre>
 
 <p>to point to your own leveldb and image mean. Likewise, do the same for <code>examples/imagenet/imagenet_val.prototxt</code>.</p>
 
@@ -137,7 +137,7 @@ test_net: &quot;imagenet_val.prototxt&quot;</code></pre>
 
 <p>Hope you liked this recipe! Many researchers have gone further since the ILSVRC 2012 challenge, changing the network architecture and/or finetuning the various parameters in the network. The recent ILSVRC 2013 challenge suggests that there are quite some room for improvement. <strong>Caffe allows one to explore different network choices more easily, by simply writing different prototxt files</strong> - isn’t that exciting?</p>
 
-<p>And since now you have a trained network, check out how to use it: <a href="imagenet_pretrained.html">Running Pretrained ImageNet</a>. This time we will use Python, but if you have wrappers for other languages, please kindly send a pull request!</p>
+<p>And since now you have a trained network, check out how to use it: <a href="getting_pretrained_models.html">Running Pretrained ImageNet</a>. This time we will use Python, but if you have wrappers for other languages, please kindly send a pull request!</p>
 
       </section>
       <footer>
