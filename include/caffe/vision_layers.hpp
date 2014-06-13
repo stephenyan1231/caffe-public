@@ -50,6 +50,43 @@ class ArgMaxLayer : public Layer<Dtype> {
   bool out_max_val_;
 };
 
+/* CCCPLayer
+  Cascadable Cross Channel Parametric Pooling.
+  Perform weighted recombination of the channels.
+  When applied on top of convolutional layer, it is equivalent to
+  fully connected layer applied on all patches of the underlying input.
+  Stacking multiple of CCCPLayer results in a nonlinear mapping from each
+  input patch to the output feature vector.
+  Refer to Network in Network [http://arxiv.org/abs/1312.4400].
+*/
+template <typename Dtype>
+class CCCPLayer : public Layer<Dtype> {
+ public:
+  explicit CCCPLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  int num_;
+  int channels_;
+  int height_;
+  int width_;
+  int num_output_;
+  int group_;
+  shared_ptr<SyncedMemory> bias_multiplier_;
+  bool bias_term_;
+};
+
 /* ConcatLayer
   Takes at least two blobs and concatenates them along either num or
   channel dim, outputting the result.

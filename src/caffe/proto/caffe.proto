@@ -136,6 +136,7 @@ message LayerParameter {
     ACCURACY = 1;
     ARGMAX = 30;
     BNLL = 2;
+    CCCP = 31;
     CONCAT = 3;
     CONVOLUTION = 4;
     DATA = 5;
@@ -177,6 +178,7 @@ message LayerParameter {
   repeated float weight_decay = 8;
 
   optional ArgMaxParameter argmax_param = 23;
+  optional CCCPParameter cccp_param = 24;
   optional ConcatParameter concat_param = 9;
   optional ConvolutionParameter convolution_param = 10;
   optional DataParameter data_param = 11;
@@ -205,6 +207,15 @@ message LayerParameter {
 message ArgMaxParameter {
   // If true produce pairs (argmax, maxval)
   optional bool out_max_val = 1 [default = false];
+}
+
+// Message that stores parameters used by CCCPLayer
+message CCCPParameter {
+  optional uint32 num_output = 1; // The number of outputs for the layer
+  optional bool bias_term = 2 [default = true]; // whether to have bias terms
+  optional uint32 group = 3 [default = 1]; // group size
+  optional FillerParameter weight_filler = 4; // The filler for the weight
+  optional FillerParameter bias_filler = 5; // The filler for the bias
 }
 
 // Message that stores parameters used by ConcatLayer
