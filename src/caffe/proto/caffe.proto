@@ -127,7 +127,7 @@ message LayerParameter {
   // line above the enum. Update the next available ID when you add a new
   // LayerType.
   //
-  // LayerType next available ID: 33 (last added: DUMMY_DATA)
+  // LayerType next available ID: 34 (last added: CCCP)
   enum LayerType {
     // "NONE" layer type is 0th enum element so that we don't cause confusion
     // by defaulting to an existent LayerType (instead, should usually error if
@@ -136,7 +136,7 @@ message LayerParameter {
     ACCURACY = 1;
     ARGMAX = 30;
     BNLL = 2;
-    CCCP = 31;
+    CCCP = 33;
     CONCAT = 3;
     CONVOLUTION = 4;
     DATA = 5;
@@ -178,7 +178,7 @@ message LayerParameter {
   repeated float weight_decay = 8;
 
   optional ArgMaxParameter argmax_param = 23;
-  optional CCCPParameter cccp_param = 24;
+  optional CCCPParameter cccp_param = 27;
   optional ConcatParameter concat_param = 9;
   optional ConvolutionParameter convolution_param = 10;
   optional DataParameter data_param = 11;
