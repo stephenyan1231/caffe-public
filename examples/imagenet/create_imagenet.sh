@@ -5,8 +5,8 @@
 TOOLS=../../build/tools
 DATA=../../data/ilsvrc12
 
-TRAIN_DATA_ROOT=/path/to/imagenet/train/
-VAL_DATA_ROOT=/path/to/imagenet/val/
+TRAIN_DATA_ROOT=/media/zyan3/label/proj/cuda-convnet-plus/cuda-convnet-data/imagenet/12_challenge/ILSVRC2012_img_train_resized/
+VAL_DATA_ROOT=/media/zyan3/label/proj/cuda-convnet-plus/cuda-convnet-data/imagenet/12_challenge/ILSVRC2012_img_val_resized/
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
@@ -38,7 +38,7 @@ echo "Creating train leveldb..."
 GLOG_logtostderr=1 $TOOLS/convert_imageset.bin \
     $TRAIN_DATA_ROOT \
     $DATA/train.txt \
-    imagenet_train_leveldb 1 \
+    imagenet_train_leveldb 1 leveldb \
     $RESIZE_HEIGHT $RESIZE_WIDTH
 
 echo "Creating val leveldb..."
@@ -46,7 +46,7 @@ echo "Creating val leveldb..."
 GLOG_logtostderr=1 $TOOLS/convert_imageset.bin \
     $VAL_DATA_ROOT \
     $DATA/val.txt \
-    imagenet_val_leveldb 1 \
+    imagenet_val_leveldb 1 leveldb\
     $RESIZE_HEIGHT $RESIZE_WIDTH
 
 echo "Done."
