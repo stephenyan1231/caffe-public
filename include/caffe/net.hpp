@@ -64,6 +64,29 @@ class Net {
   // trained layers from another net parameter instance.
   void CopyTrainedLayersFrom(const NetParameter& param);
   void CopyTrainedLayersFrom(const string trained_filename);
+  // For an already initialized net, CopyTrainedLayersFromPrefixMatching() copies the already
+  // trained layers from another net parameter instance as long as the source layer name is a prefix
+  // of a target layer name
+  void CopyTrainedLayersFromPrefixMatch(const NetParameter& params);
+  void CopyTrainedLayersFromPrefixMatch(const string trained_filenames);
+
+  // For an already initialized net, CopyTrainedLayersFromPrefixMatching() copies the already
+  // trained layers from another net parameter instance as long as the source layer name is a prefix
+  // of a target layer name
+  void CopyTrainedLayersFromPrefixMatch(const std::vector<NetParameter>& param);
+  void CopyTrainedLayersFromPrefixMatch(const std::vector<string>& trained_filename);
+
+  // For an already initialized net, CopyTrainedLayersFromSuffixMatching() copies the already
+  // trained layers from another net parameter instance as long as the source layer name is a suffix
+  // of a target layer name
+  void CopyTrainedLayersFromSuffixMatch(const NetParameter& params);
+  void CopyTrainedLayersFromSuffixMatch(const string trained_filenames);
+
+  // For an already initialized net, CopyTrainedLayersFromSuffixMatching() copies the already
+  // trained layers from another net parameter instance as long as the source layer name is a suffix
+  // of a target layer name
+  void CopyTrainedLayersFromSuffixMatch(const std::vector<NetParameter>& param);
+  void CopyTrainedLayersFromSuffixMatch(const std::vector<string>& trained_filename);
   // Writes the net to a proto.
   void ToProto(NetParameter* param, bool write_diff = false);
 

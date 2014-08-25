@@ -364,6 +364,138 @@ void Net<Dtype>::CopyTrainedLayersFrom(const string trained_filename) {
   CopyTrainedLayersFrom(param);
 }
 
+
+template<typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFromPrefixMatch(const NetParameter& param) {
+	int num_source_layers = param.layers_size();
+	int target_source_layers = layer_names_.size();
+	for (int i = 0; i < target_source_layers; ++i) {
+		int source_layer_id = 0;
+		for (source_layer_id = 0; source_layer_id < num_source_layers;
+				++source_layer_id) {
+			const LayerParameter& source_layer = param.layers(source_layer_id);
+			if (layer_names_[i].length() < source_layer.name().length())
+				continue;
+			if (layer_names_[i].substr(0, source_layer.name().length())
+					== source_layer.name())
+				break;
+		}
+		if (source_layer_id == num_source_layers)
+			DLOG(INFO) << "Don't initialize parameters in layer " << layer_names_[i];
+		else {
+			DLOG(INFO) << "Copy parameters from source layer "
+					<< param.layers(source_layer_id).name() << " to target layer "
+					<< layer_names_[i];
+			vector < shared_ptr<Blob<Dtype> > > &target_blobs = layers_[i]->blobs();
+			CHECK_EQ(target_blobs.size(), param.layers(source_layer_id).blobs_size());
+			for (int j = 0; j < target_blobs.size(); ++j) {
+				CHECK_EQ(target_blobs[j]->num(),
+						param.layers(source_layer_id).blobs(j).num());
+				CHECK_EQ(target_blobs[j]->channels(),
+						param.layers(source_layer_id).blobs(j).channels());
+				CHECK_EQ(target_blobs[j]->height(),
+						param.layers(source_layer_id).blobs(j).height());
+				CHECK_EQ(target_blobs[j]->width(),
+						param.layers(source_layer_id).blobs(j).width());
+				target_blobs[j]->FromProto(param.layers(source_layer_id).blobs(j));
+			}
+		}
+	}
+}
+
+template<typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFromPrefixMatch(
+		const string trained_filename) {
+	NetParameter param;
+	ReadNetParamsFromBinaryFileOrDie(trained_filename, &param);
+	CopyTrainedLayersFromPrefixMatch(param);
+}
+
+template<typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFromPrefixMatch(
+		const std::vector<NetParameter>& params) {
+	for (int i = 0; i < params.size(); ++i) {
+		CopyTrainedLayersFromPrefixMatch(params[i]);
+	}
+}
+template<typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFromPrefixMatch(
+		const std::vector<string>& trained_filenames) {
+	std::vector < NetParameter > params;
+	for (int i = 0; i < trained_filenames.size(); ++i) {
+		NetParameter param;
+		ReadNetParamsFromBinaryFileOrDie(trained_filenames[i], &param);
+		params.push_back(param);
+	}
+	CopyTrainedLayersFromPrefixMatch(params);
+}
+
+
+template<typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFromSuffixMatch(const NetParameter& param) {
+	int num_source_layers = param.layers_size();
+	int target_source_layers = layer_names_.size();
+	for (int i = 0; i < target_source_layers; ++i) {
+		int source_layer_id = 0;
+		for (source_layer_id = 0; source_layer_id < num_source_layers;
+				++source_layer_id) {
+			const LayerParameter& source_layer = param.layers(source_layer_id);
+			if (layer_names_[i].length() < source_layer.name().length())
+				continue;
+			if (layer_names_[i].substr(layer_names_[i].length()-source_layer.name().length(), source_layer.name().length())
+					== source_layer.name())
+				break;
+		}
+		if (source_layer_id == num_source_layers)
+			DLOG(INFO) << "Don't initialize parameters in layer " << layer_names_[i];
+		else {
+			DLOG(INFO) << "Copy parameters from source layer "
+					<< param.layers(source_layer_id).name() << " to target layer "
+					<< layer_names_[i];
+			vector < shared_ptr<Blob<Dtype> > > &target_blobs = layers_[i]->blobs();
+			CHECK_EQ(target_blobs.size(), param.layers(source_layer_id).blobs_size());
+			for (int j = 0; j < target_blobs.size(); ++j) {
+				CHECK_EQ(target_blobs[j]->num(),
+						param.layers(source_layer_id).blobs(j).num());
+				CHECK_EQ(target_blobs[j]->channels(),
+						param.layers(source_layer_id).blobs(j).channels());
+				CHECK_EQ(target_blobs[j]->height(),
+						param.layers(source_layer_id).blobs(j).height());
+				CHECK_EQ(target_blobs[j]->width(),
+						param.layers(source_layer_id).blobs(j).width());
+				target_blobs[j]->FromProto(param.layers(source_layer_id).blobs(j));
+			}
+		}
+	}
+}
+
+template<typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFromSuffixMatch(
+		const string trained_filename) {
+	NetParameter param;
+	ReadNetParamsFromBinaryFileOrDie(trained_filename, &param);
+	CopyTrainedLayersFromSuffixMatch(param);
+}
+
+template<typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFromSuffixMatch(
+		const std::vector<NetParameter>& params) {
+	for (int i = 0; i < params.size(); ++i) {
+		CopyTrainedLayersFromSuffixMatch(params[i]);
+	}
+}
+template<typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFromSuffixMatch(
+		const std::vector<string>& trained_filenames) {
+	std::vector < NetParameter > params;
+	for (int i = 0; i < trained_filenames.size(); ++i) {
+		NetParameter param;
+		ReadNetParamsFromBinaryFileOrDie(trained_filenames[i], &param);
+		params.push_back(param);
+	}
+	CopyTrainedLayersFromSuffixMatch(params);
+}
+
 template <typename Dtype>
 void Net<Dtype>::ToProto(NetParameter* param, bool write_diff) {
   param->Clear();
