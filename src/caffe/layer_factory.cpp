@@ -8,7 +8,7 @@
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
 #include "caffe/proto/caffe.pb.h"
-
+#include "caffe/ensemble_prob_layers.hpp"
 using std::string;
 
 namespace caffe {
@@ -88,6 +88,10 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new WindowDataLayer<Dtype>(param);
   case LayerParameter_LayerType_FLOAT_DATA:
     return new FloatDataLayer<Dtype>(param);
+  case LayerParameter_LayerType_MULTINOMIAL_LOGISTIC_SPARSITY_LOSS:
+	return new MultinomialLogisticSparsityLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_PROBABLISTIC_AVERAGE_PROB:
+	  return new ProbabilisticAverageProbLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
   default:

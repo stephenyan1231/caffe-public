@@ -193,6 +193,34 @@ class AccuracyLayer : public Layer<Dtype> {
 - SoftmaxWithLossLayer in vision_layers.hpp
 */
 
+/* MultinomialLogisticSparsityLossLayer
+*/
+template <typename Dtype>
+class MultinomialLogisticSparsityLossLayer : public Layer<Dtype> {
+ public:
+  explicit MultinomialLogisticSparsityLossLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top);
+  virtual void FurtherSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_MULTINOMIAL_LOGISTIC_SPARSITY_LOSS;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 3; }
+  virtual inline int ExactNumTopBlobs() const { return 0; }
+
+
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  int num_branch_;
+  shared_ptr<Blob<Dtype> > branch_sparsity_diff_;
+};
+
 }  // namespace caffe
 
 #endif  // CAFFE_LOSS_LAYERS_HPP_

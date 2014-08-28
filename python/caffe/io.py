@@ -40,7 +40,10 @@ def resize_image(im, new_dims, interp_order=1):
     Give
     im: resized ndarray with shape (new_dims[0], new_dims[1], K)
     """
-    return skimage.transform.resize(im, new_dims, order=interp_order)
+    if not im.shape[:2] == new_dims:
+        return skimage.transform.resize(im, new_dims, order=interp_order)
+    else:
+        return im
 
 
 def oversample(images, crop_dims):
