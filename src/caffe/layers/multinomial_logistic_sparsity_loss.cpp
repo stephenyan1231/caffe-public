@@ -79,8 +79,8 @@ Dtype MultinomialLogisticSparsityLossLayer<Dtype>::Forward_cpu(
 	}
 	loss_2nd *=
 			this->layer_param_.multinomial_logistic_sparsity_loss_param().sparsity_lamda();
-	LOG(INFO) << "loss 1st:" << (loss / num) << " loss 2nd: " << (loss_2nd / num);
-	return (loss / num) + (loss_2nd / num);
+	LOG(INFO) << "loss 1st:" << (loss / num) << " loss 2nd: " << (loss_2nd);
+	return (loss / num) + (loss_2nd);
 }
 
 template<typename Dtype>
@@ -103,7 +103,7 @@ void MultinomialLogisticSparsityLossLayer<Dtype>::Backward_cpu(
 
 		for (int j = 0; j < num_branch_; ++j) {
 			(bottom_branch_prob_diff + (*bottom)[2]->offset(i))[j] =
-					branch_sparsity_diff_data[j] * ((Dtype) -1.0 / (num * num))
+					branch_sparsity_diff_data[j] * ((Dtype) -1.0 / (num))
 							* this->layer_param_.multinomial_logistic_sparsity_loss_param().sparsity_lamda();
 		}
 	}
