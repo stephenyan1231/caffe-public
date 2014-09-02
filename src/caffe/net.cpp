@@ -342,7 +342,7 @@ void Net<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
       DLOG(INFO) << "Ignoring source layer " << source_layer_name;
       continue;
     }
-    DLOG(INFO) << "Copying source layer " << source_layer_name;
+    LOG(INFO) << "Copying source layer " << source_layer_name;
     vector<shared_ptr<Blob<Dtype> > >& target_blobs =
         layers_[target_layer_id]->blobs();
     CHECK_EQ(target_blobs.size(), source_layer.blobs_size())
@@ -364,6 +364,25 @@ void Net<Dtype>::CopyTrainedLayersFrom(const string trained_filename) {
   CopyTrainedLayersFrom(param);
 }
 
+template <typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFrom(const std::vector<NetParameter>& params){
+	for (int i = 0; i < params.size(); ++i) {
+		CopyTrainedLayersFrom(params[i]);
+	}
+}
+
+template <typename Dtype>
+void Net<Dtype>::CopyTrainedLayersFrom(const std::vector<string>& trained_filenames){
+	std::vector < NetParameter > params;
+	for (int i = 0; i < trained_filenames.size(); ++i) {
+		NetParameter param;
+		ReadNetParamsFromBinaryFileOrDie(trained_filenames[i], &param);
+		params.push_back(param);
+	}
+	CopyTrainedLayersFrom(params);
+}
+
+
 
 template<typename Dtype>
 void Net<Dtype>::CopyTrainedLayersFromPrefixMatch(const NetParameter& param) {
@@ -383,7 +402,7 @@ void Net<Dtype>::CopyTrainedLayersFromPrefixMatch(const NetParameter& param) {
 		if (source_layer_id == num_source_layers)
 			DLOG(INFO) << "Don't initialize parameters in layer " << layer_names_[i];
 		else {
-			DLOG(INFO) << "Copy parameters from source layer "
+			LOG(INFO) << "Copy parameters from source layer "
 					<< param.layers(source_layer_id).name() << " to target layer "
 					<< layer_names_[i];
 			vector < shared_ptr<Blob<Dtype> > > &target_blobs = layers_[i]->blobs();
@@ -449,7 +468,7 @@ void Net<Dtype>::CopyTrainedLayersFromSuffixMatch(const NetParameter& param) {
 		if (source_layer_id == num_source_layers)
 			DLOG(INFO) << "Don't initialize parameters in layer " << layer_names_[i];
 		else {
-			DLOG(INFO) << "Copy parameters from source layer "
+			LOG(INFO) << "Copy parameters from source layer "
 					<< param.layers(source_layer_id).name() << " to target layer "
 					<< layer_names_[i];
 			vector < shared_ptr<Blob<Dtype> > > &target_blobs = layers_[i]->blobs();

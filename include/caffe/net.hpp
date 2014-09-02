@@ -64,6 +64,10 @@ class Net {
   // trained layers from another net parameter instance.
   void CopyTrainedLayersFrom(const NetParameter& param);
   void CopyTrainedLayersFrom(const string trained_filename);
+
+  void CopyTrainedLayersFrom(const std::vector<NetParameter>& param);
+  void CopyTrainedLayersFrom(const std::vector<string>& trained_filename);
+
   // For an already initialized net, CopyTrainedLayersFromPrefixMatching() copies the already
   // trained layers from another net parameter instance as long as the source layer name is a prefix
   // of a target layer name
@@ -75,6 +79,8 @@ class Net {
   // of a target layer name
   void CopyTrainedLayersFromPrefixMatch(const std::vector<NetParameter>& param);
   void CopyTrainedLayersFromPrefixMatch(const std::vector<string>& trained_filename);
+
+
 
   // For an already initialized net, CopyTrainedLayersFromSuffixMatching() copies the already
   // trained layers from another net parameter instance as long as the source layer name is a suffix
