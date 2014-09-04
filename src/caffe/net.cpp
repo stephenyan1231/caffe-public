@@ -406,6 +406,9 @@ void Net<Dtype>::CopyTrainedLayersFromPrefixMatch(const NetParameter& param) {
 					<< param.layers(source_layer_id).name() << " to target layer "
 					<< layer_names_[i];
 			vector < shared_ptr<Blob<Dtype> > > &target_blobs = layers_[i]->blobs();
+			if(target_blobs.size() != param.layers(source_layer_id).blobs_size() &&
+					((target_blobs.size() ==0) || (param.layers(source_layer_id).blobs_size() ==0)))
+				continue;
 			CHECK_EQ(target_blobs.size(), param.layers(source_layer_id).blobs_size());
 			for (int j = 0; j < target_blobs.size(); ++j) {
 				CHECK_EQ(target_blobs[j]->num(),
