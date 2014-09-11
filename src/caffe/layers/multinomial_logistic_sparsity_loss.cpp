@@ -69,8 +69,6 @@ Dtype MultinomialLogisticSparsityLossLayer<Dtype>::Forward_cpu(
 //				- (branch_sparsity_diff_data[j] / num);
 		branch_sparsity_diff_msg << branch_sparsity_diff_data[j] <<" ";
 	}
-//  LOG(INFO)<<"branch_sparsity_diff_data "<<branch_sparsity_diff_msg.str();
-
 
 	Dtype loss_2nd = 0;
 	for (int j = 0; j < num_branch_; ++j) {
@@ -79,7 +77,7 @@ Dtype MultinomialLogisticSparsityLossLayer<Dtype>::Forward_cpu(
 	}
 	loss_2nd *=
 			this->layer_param_.multinomial_logistic_sparsity_loss_param().sparsity_lamda();
-//	LOG(INFO) << "loss 1st:" << (loss / num) << " loss 2nd: " << (loss_2nd);
+  	LOG(INFO)<<"branch_sparsity_diff_data "<<branch_sparsity_diff_msg.str() << "\tloss 1st:" << (loss / num) << " loss 2nd: " << (loss_2nd);
 	return (loss / num) + (loss_2nd);
 }
 
