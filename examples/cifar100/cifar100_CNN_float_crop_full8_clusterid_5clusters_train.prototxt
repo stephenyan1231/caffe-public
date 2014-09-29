@@ -1,0 +1,181 @@
+name: "CIFAR100_CNN_float_crop_full8_clusterid_5clusters_train"
+layers {
+  name: "cifar"
+  type: FLOAT_DATA
+  top: "data"
+  top: "label"
+  data_param {
+    source: "cifar100-float-clusterid-5clusters-CNN-leveldb/cifar100-train-leveldb"
+    mean_file: "float_mean.binaryproto"
+    batch_size: 100
+    crop_size: 26
+    mirror: true
+    scale: 2500
+  }
+}
+layers {
+  name: "clusterid_conv1"
+  type: CONVOLUTION
+  bottom: "data"
+  top: "clusterid_conv1"
+  blobs_lr: 1
+  blobs_lr: 2
+  convolution_param {
+    num_output: 64
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.0001
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layers {
+  name: "clusterid_pool1"
+  type: POOLING
+  bottom: "clusterid_conv1"
+  top: "clusterid_pool1"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layers {
+  name: "clusterid_relu1"
+  type: RELU
+  bottom: "clusterid_pool1"
+  top: "clusterid_pool1"
+}
+layers {
+  name: "clusterid_norm1"
+  type: LRN
+  bottom: "clusterid_pool1"
+  top: "clusterid_norm1"
+  lrn_param {
+    norm_region: WITHIN_CHANNEL
+    local_size: 3
+    alpha: 5e-05
+    beta: 0.75
+  }
+}
+
+layers {
+  name: "clusterid_conv2"
+  type: CONVOLUTION
+  bottom: "clusterid_norm1"
+  top: "clusterid_conv2"
+  blobs_lr: 1
+  blobs_lr: 2
+  convolution_param {
+    num_output: 64
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layers {
+  name: "clusterid_relu2"
+  type: RELU
+  bottom: "clusterid_conv2"
+  top: "clusterid_conv2"
+}
+layers {
+  name: "clusterid_pool2"
+  type: POOLING
+  bottom: "clusterid_conv2"
+  top: "clusterid_pool2"
+  pooling_param {
+    pool: AVE
+    kernel_size: 3
+    stride: 2
+  }
+}
+layers {
+  name: "clusterid_norm2"
+  type: LRN
+  bottom: "clusterid_pool2"
+  top: "clusterid_norm2"
+  lrn_param {
+    norm_region: WITHIN_CHANNEL
+    local_size: 3
+    alpha: 5e-05
+    beta: 0.75
+  }
+}
+
+layers {
+  name: "clusterid_conv3"
+  type: CONVOLUTION
+  bottom: "clusterid_norm2"
+  top: "clusterid_conv3"
+  blobs_lr: 1
+  blobs_lr: 2
+  convolution_param {
+    num_output: 64
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layers {
+  name: "clusterid_relu3"
+  type: RELU
+  bottom: "clusterid_conv3"
+  top: "clusterid_conv3"
+}
+layers {
+  name: "clusterid_pool3"
+  type: POOLING
+  bottom: "clusterid_conv3"
+  top: "clusterid_pool3"
+  pooling_param {
+    pool: AVE
+    kernel_size: 3
+    stride: 2
+  }
+}
+layers {
+  name: "clusterid_ip1_4"
+  type: INNER_PRODUCT
+  bottom: "clusterid_pool3"
+  top: "clusterid_ip1_4"
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 250
+  weight_decay: 0
+  inner_product_param {
+    num_output: 5
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layers {
+  name: "loss"
+  type: SOFTMAX_LOSS
+  bottom: "clusterid_ip1_4"
+  bottom: "label"
+}
