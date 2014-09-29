@@ -1,4 +1,4 @@
-// Copyright 2014 Zhicheng Yan.
+// Copyright 2014 Zhicheng Yan@eBay
 
 #include <stdint.h>
 #include <leveldb/db.h>
@@ -95,6 +95,8 @@ void* FloatDataLayerPrefetch(void* layer_pointer) {
 						}
 					}
 				}
+//				int top_index = item_id * channels * crop_size * crop_size;
+//				LOG(INFO)<<"top_data [top_index] "<<top_data[top_index];
 			} else {
 				// Normal copy
 				for (int c = 0; c < channels; ++c) {
@@ -112,6 +114,8 @@ void* FloatDataLayerPrefetch(void* layer_pointer) {
 						}
 					}
 				}
+//				int top_index = item_id * channels * crop_size * crop_size;
+//				LOG(INFO)<<"top_data [top_index] "<<top_data[top_index];
 			}
 		} else {
 			for (int j = 0; j < size; ++j) {
@@ -123,6 +127,7 @@ void* FloatDataLayerPrefetch(void* layer_pointer) {
 
 		if (layer->output_labels_) {
 			top_label[item_id] = datum.label();
+//			LOG(INFO)<<"top_label[item_id] "<<top_label[item_id];
 		}
 		// go to the next iter
 		switch (layer->layer_param_.data_param().backend()) {

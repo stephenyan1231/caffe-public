@@ -92,6 +92,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
 	return new MultinomialLogisticSparsityLossLayer<Dtype>(param);
   case LayerParameter_LayerType_PROBABLISTIC_AVERAGE_PROB:
 	  return new ProbabilisticAverageProbLayer<Dtype>(param);
+  case LayerParameter_LayerType_FLOAT_DATA_TRANSLATE:
+    return new FloatDataTranslateLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
   default:

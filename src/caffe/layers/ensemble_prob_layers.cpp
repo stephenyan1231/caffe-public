@@ -1,4 +1,4 @@
-//Copyright 2014 Zhicheng Yan
+//Copyright 2014 Zhicheng Yan@eBay
 
 #include "caffe/ensemble_prob_layers.hpp"
 

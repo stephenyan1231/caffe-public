@@ -1,4 +1,4 @@
-// Zhicheng Yan@eBay
+// Copyright 2014 Zhicheng Yan@eBay
 
 #include <algorithm>
 #include <cmath>
@@ -65,8 +65,6 @@ Dtype MultinomialLogisticSparsityLossLayer<Dtype>::Forward_cpu(
 	for (int j = 0; j < num_branch_; ++j) {
 		branch_sparsity_diff_data[j] = this->layer_param_.multinomial_logistic_sparsity_loss_param().target_sparsity(j)
 				- (branch_sparsity_diff_data[j] / num);
-//		branch_sparsity_diff_data[j] = ((Dtype) 1.0 / num_branch_)
-//				- (branch_sparsity_diff_data[j] / num);
 		branch_sparsity_diff_msg << branch_sparsity_diff_data[j] <<" ";
 	}
 
@@ -77,7 +75,7 @@ Dtype MultinomialLogisticSparsityLossLayer<Dtype>::Forward_cpu(
 	}
 	loss_2nd *=
 			this->layer_param_.multinomial_logistic_sparsity_loss_param().sparsity_lamda();
-  	LOG(INFO)<<"branch_sparsity_diff_data "<<branch_sparsity_diff_msg.str() << "\tloss 1st:" << (loss / num) << " loss 2nd: " << (loss_2nd);
+//  	LOG(INFO)<<"branch_sparsity_diff_data "<<branch_sparsity_diff_msg.str() << "\tloss 1st:" << (loss / num) << " loss 2nd: " << (loss_2nd);
 	return (loss / num) + (loss_2nd);
 }
 

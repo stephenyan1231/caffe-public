@@ -169,6 +169,7 @@ message LayerParameter {
     FLOAT_DATA = 34;
     MULTINOMIAL_LOGISTIC_SPARSITY_LOSS = 35;    
     PROBABLISTIC_AVERAGE_PROB = 36;
+    FLOAT_DATA_TRANSLATE = 37;
     
   }
   optional LayerType type = 5; // the layer type from the enum above

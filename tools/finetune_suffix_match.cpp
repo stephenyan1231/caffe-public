@@ -1,4 +1,4 @@
-// Zhicheng Yan@eBay
+// Copyright 2014 Zhicheng Yan@eBay
 // Aug 7, 2014
 // similar to finetune_net.cpp except that
 // For an already initialized net, CopyTrainedLayersFromPrefixMatching() copies the already
@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 	::google::InitGoogleLogging(argv[0]);
 	if (argc < 3) {
 		LOG(ERROR)
-				<< "Usage: finetune_net solver_proto_file pretrained_net_1 pretrained_net_2 ...";
+				<< "Usage: finetune_suffix_match solver_proto_file pretrained_net_1 pretrained_net_2 ...";
 		return 1;
 	}
 

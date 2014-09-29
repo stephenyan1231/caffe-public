@@ -1,4 +1,4 @@
-// Copyright 2014 Zhicheng Yan@eBay
+// Copyright 2014 Zhicheng Yan.
 //
 // This script converts the CIFAR float-typed dataset with global constrast normalization and ZCA whitening to the leveldb format used
 // by caffe to perform classification.
@@ -19,14 +19,15 @@ using std::string;
 
 const int kCIFARSize = 32;
 const int kCIFARImageNBytes = 3072;
-const int kCIFARBatchSize = 10000;
+const int kCIFARBatchSize = 150000/5;
+const int kCIFARTestSize = 10000;
 const int kCIFARTrainBatches = 5;
 
-void read_image(std::ifstream* file, int* label, float* buffer) {
+void read_image(std::ifstream* file, int* label, char* buffer) {
   char label_char;
   file->read(&label_char, 1);
   *label = label_char;
-  file->read((char*)buffer, kCIFARImageNBytes * sizeof(float));
+  file->read((char*)buffer, kCIFARImageNBytes * sizeof(char));
   return;
 }
 
@@ -38,7 +39,7 @@ void convert_dataset(const string& input_folder, const string& output_folder) {
   // Data buffer
   int label;
   char str_buffer[kCIFARImageNBytes];
-  float float_buffer[kCIFARImageNBytes];
+//  float float_buffer[kCIFARImageNBytes];
   string value;
   caffe::Datum datum;
   datum.set_channels(3);
@@ -54,18 +55,20 @@ void convert_dataset(const string& input_folder, const string& output_folder) {
   for (int fileid = 0; fileid < kCIFARTrainBatches; ++fileid) {
     // Open files
     LOG(INFO) << "Training Batch " << fileid + 1;
-    snprintf(str_buffer, kCIFARImageNBytes, "/float_data_batch_%d.bin", fileid + 1);
+    snprintf(str_buffer, kCIFARImageNBytes, "/data_batch_%d.bin", fileid + 1);
     std::ifstream data_file((input_folder + str_buffer).c_str(),
         std::ios::in | std::ios::binary);
     CHECK(data_file) << "Unable to open train file #" << fileid + 1;
     for (int itemid = 0; itemid < kCIFARBatchSize; ++itemid) {
-      read_image(&data_file, &label, float_buffer);
+      read_image(&data_file, &label, str_buffer);
       datum.set_label(label);
-      datum.clear_float_data();
-      for(int i=0;i<kCIFARImageNBytes;++i)
-    	  datum.add_float_data(float_buffer[i]);
+//      LOG(INFO)<<"label "<<label;
+      datum.set_data(str_buffer, kCIFARImageNBytes);
+//      datum.clear_float_data();
+//      for(int i=0;i<kCIFARImageNBytes;++i)
+//    	  datum.add_float_data(float_buffer[i]);
       datum.SerializeToString(&value);
-      snprintf(str_buffer, kCIFARImageNBytes, "%05d",
+      snprintf(str_buffer, kCIFARImageNBytes, "%010d",
           fileid * kCIFARBatchSize + itemid);
       train_db->Put(leveldb::WriteOptions(), string(str_buffer), value);
     }
@@ -76,17 +79,20 @@ void convert_dataset(const string& input_folder, const string& output_folder) {
   CHECK(leveldb::DB::Open(options, output_folder + "/cifar-test-leveldb",
       &test_db).ok()) << "Failed to open leveldb.";
   // Open files
-  std::ifstream data_file((input_folder + "/float_test_batch.bin").c_str(),
+  std::ifstream data_file((input_folder + "/test_batch.bin").c_str(),
       std::ios::in | std::ios::binary);
   CHECK(data_file) << "Unable to open test file.";
-  for (int itemid = 0; itemid < kCIFARBatchSize; ++itemid) {
-    read_image(&data_file, &label, float_buffer);
+  for (int itemid = 0; itemid < kCIFARTestSize; ++itemid) {
+    read_image(&data_file, &label, str_buffer);
     datum.set_label(label);
-    datum.clear_float_data();
-    for(int i=0;i<kCIFARImageNBytes;++i)
-    	datum.add_float_data(float_buffer[i]);
+//    LOG(INFO)<<"label "<<label;
+    datum.set_data(str_buffer, kCIFARImageNBytes);
+
+//    datum.clear_float_data();
+//    for(int i=0;i<kCIFARImageNBytes;++i)
+//    	datum.add_float_data(float_buffer[i]);
     datum.SerializeToString(&value);
-    snprintf(str_buffer, kCIFARImageNBytes, "%05d", itemid);
+    snprintf(str_buffer, kCIFARImageNBytes, "%010d", itemid);
     test_db->Put(leveldb::WriteOptions(), string(str_buffer), value);
   }
 

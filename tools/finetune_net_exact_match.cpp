@@ -1,4 +1,4 @@
-// Zhicheng Yan@eBay
+// Copyright 2014 Zhicheng Yan@eBay
 // Aug 7, 2014
 // similar to finetune_net.cpp except that
 // For an already initialized net, CopyTrainedLayersFromPrefixMatching() copies the already

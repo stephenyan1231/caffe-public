@@ -157,7 +157,7 @@ class DataLayer : public Layer<Dtype> {
   Caffe::Phase phase_;
 };
 
-// This function is used to create a pthread that prefetches the data.
+// This function is used to create a pthread that prefetches the data in float data type.
 template <typename Dtype>
 void* FloatDataLayerPrefetch(void* layer_pointer);
 
@@ -167,6 +167,21 @@ class FloatDataLayer : public DataLayer<Dtype> {
 	friend void* FloatDataLayerPrefetch<Dtype>(void* layer_pointer);
 public:
 	explicit FloatDataLayer(const LayerParameter& param)
+	: DataLayer<Dtype>(param) {}
+protected:
+	virtual void CreatePrefetchThread();
+};
+
+// This function is used to create a pthread that prefetches the data.
+template <typename Dtype>
+void* FloatDataTranslateLayerPrefetch(void* layer_pointer);
+
+template <typename Dtype>
+class FloatDataTranslateLayer : public DataLayer<Dtype> {
+	// The function used to perform prefetching.
+	friend void* FloatDataTranslateLayerPrefetch<Dtype>(void* layer_pointer);
+public:
+	explicit FloatDataTranslateLayer(const LayerParameter& param)
 	: DataLayer<Dtype>(param) {}
 protected:
 	virtual void CreatePrefetchThread();

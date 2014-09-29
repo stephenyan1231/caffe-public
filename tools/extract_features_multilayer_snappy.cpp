@@ -1,5 +1,4 @@
-// Zhicheng Yan@eBay
-// most are borrowed from extract_features.cpp
+// Copyright 2014 Zhicheng Yan@eBay
 
 #include <stdio.h>  // for snprintf
 #include <cuda_runtime.h>
@@ -38,7 +37,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 		LOG(ERROR)<<
 		"This program takes in a trained network and an input data layer, and then"
 		" extract features of the input data produced by the net.\n"
-		"Usage: demo_extract_features  pretrained_net_param"
+		"Usage: extract_features_multilayer_snappy  pretrained_net_param"
 		"  feature_extraction_proto_file  extract_feature_blob_name_list"
 		"  save_feature_dir_prefix  num_mini_batches  [CPU/GPU]  [DEVICE_ID=0]";
 		return 1;

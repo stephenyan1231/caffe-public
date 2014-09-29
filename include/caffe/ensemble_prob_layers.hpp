@@ -1,4 +1,4 @@
-// Copyright 2014 Zhicheng Yan
+// Copyright 2014 Zhicheng Yan@eBay
 
 #ifndef CAFFE_ENSEMBLE_PROB_LAYERS_HPP_
 #define CAFFE_ENSEMBLE_PROB_LAYERS_HPP_
