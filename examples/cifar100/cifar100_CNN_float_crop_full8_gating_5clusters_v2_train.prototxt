@@ -1,0 +1,856 @@
+name: "CIFAR100_CNN_float_crop_full8_gating_5clusters_train"
+layers {
+  name: "cifar"
+  type: FLOAT_DATA
+  top: "data"
+  top: "label"
+  data_param {
+    source: "cifar100-float-leveldb-copy-copy-copy/cifar-train-leveldb"
+    mean_file: "float_mean.binaryproto"
+    batch_size: 250
+    crop_size: 26
+    mirror: true
+    scale: 2500
+  }
+}
+
+# gating part
+layers {
+  name: "clusterid_conv1"
+  type: CONVOLUTION
+  bottom: "data"
+  top: "clusterid_conv1"
+  blobs_lr: 0
+  blobs_lr: 0
+  convolution_param {
+    num_output: 64
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.0001
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layers {
+  name: "clusterid_pool1"
+  type: POOLING
+  bottom: "clusterid_conv1"
+  top: "clusterid_pool1"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layers {
+  name: "clusterid_relu1"
+  type: RELU
+  bottom: "clusterid_pool1"
+  top: "clusterid_pool1"
+}
+layers {
+  name: "clusterid_norm1"
+  type: LRN
+  bottom: "clusterid_pool1"
+  top: "clusterid_norm1"
+  lrn_param {
+    norm_region: WITHIN_CHANNEL
+    local_size: 3
+    alpha: 5e-05
+    beta: 0.75
+  }
+}
+
+layers {
+  name: "clusterid_conv2"
+  type: CONVOLUTION
+  bottom: "clusterid_norm1"
+  top: "clusterid_conv2"
+  blobs_lr: 0
+  blobs_lr: 0
+  convolution_param {
+    num_output: 64
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layers {
+  name: "clusterid_relu2"
+  type: RELU
+  bottom: "clusterid_conv2"
+  top: "clusterid_conv2"
+}
+layers {
+  name: "clusterid_pool2"
+  type: POOLING
+  bottom: "clusterid_conv2"
+  top: "clusterid_pool2"
+  pooling_param {
+    pool: AVE
+    kernel_size: 3
+    stride: 2
+  }
+}
+layers {
+  name: "clusterid_norm2"
+  type: LRN
+  bottom: "clusterid_pool2"
+  top: "clusterid_norm2"
+  lrn_param {
+    norm_region: WITHIN_CHANNEL
+    local_size: 3
+    alpha: 5e-05
+    beta: 0.75
+  }
+}
+
+layers {
+  name: "clusterid_conv3"
+  type: CONVOLUTION
+  bottom: "clusterid_norm2"
+  top: "clusterid_conv3"
+  blobs_lr: 0
+  blobs_lr: 0
+  convolution_param {
+    num_output: 64
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layers {
+  name: "clusterid_relu3"
+  type: RELU
+  bottom: "clusterid_conv3"
+  top: "clusterid_conv3"
+}
+layers {
+  name: "clusterid_pool3"
+  type: POOLING
+  bottom: "clusterid_conv3"
+  top: "clusterid_pool3"
+  pooling_param {
+    pool: AVE
+    kernel_size: 3
+    stride: 2
+  }
+}
+layers {
+  name: "clusterid_ip1_4"
+  type: INNER_PRODUCT
+  bottom: "clusterid_pool3"
+  top: "clusterid_ip1_4"
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 250
+  weight_decay: 0
+  inner_product_param {
+    num_output: 5
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layers {
+  name: "branch_prob"
+  type: SOFTMAX
+  bottom: "clusterid_ip1_4"
+  top: "branch_prob"
+}
+# end of gating part
+
+
+# shared layers
+    layers {
+   name: "conv1"
+   type: CONVOLUTION
+   bottom: "data"
+   top: "conv1"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.0001
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+ name: "pool1"
+   type: POOLING
+   bottom: "conv1"
+   top: "pool1"
+   pooling_param {
+     pool: MAX
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+ name: "relu1"
+   type: RELU
+   bottom: "pool1"
+   top: "pool1"
+ }
+ layers {
+ name: "norm1"
+   type: LRN
+   bottom: "pool1"
+   top: "norm1"
+   lrn_param {
+     norm_region: WITHIN_CHANNEL
+     local_size: 3
+     alpha: 5e-05
+     beta: 0.75
+   }
+ }
+ # end of shared layers
+# branch 0 
+         layers {
+   name: "cluster00_conv2"
+   type: CONVOLUTION
+   bottom: "norm1"
+   top: "cluster00_conv2"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster00_relu2"
+   type: RELU
+   bottom: "cluster00_conv2"
+   top: "cluster00_conv2"
+ }
+ layers {
+   name: "cluster00_pool2"
+   type: POOLING
+   bottom: "cluster00_conv2"
+   top: "cluster00_pool2"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster00_norm2"
+   type: LRN
+   bottom: "cluster00_pool2"
+   top: "cluster00_norm2"
+   lrn_param {
+     norm_region: WITHIN_CHANNEL
+     local_size: 3
+     alpha: 5e-05
+     beta: 0.75
+   }
+ }
+ 
+ layers {
+   name: "cluster00_conv3"
+   type: CONVOLUTION
+   bottom: "cluster00_norm2"
+   top: "cluster00_conv3"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster00_relu3"
+   type: RELU
+   bottom: "cluster00_conv3"
+   top: "cluster00_conv3"
+ }
+ layers {
+   name: "cluster00_pool3"
+   type: POOLING
+   bottom: "cluster00_conv3"
+   top: "cluster00_pool3"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster00_ip1_4"
+   type: INNER_PRODUCT
+   bottom: "cluster00_pool3"
+   top: "cluster00_ip1_4"
+   blobs_lr: 1
+   blobs_lr: 2
+   weight_decay: 250
+   weight_decay: 0
+   inner_product_param {
+     num_output: 100
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster00_prob"
+   type: SOFTMAX
+   bottom: "cluster00_ip1_4"
+   top: "cluster00_prob"
+ }
+ 
+ # end of branch 0
+# branch 1 
+         layers {
+   name: "cluster01_conv2"
+   type: CONVOLUTION
+   bottom: "norm1"
+   top: "cluster01_conv2"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster01_relu2"
+   type: RELU
+   bottom: "cluster01_conv2"
+   top: "cluster01_conv2"
+ }
+ layers {
+   name: "cluster01_pool2"
+   type: POOLING
+   bottom: "cluster01_conv2"
+   top: "cluster01_pool2"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster01_norm2"
+   type: LRN
+   bottom: "cluster01_pool2"
+   top: "cluster01_norm2"
+   lrn_param {
+     norm_region: WITHIN_CHANNEL
+     local_size: 3
+     alpha: 5e-05
+     beta: 0.75
+   }
+ }
+ 
+ layers {
+   name: "cluster01_conv3"
+   type: CONVOLUTION
+   bottom: "cluster01_norm2"
+   top: "cluster01_conv3"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster01_relu3"
+   type: RELU
+   bottom: "cluster01_conv3"
+   top: "cluster01_conv3"
+ }
+ layers {
+   name: "cluster01_pool3"
+   type: POOLING
+   bottom: "cluster01_conv3"
+   top: "cluster01_pool3"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster01_ip1_4"
+   type: INNER_PRODUCT
+   bottom: "cluster01_pool3"
+   top: "cluster01_ip1_4"
+   blobs_lr: 1
+   blobs_lr: 2
+   weight_decay: 250
+   weight_decay: 0
+   inner_product_param {
+     num_output: 100
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster01_prob"
+   type: SOFTMAX
+   bottom: "cluster01_ip1_4"
+   top: "cluster01_prob"
+ }
+ 
+ # end of branch 1
+# branch 2 
+         layers {
+   name: "cluster02_conv2"
+   type: CONVOLUTION
+   bottom: "norm1"
+   top: "cluster02_conv2"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster02_relu2"
+   type: RELU
+   bottom: "cluster02_conv2"
+   top: "cluster02_conv2"
+ }
+ layers {
+   name: "cluster02_pool2"
+   type: POOLING
+   bottom: "cluster02_conv2"
+   top: "cluster02_pool2"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster02_norm2"
+   type: LRN
+   bottom: "cluster02_pool2"
+   top: "cluster02_norm2"
+   lrn_param {
+     norm_region: WITHIN_CHANNEL
+     local_size: 3
+     alpha: 5e-05
+     beta: 0.75
+   }
+ }
+ 
+ layers {
+   name: "cluster02_conv3"
+   type: CONVOLUTION
+   bottom: "cluster02_norm2"
+   top: "cluster02_conv3"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster02_relu3"
+   type: RELU
+   bottom: "cluster02_conv3"
+   top: "cluster02_conv3"
+ }
+ layers {
+   name: "cluster02_pool3"
+   type: POOLING
+   bottom: "cluster02_conv3"
+   top: "cluster02_pool3"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster02_ip1_4"
+   type: INNER_PRODUCT
+   bottom: "cluster02_pool3"
+   top: "cluster02_ip1_4"
+   blobs_lr: 1
+   blobs_lr: 2
+   weight_decay: 250
+   weight_decay: 0
+   inner_product_param {
+     num_output: 100
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster02_prob"
+   type: SOFTMAX
+   bottom: "cluster02_ip1_4"
+   top: "cluster02_prob"
+ }
+ 
+ # end of branch 2
+# branch 3 
+         layers {
+   name: "cluster03_conv2"
+   type: CONVOLUTION
+   bottom: "norm1"
+   top: "cluster03_conv2"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster03_relu2"
+   type: RELU
+   bottom: "cluster03_conv2"
+   top: "cluster03_conv2"
+ }
+ layers {
+   name: "cluster03_pool2"
+   type: POOLING
+   bottom: "cluster03_conv2"
+   top: "cluster03_pool2"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster03_norm2"
+   type: LRN
+   bottom: "cluster03_pool2"
+   top: "cluster03_norm2"
+   lrn_param {
+     norm_region: WITHIN_CHANNEL
+     local_size: 3
+     alpha: 5e-05
+     beta: 0.75
+   }
+ }
+ 
+ layers {
+   name: "cluster03_conv3"
+   type: CONVOLUTION
+   bottom: "cluster03_norm2"
+   top: "cluster03_conv3"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster03_relu3"
+   type: RELU
+   bottom: "cluster03_conv3"
+   top: "cluster03_conv3"
+ }
+ layers {
+   name: "cluster03_pool3"
+   type: POOLING
+   bottom: "cluster03_conv3"
+   top: "cluster03_pool3"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster03_ip1_4"
+   type: INNER_PRODUCT
+   bottom: "cluster03_pool3"
+   top: "cluster03_ip1_4"
+   blobs_lr: 1
+   blobs_lr: 2
+   weight_decay: 250
+   weight_decay: 0
+   inner_product_param {
+     num_output: 100
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster03_prob"
+   type: SOFTMAX
+   bottom: "cluster03_ip1_4"
+   top: "cluster03_prob"
+ }
+ 
+ # end of branch 3
+# branch 4 
+         layers {
+   name: "cluster04_conv2"
+   type: CONVOLUTION
+   bottom: "norm1"
+   top: "cluster04_conv2"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster04_relu2"
+   type: RELU
+   bottom: "cluster04_conv2"
+   top: "cluster04_conv2"
+ }
+ layers {
+   name: "cluster04_pool2"
+   type: POOLING
+   bottom: "cluster04_conv2"
+   top: "cluster04_pool2"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster04_norm2"
+   type: LRN
+   bottom: "cluster04_pool2"
+   top: "cluster04_norm2"
+   lrn_param {
+     norm_region: WITHIN_CHANNEL
+     local_size: 3
+     alpha: 5e-05
+     beta: 0.75
+   }
+ }
+ 
+ layers {
+   name: "cluster04_conv3"
+   type: CONVOLUTION
+   bottom: "cluster04_norm2"
+   top: "cluster04_conv3"
+   blobs_lr: 1
+   blobs_lr: 2
+   convolution_param {
+     num_output: 64
+     pad: 2
+     kernel_size: 5
+     stride: 1
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster04_relu3"
+   type: RELU
+   bottom: "cluster04_conv3"
+   top: "cluster04_conv3"
+ }
+ layers {
+   name: "cluster04_pool3"
+   type: POOLING
+   bottom: "cluster04_conv3"
+   top: "cluster04_pool3"
+   pooling_param {
+     pool: AVE
+     kernel_size: 3
+     stride: 2
+   }
+ }
+ layers {
+   name: "cluster04_ip1_4"
+   type: INNER_PRODUCT
+   bottom: "cluster04_pool3"
+   top: "cluster04_ip1_4"
+   blobs_lr: 1
+   blobs_lr: 2
+   weight_decay: 250
+   weight_decay: 0
+   inner_product_param {
+     num_output: 100
+     weight_filler {
+       type: "gaussian"
+       std: 0.01
+     }
+     bias_filler {
+       type: "constant"
+     }
+   }
+ }
+ layers {
+   name: "cluster04_prob"
+   type: SOFTMAX
+   bottom: "cluster04_ip1_4"
+   top: "cluster04_prob"
+ }
+ 
+ # end of branch 4
+layers {
+   name: "probabilistic_average_prob"
+   type: PROBABLISTIC_AVERAGE_PROB
+	bottom: "cluster00_prob"
+	bottom: "cluster01_prob"
+	bottom: "cluster02_prob"
+	bottom: "cluster03_prob"
+	bottom: "cluster04_prob"
+	bottom: "branch_prob"
+	top: "probabilistic_average_prob"
+ }
+ 
+layers {
+   name: "loss"
+   type: MULTINOMIAL_LOGISTIC_SPARSITY_LOSS
+   bottom: "probabilistic_average_prob"
+   bottom: "label"
+   bottom: "branch_prob"
+   multinomial_logistic_sparsity_loss_param{
+     sparsity_lamda:  1.0
+	target_sparsity: 0.25
+	target_sparsity: 0.11
+	target_sparsity: 0.40
+	target_sparsity: 0.05
+	target_sparsity: 0.19
+} 
+ }
+ 

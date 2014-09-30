@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+
+TOOLS=../../build/tools
+
+GLOG_logtostderr=1 $TOOLS/finetune_net_exact_match.bin \
+    cifar100_CNN_float_crop_full8_gating_5clusters_v2_solver.prototxt \
+cifar100_CNN_float_crop_full8_clusterid_5clusters_iter_110000 \
+cluster00_cifar100_CNN_float_crop_full8_5clusters_v2_iter_40000 \
+cluster01_cifar100_CNN_float_crop_full8_5clusters_v2_iter_40000 \
+cluster02_cifar100_CNN_float_crop_full8_5clusters_v2_iter_40000 \
+cluster03_cifar100_CNN_float_crop_full8_5clusters_v2_iter_40000 \
+cluster04_cifar100_CNN_float_crop_full8_5clusters_v2_iter_40000 \
+
+GLOG_logtostderr=1 $TOOLS/train_net.bin \
+   cifar100_CNN_float_crop_full8_gating_5clusters_v2_solver_lr1.prototxt cifar100_CNN_float_crop_full8_gating_5clusters_v2_finetune_from_CNN_float_crop_full8_iter_5000.solverstate
+
+GLOG_logtostderr=1 $TOOLS/train_net.bin \
+    cifar100_CNN_float_crop_full8_gating_5clusters_v2_solver_lr2.prototxt  cifar100_CNN_float_crop_full8_gating_5clusters_v2_finetune_from_CNN_float_crop_full8_iter_20000.solverstate
+
+echo "Done."
