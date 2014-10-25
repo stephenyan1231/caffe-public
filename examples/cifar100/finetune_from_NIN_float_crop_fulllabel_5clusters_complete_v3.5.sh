@@ -4,7 +4,7 @@ TOOLS=../../build/tools
 
 GLOG_logtostderr=1 $TOOLS/finetune_net_prefix_match.bin \
     cifar100_NIN_float_crop_gating_5clusters_v3.5_solver.prototxt \
-cifar100_NIN_float_crop_clusterid_5clusters_iter_140000 \
+cifar100_NIN_float_crop_clusterid_5clusters_iter_200000 \
 cifar100_NIN_float_crop_v2_iter_130000
 
 GLOG_logtostderr=1 $TOOLS/train_net.bin \
