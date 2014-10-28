@@ -31,4 +31,4 @@ snapshot_prefix: "cluster01_cifar100_CNN_float_crop_full8_5clusters_v2"
 # CPU, try changing the pooling regions from WITHIN_CHANNEL to ACROSS_CHANNELS
 # in both cifar_full_train.prototxt and cifar_full_test.prototxt.
 solver_mode: GPU
-device_id: 1
+device_id: 0
