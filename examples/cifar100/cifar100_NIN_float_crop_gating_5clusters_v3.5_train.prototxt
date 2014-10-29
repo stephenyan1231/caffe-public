@@ -5,7 +5,7 @@ layers {
       top: "data" 
       top: "label" 
       data_param {
-        source: "cifar100-float-leveldb-copy/cifar-train-leveldb"
+        source: "cifar100-float-leveldb/cifar-train-leveldb"
         mean_file: "float_mean.binaryproto"
         batch_size: 250 
         crop_size: 26 
