@@ -200,7 +200,7 @@ void FloatDataTranslateLayer<Dtype>::CreatePrefetchThread() {
 	}
 	// Create the thread.
 	CHECK(
-			!pthread_create(&(DataLayer<Dtype>::thread_), NULL,
+			!pthread_create(&(this->thread_), NULL,
 					FloatDataTranslateLayerPrefetch<Dtype>, static_cast<void*>(this)))
 			<< "Pthread execution failed.";
 }
