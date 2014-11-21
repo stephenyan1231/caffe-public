@@ -3,7 +3,7 @@ layers {
   name: "data"
   type: DATA
   data_param {
-    source: "ilsvrc12_val_leveldb"
+    source: "imagenet_val_leveldb"
     mean_file: "../../data/ilsvrc12/imagenet_mean.binaryproto"
     batch_size: 50
     crop_size: 227
