@@ -51,7 +51,17 @@ Makefile.config
 # 1. reference, and not casually committed
 # 2. custom, and live on their own unless they're deliberated contributed
 data/*
-examples/*
+examples/feature_extraction/*
+examples/images/*
+examples/pascal-finetuning/*
+examples/cifar10/*
+examples/imagenet/*
+examples/mnist/*
+
+
+
+
+
 
 # Generated documentation
 docs/_site
