@@ -30,8 +30,8 @@ class AccuracyLayer : public Layer<Dtype> {
    *     correct.  For example, if @f$ k = 5 @f$, a prediction is counted
    *     correct if the correct label is among the top 5 predicted labels.
    */
-  explicit AccuracyLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit AccuracyLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -92,8 +92,8 @@ class AccuracyLayer : public Layer<Dtype> {
 template <typename Dtype>
 class LossLayer : public Layer<Dtype> {
  public:
-  explicit LossLayer(const LayerParameter& param)
-     : Layer<Dtype>(param) {}
+  explicit LossLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+     : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(
       const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top);
   virtual void Reshape(
@@ -145,8 +145,8 @@ class LossLayer : public Layer<Dtype> {
 template <typename Dtype>
 class ContrastiveLossLayer : public LossLayer<Dtype> {
  public:
-  explicit ContrastiveLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param), diff_() {}
+  explicit ContrastiveLossLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : LossLayer<Dtype>(param,replica_id,net), diff_() {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -232,8 +232,8 @@ class ContrastiveLossLayer : public LossLayer<Dtype> {
 template <typename Dtype>
 class EuclideanLossLayer : public LossLayer<Dtype> {
  public:
-  explicit EuclideanLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param), diff_() {}
+  explicit EuclideanLossLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : LossLayer<Dtype>(param,replica_id,net), diff_() {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -340,8 +340,8 @@ class EuclideanLossLayer : public LossLayer<Dtype> {
 template <typename Dtype>
 class HingeLossLayer : public LossLayer<Dtype> {
  public:
-  explicit HingeLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param) {}
+  explicit HingeLossLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : LossLayer<Dtype>(param,replica_id,net) {}
 
   virtual inline const char* type() const { return "HingeLoss"; }
 
@@ -416,8 +416,8 @@ class HingeLossLayer : public LossLayer<Dtype> {
 template <typename Dtype>
 class InfogainLossLayer : public LossLayer<Dtype> {
  public:
-  explicit InfogainLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param), infogain_() {}
+  explicit InfogainLossLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : LossLayer<Dtype>(param,replica_id,net), infogain_() {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -507,8 +507,8 @@ class InfogainLossLayer : public LossLayer<Dtype> {
 template <typename Dtype>
 class MultinomialLogisticLossLayer : public LossLayer<Dtype> {
  public:
-  explicit MultinomialLogisticLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param) {}
+  explicit MultinomialLogisticLossLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : LossLayer<Dtype>(param,replica_id,net) {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -583,9 +583,9 @@ class MultinomialLogisticLossLayer : public LossLayer<Dtype> {
 template <typename Dtype>
 class SigmoidCrossEntropyLossLayer : public LossLayer<Dtype> {
  public:
-  explicit SigmoidCrossEntropyLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param),
-          sigmoid_layer_(new SigmoidLayer<Dtype>(param)),
+  explicit SigmoidCrossEntropyLossLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : LossLayer<Dtype>(param,replica_id,net),
+          sigmoid_layer_(new SigmoidLayer<Dtype>(param,replica_id,net)),
           sigmoid_output_(new Blob<Dtype>()) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
@@ -688,8 +688,9 @@ class SoftmaxWithLossLayer : public LossLayer<Dtype> {
     *    If true, the loss is normalized by the number of (nonignored) labels
     *    present; otherwise the loss is simply summed over spatial locations.
     */
-  explicit SoftmaxWithLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param) {}
+  explicit SoftmaxWithLossLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      :
+			LossLayer<Dtype>(param, replica_id, net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,

@@ -12,13 +12,14 @@ SyncedMemory::~SyncedMemory() {
   }
 
 #ifndef CPU_ONLY
-  if (gpu_ptr_) {
+  if (gpu_ptr_ && own_gpu_data_) {
     CUDA_CHECK(cudaFree(gpu_ptr_));
   }
 #endif  // CPU_ONLY
 }
 
 inline void SyncedMemory::to_cpu() {
+	int old_device = 0;
   switch (head_) {
   case UNINITIALIZED:
     CaffeMallocHost(&cpu_ptr_, size_);
@@ -32,7 +33,10 @@ inline void SyncedMemory::to_cpu() {
       CaffeMallocHost(&cpu_ptr_, size_);
       own_cpu_data_ = true;
     }
+    old_device = Caffe::GetDeviceId();
+    Caffe::SetDevice(device_id_);
     caffe_gpu_memcpy(size_, gpu_ptr_, cpu_ptr_);
+    Caffe::SetDevice(old_device);
     head_ = SYNCED;
 #else
     NO_GPU;
@@ -46,17 +50,26 @@ inline void SyncedMemory::to_cpu() {
 
 inline void SyncedMemory::to_gpu() {
 #ifndef CPU_ONLY
+	int old_device = 0;
   switch (head_) {
   case UNINITIALIZED:
+  	old_device = Caffe::GetDeviceId();
+  	Caffe::SetDevice(device_id_);
     CUDA_CHECK(cudaMalloc(&gpu_ptr_, size_));
     caffe_gpu_memset(size_, 0, gpu_ptr_);
+    Caffe::SetDevice(old_device);
     head_ = HEAD_AT_GPU;
+    own_gpu_data_ = true;
     break;
   case HEAD_AT_CPU:
+  	old_device = Caffe::GetDeviceId();
+  	Caffe::SetDevice(device_id_);
     if (gpu_ptr_ == NULL) {
       CUDA_CHECK(cudaMalloc(&gpu_ptr_, size_));
+      own_gpu_data_ = true;
     }
     caffe_gpu_memcpy(size_, cpu_ptr_, gpu_ptr_);
+    Caffe::SetDevice(old_device);
     head_ = SYNCED;
     break;
   case HEAD_AT_GPU:
@@ -90,6 +103,21 @@ const void* SyncedMemory::gpu_data() {
 #else
   NO_GPU;
 #endif
+}
+
+void SyncedMemory::set_gpu_data(void* data, int device_id){
+	CHECK(data);
+	if(own_gpu_data_){
+  	int old_device = Caffe::GetDeviceId();
+  	Caffe::SetDevice(device_id_);
+  	LOG(INFO)<<"SyncedMemory::set_gpu_data cudaFree memory ";
+		CUDA_CHECK(cudaFree(gpu_ptr_));
+		Caffe::SetDevice(old_device);
+	}
+	device_id_ = device_id;
+	gpu_ptr_ = data;
+	head_ = HEAD_AT_GPU;
+	own_gpu_data_ = false;
 }
 
 void* SyncedMemory::mutable_cpu_data() {

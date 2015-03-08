@@ -11,9 +11,22 @@
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/proto/caffe.pb.h"
+#include "caffe/data_manager.hpp"
+#include "caffe/work_message.hpp"
+//#include "caffe/net_thread_solver.hpp"
+//#include "caffe/blob_diff_reducer.hpp"
+#include "caffe/copy_pipeline.hpp"
 
 namespace caffe {
 
+template<typename Dtype>
+class NetThread;
+
+template <typename Dtype>
+class Solver;
+
+template <typename Dtype>
+class BlobSolver;
 /**
  * @brief Connects Layer%s together into a directed acyclic graph (DAG)
  *        specified by a NetParameter.
@@ -23,13 +36,221 @@ namespace caffe {
 template <typename Dtype>
 class Net {
  public:
-  explicit Net(const NetParameter& param);
-  explicit Net(const string& param_file);
-  virtual ~Net() {}
+  explicit Net(const NetParameter& param, std::vector<int> device_ids = std::vector<int>(),
+  		Solver<Dtype> *solver = NULL, SolverParameter solver_param = SolverParameter());
+  explicit Net(const string& param_file, std::vector<int> device_ids = std::vector<int>(),
+  		Solver<Dtype> *solver = NULL, SolverParameter solver_param = SolverParameter());
+  virtual ~Net();
+
+  void Init(const NetParameter& in_param, vector<int> &device_ids);
+  void PostInit();
+
+  void InitDataManager(const NetParameter& param);
+  void InitNetThreads(const NetParameter& param);
+  void ConnectReplicas();
+  vector<int>& GetDeviceIds(){return device_ids_;}
+
+  void SetBatchSize(int replica_id, int batch_size){
+  	CHECK_GT(batch_sizes_.size(), replica_id);
+  	batch_sizes_[replica_id] = batch_size;
+  }
+
+  int GetBatchSize(int replica_id){
+  	CHECK_GT(batch_sizes_.size(), replica_id);
+  	return batch_sizes_[replica_id];
+  }
+
+  inline Dtype GetBatchSizeRatio(int device_id){
+  	CHECK_EQ(batch_size_ratios_.count(device_id),1);
+  	return batch_size_ratios_[device_id];
+  }
+
+  Dtype ForwardBackward(vector<Blob<Dtype>* >& bottom);
+//  const vector<Blob<Dtype>*>& Forward(vector<Blob<Dtype>* >& bottom, Dtype *loss = NULL);
+  void ForwardPrefilled(Dtype* loss);
+
+  /// @brief Run forward using a set of bottom blobs, and return the result.
+  const vector<Blob<Dtype>*>& Forward(const vector<Blob<Dtype>* > & bottom,
+      Dtype* loss = NULL);
+  /**
+   * @brief Run forward using a serialized BlobProtoVector and return the
+   *        result as a serialized BlobProtoVector
+   */
+  string Forward(const string& input_blob_protos, Dtype* loss = NULL);
+
+  const shared_ptr<Blob<Dtype> > blob_by_name(const string& blob_name);
+  /**
+   * The network backward should take no input and output, since it solely
+   * computes the gradient w.r.t the parameters, and the data has already been
+   * provided during the forward pass.
+   */
+  void Backward();
+
+  void CollectLoss();
+
+
+  void CopyTrainedLayersFrom(const NetParameter& param);
+  void CopyTrainedLayersFrom(const string trained_filename);
+  /// @brief Writes the net to a proto.
+  void ToProto(NetParameter* param, bool write_diff = false) const;
+
+  DataManager<Dtype>* GetDataManager(){return data_manager_.get();}
+	const vector<NetThread<Dtype>*>& GetNetThreads() const{
+		return net_threads_;
+	}
+
+  // Helpers for Init.
+  /**
+   * @brief Remove layers that the user specified should be excluded given the current
+   *        phase, level, and stage.
+   */
+  static void FilterNet(const NetParameter& param,
+      NetParameter* param_filtered);
+  /// @brief return whether NetState state meets NetStateRule rule
+  static bool StateMeetsRule(const NetState& state, const NetStateRule& rule,
+      const string& layer_name);
+
+  void set_debug_info(const bool value);
+
+  std::string name();
+
+  /// @brief returns the parameters
+  inline const vector<shared_ptr<Blob<Dtype> > >& params() const {
+  	CHECK_GT(net_threads_.size(), 0);
+    return net_threads_[0]->params();
+  }
+
+  /// @brief returns the parameter learning rate multipliers
+  inline const vector<float>& params_lr() const {
+  	CHECK_GT(net_threads_.size(), 0);
+  	return net_threads_[0]->params_lr();
+  }
+
+  inline const vector<float>& params_weight_decay() const {
+  	CHECK_GT(net_threads_.size(), 0);
+  	return net_threads_[0]->params_weight_decay();
+  }
+
+  inline const vector<Blob<Dtype>*>& output_blobs() const {
+    return net_output_blobs_;
+  }
+
+  /// @brief returns the blob names
+  inline const vector<string>& blob_names() const{
+  	CHECK_GT(net_threads_.size(), 0);
+  	return net_threads_[0]->blob_names();
+  }
+
+  /// @brief returns the layers
+  inline const vector<shared_ptr<Layer<Dtype> > >& layers() const {
+  	CHECK_GT(net_threads_.size(), 0);
+    return net_threads_[0]->layers();
+  }
+  /**
+   * @brief returns the bottom vecs for each layer -- usually you won't
+   *        need this unless you do per-layer checks such as gradients.
+   */
+  inline const vector<vector<Blob<Dtype>*> >& bottom_vecs() const {
+  	CHECK_GT(net_threads_.size(), 0);
+    return net_threads_[0]->bottom_vecs();
+  }
+  /**
+   * @brief returns the top vecs for each layer -- usually you won't
+   *        need this unless you do per-layer checks such as gradients.
+   */
+  inline const vector<vector<Blob<Dtype>*> >& top_vecs() const {
+  	CHECK_GT(net_threads_.size(), 0);
+    return net_threads_[0]->top_vecs();
+  }
+  inline const vector<vector<bool> >& bottom_need_backward() const {
+  	CHECK_GT(net_threads_.size(), 0);
+    return net_threads_[0]->bottom_need_backward();
+  }
+
+  inline const vector<Dtype>& blob_loss_weights() const {
+  	CHECK_GT(net_threads_.size(), 0);
+    return net_threads_[0]->blob_loss_weights();
+  }
+
+  inline const vector<int>& output_blob_indices() const {
+  	CHECK_GT(net_threads_.size(), 0);
+    return net_threads_[0]->output_blob_indices();
+  }
+
+  bool has_blob(const string& blob_name) const{
+  	CHECK_GT(net_threads_.size(), 0);
+    return net_threads_[0]->has_blob(blob_name);
+  }
+
+  void ComputeUpdateValue();
+  /// @brief Updates the network weights based on the diff values computed.
+  void Update();
+
+  /**
+   * @brief For an already initialized net, implicitly copies (i.e., using no
+   *        additional memory) the pre-trained layers from another Net.
+   */
+  void ShareTrainedLayersWith(const Net<Dtype>* other);
+
+  SolverParameter& get_solver_param(){return solver_param_;}
+
+  Solver<Dtype> *get_solver(){return solver_;}
+
+ protected:
+  void ForwardBackwardHelper(const vector<Blob<Dtype>* >& bottom, Dtype *loss, bool do_backward);
+
+  SolverParameter solver_param_;
+  Solver<Dtype> *solver_;
+  vector<int> device_ids_;
+  vector<NetThread<Dtype>* > net_threads_;
+  vector<map<int, shared_ptr<Layer<Dtype> > > > layer_map_;
+  shared_ptr<DataManager<Dtype> > data_manager_;
+  vector<Dtype> losses_;
+  vector<Blob<Dtype>*> net_output_blobs_;
+  int batch_size_;
+  vector<int> batch_sizes_;
+  // device id -> ratio
+  std::map<int, Dtype> batch_size_ratios_;
+
+  DISABLE_COPY_AND_ASSIGN(Net);
+};
+
+
+template <typename Dtype>
+class NetThread : public InternalThread{
+public:
+  explicit NetThread(const NetParameter& param, int device_id, int replica_id,
+  		Net<Dtype> *net, const SolverParameter &solver_param);
+  virtual ~NetThread() {}
+
+  inline int get_device_id(){return device_id_;}
+  inline void set_bottom(vector<Blob<Dtype>* > &bottom){
+  	for(int i = 0; i < bottom_.size(); ++i){
+  		if(bottom_[i]){
+    		delete bottom_[i];
+  		}
+  	}
+  	bottom_ = bottom;
+  }
+  inline void set_input_blob_protos(std::string input_blob_protos){
+  	input_blob_protos_ = input_blob_protos;
+  }
+
+  inline Dtype get_loss(){
+  	return loss_;
+  }
+
+  inline Net<Dtype>* get_net(){
+  	return net_;
+  }
+
+
+  void InitCuda();
 
   /// @brief Initialize a network with a NetParameter.
   void Init(const NetParameter& param);
 
+  void PostInit();
   /**
    * @brief Run Forward with the input Blob%s already fed separately.
    *
@@ -75,13 +296,62 @@ class Net {
    */
   void Reshape();
 
-  Dtype ForwardBackward(const vector<Blob<Dtype>* > & bottom) {
-    Dtype loss;
-    Forward(bottom, &loss);
-    Backward();
-    return loss;
+  void StartWork(){
+    DLOG(INFO) << "CreateNetThread";
+  	CreateNetThread();
   }
 
+  void FinishWork(){
+  	DLOG(INFO) << "JoinNetThread";
+  	JoinNetThread();
+  }
+
+//  void StartForwardBackward(const vector<Blob<Dtype>* >  *bottom, bool do_backward) {
+//    // Start a new net thread
+//
+//    prefilled_ = false;
+//    do_backward_ = do_backward;
+//    bottom_ = bottom;
+//    LOG(INFO) << "CreateNetThread";
+//  	CreateNetThread();
+//  }
+
+//  Dtype FinishForwardBackward(){
+//  	LOG(INFO) << "JoinNetThread";
+//  	JoinNetThread();
+//  	return loss_;
+//  }
+//
+//  void StartForwardPrefilled() {
+//    prefilled_ = true;
+//    do_backward_ = false;
+//    LOG(INFO) << "CreateNetThread";
+//  	CreateNetThread();
+//  }
+//  Dtype FinishForwardPrefilled(){
+//  	LOG(INFO) << "JoinNetThread";
+//  	JoinNetThread();
+//  	return loss_;
+//  }
+//
+//  void StartForwardInputBlobProtos(std::string input_blob_protos){
+//  	input_blob_protos_ = input_blob_protos;
+//    do_backward_ = false;
+//    prefilled_ = false;
+//    do_forward_input_blob_protos = true;
+//    LOG(INFO) << "CreateNetThread";
+//  	CreateNetThread();
+//  }
+//
+//  Dtype FinishForwardInputBlobProtos(){
+//  	LOG(INFO) << "JoinNetThread";
+//  	JoinNetThread();
+//  	return loss_;
+//  }
+
+  Dtype GetLoss(){return loss_;}
+
+  void ComputeUpdateValue();
   /// @brief Updates the network weights based on the diff values computed.
   void Update();
 
@@ -89,7 +359,7 @@ class Net {
    * @brief For an already initialized net, implicitly copies (i.e., using no
    *        additional memory) the pre-trained layers from another Net.
    */
-  void ShareTrainedLayersWith(const Net* other);
+  void ShareTrainedLayersWith(const NetThread<Dtype>* other);
   // For an already initialized net, CopyTrainedLayersFrom() copies the already
   // trained layers from another net parameter instance.
   /**
@@ -136,7 +406,7 @@ class Net {
     return blob_loss_weights_;
   }
   /// @brief returns the parameters
-  inline const vector<shared_ptr<Blob<Dtype> > >& params() const {
+  inline const vector<shared_ptr<Blob<Dtype> > >& params() {
     return params_;
   }
   /// @brief returns the parameter learning rate multipliers
@@ -144,6 +414,8 @@ class Net {
   inline const vector<float>& params_weight_decay() const {
     return params_weight_decay_;
   }
+  inline const vector<int>& params_shard_size(){return params_shard_size_;}
+
   const map<string, int>& param_names_index() const {
     return param_names_index_;
   }
@@ -169,16 +441,36 @@ class Net {
 
   void set_debug_info(const bool value) { debug_info_ = value; }
 
-  // Helpers for Init.
-  /**
-   * @brief Remove layers that the user specified should be excluded given the current
-   *        phase, level, and stage.
-   */
-  static void FilterNet(const NetParameter& param,
-      NetParameter* param_filtered);
-  /// @brief return whether NetState state meets NetStateRule rule
-  static bool StateMeetsRule(const NetState& state, const NetStateRule& rule,
-      const string& layer_name);
+  void set_work_message(WorkMessage work_message){
+  	work_message_ = work_message;
+  }
+
+  Solver<Dtype> * GetExternalSolver(){return net_->get_solver();}
+
+  int get_replica_id(){return replica_id_;}
+
+  void add_replicas(NetThread<Dtype> *nt){
+  	CHECK_EQ(replicas_.count(nt->get_replica_id()), 0);
+  	replicas_[nt->get_replica_id()] = nt;
+  }
+
+  std::map<int, NetThread<Dtype>* >& get_replicas(){
+  	return replicas_;
+  }
+
+  shared_ptr<Blob<Dtype> > GetShardGPUOnly(const shared_ptr<Blob<Dtype> > &p, int param_id, int replica_id);
+
+  shared_ptr<Blob<Dtype> > GetShardGPUOnly(int param_id, int replica_id);
+
+
+//  shared_ptr<BlobDiffReducer<Dtype> > get_blob_diff_reducer(){
+//  	return blob_diff_reducer_;
+//  }
+
+//  shared_ptr<IBroadcastDiffNetwork<Dtype> > get_blob_diff_broadcaster(){
+//  	return blob_diff_broadcaster_;
+//  }
+
 
  protected:
   // Helpers for Init.
@@ -241,6 +533,9 @@ class Net {
   string name_;
   /// The parameters in the network.
   vector<shared_ptr<Blob<Dtype> > > params_;
+  vector<shared_ptr<BlobSolver<Dtype> > > params_solver_;
+
+  vector<int> params_shard_size_;
   /// the learning rate multipliers
   vector<float> params_lr_;
   /// the weight decay multipliers
@@ -249,10 +544,34 @@ class Net {
   size_t memory_used_;
   /// Whether to compute and display debug info for the net.
   bool debug_info_;
+  /// if it's a testing net
+  bool test_net_;
 
-  DISABLE_COPY_AND_ASSIGN(Net);
+	virtual void CreateNetThread();
+	virtual void JoinNetThread();
+  virtual void InternalThreadEntry();
+
+//  shared_ptr<NetThreadSolver<Dtype> > solver_;
+  int replica_id_;
+  std::map<int, NetThread<Dtype>* > replicas_;
+  int device_id_;
+//  const vector<Blob<Dtype>* > *bottom_;
+  vector<Blob<Dtype>* > bottom_;
+  std::string input_blob_protos_;
+  Dtype loss_;
+  Net<Dtype>* net_;
+  bool do_backward_;
+  bool prefilled_;
+  bool do_forward_input_blob_protos;
+  WorkMessage work_message_;
+//  shared_ptr<BlobDiffReducer<Dtype> > blob_diff_reducer_;
+//  shared_ptr<IBroadcastDiffNetwork<Dtype> > blob_diff_broadcaster_;
+
+  boost::shared_mutex params_mutex_;
+
+
+  DISABLE_COPY_AND_ASSIGN(NetThread);
 };
-
 
 }  // namespace caffe
 

@@ -2,6 +2,7 @@
 #define CAFFE_COMMON_HPP_
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/thread.hpp>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
@@ -16,6 +17,10 @@
 #include <vector>
 
 #include "caffe/util/device_alternate.hpp"
+#include "cuda_profiler_api.h"
+#include "nvToolsExt.h"
+#include "nvToolsExtCuda.h"
+#include "nvToolsExtCudaRt.h"
 
 // gflags 2.1 issue: namespace google was changed to gflags without warning.
 // Luckily we will be able to use GFLAGS_GFAGS_H_ to detect if it is version
@@ -123,15 +128,27 @@ class Caffe {
 
   // Getters for boost rng, curand, and cublas handles
   inline static RNG& rng_stream() {
+  	Get().random_generator_mutex_.lock();
     if (!Get().random_generator_) {
       Get().random_generator_.reset(new RNG());
     }
+    Get().random_generator_mutex_.unlock();
     return *(Get().random_generator_);
   }
 #ifndef CPU_ONLY
-  inline static cublasHandle_t cublas_handle() { return Get().cublas_handle_; }
+  inline static cublasHandle_t cublas_handle(){
+  	return cublas_handle(GetDeviceId());
+  }
+
+  static cublasHandle_t cublas_handle(int device_id);
+
   inline static curandGenerator_t curand_generator() {
-    return Get().curand_generator_;
+  	return curand_generator(GetDeviceId());
+  }
+
+  inline static curandGenerator_t curand_generator(int device_id) {
+  	CHECK_EQ(Get().curand_generator_.count(device_id),1);
+    return Get().curand_generator_[device_id];
   }
 #endif
 
@@ -147,6 +164,8 @@ class Caffe {
   inline static void set_mode(Brew mode) { Get().mode_ = mode; }
   // Sets the phase.
   inline static void set_phase(Phase phase) { Get().phase_ = phase; }
+
+  inline static Phase get_phase() {return Get().phase_;}
   // Sets the random seed of both boost and curand
   static void set_random_seed(const unsigned int seed);
   // Sets the device. Since we have cublas and curand stuff, set device also
@@ -155,16 +174,60 @@ class Caffe {
   // Prints the current GPU status.
   static void DeviceQuery();
 
+  static int GetDeviceId();
+
+  static void InitDevices(const std::vector<int> &device_id);
+
+  static void InitDevice(int device_id);
+
+  static void SyncDevice();
+
+  static void SyncStream();
+
+  static void SyncStream(cudaStream_t stream);
+
+  static void CublasSetStream(cublasHandle_t handle);
+
+  static void CublasSetStream(cublasHandle_t handle, cudaStream_t stream);
+
+  static bool CanAccessPeer(int src_device, int tgt_device);
+
+  static cudaStream_t GetDefaultStream();
+
+  static cudaStream_t GetDefaultStream(int device_id);
+
+
+
+
+//  static cublasHandle_t GetCublasHandle();
+//
+//  static cublasHandle_t GetCublasHandle(int device_id);
+
+//  static curandGenerator_t GetCurandGenerator();
+//
+//  static curandGenerator_t GetCurandGenerator(int device_id);
+
+
  protected:
 #ifndef CPU_ONLY
-  cublasHandle_t cublas_handle_;
-  curandGenerator_t curand_generator_;
+  // device_id -> cublasHandle
+  map<int, cublasHandle_t> cublas_handle_;
+  map<int, curandGenerator_t> curand_generator_;
+  std::map<int, cudaStream_t> default_streams_;
+
+  boost::mutex cublas_mutex_;
+  boost::mutex default_stream_mutex_;
+  boost::mutex random_generator_mutex_;
+
 #endif
+  set<int> device_ids_;
   shared_ptr<RNG> random_generator_;
 
   Brew mode_;
   Phase phase_;
   static shared_ptr<Caffe> singleton_;
+
+//  boost::mutex stream_mutex_, cublas_mutex_, curand_mutex_;
 
  private:
   // The private constructor to avoid duplicate instantiation.
@@ -172,6 +235,10 @@ class Caffe {
 
   DISABLE_COPY_AND_ASSIGN(Caffe);
 };
+
+std::vector<int> parse_int_list(std::string s, std::string delimiter = ",");
+int divide_up(int n, int m);
+
 
 }  // namespace caffe
 

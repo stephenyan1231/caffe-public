@@ -52,13 +52,19 @@ int feature_extraction_pipeline(int argc, char** argv) {
   arg_pos = num_required_args;
   if (argc > arg_pos && strcmp(argv[arg_pos], "GPU") == 0) {
     LOG(ERROR)<< "Using GPU";
-    uint device_id = 0;
+    std::vector<int> device_id;
+//    uint device_id = 0;
     if (argc > arg_pos + 1) {
-      device_id = atoi(argv[arg_pos + 1]);
-      CHECK_GE(device_id, 0);
+    	device_id = caffe::parse_int_list(std::string(argv[arg_pos + 1]));
+    	for(int i=0;i<device_id.size();++i){
+    		CHECK_GE(device_id[i], 0);
+    		LOG(ERROR) << "Using Device_id=" << device_id[i];
+    	}
+//      device_id = atoi(argv[arg_pos + 1]);
+//      CHECK_GE(device_id, 0);
     }
-    LOG(ERROR) << "Using Device_id=" << device_id;
-    Caffe::SetDevice(device_id);
+//    LOG(ERROR) << "Using Device_id=" << device_id;
+    Caffe::InitDevices(device_id);
     Caffe::set_mode(Caffe::GPU);
   } else {
     LOG(ERROR) << "Using CPU";

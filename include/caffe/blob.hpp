@@ -2,12 +2,15 @@
 #define CAFFE_BLOB_HPP_
 
 #include "caffe/common.hpp"
+//#include "caffe/blob_solver.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/syncedmem.hpp"
 #include "caffe/util/math_functions.hpp"
 
-namespace caffe {
 
+namespace caffe {
+//template <typename Dtype>
+//class NetThread;
 /**
  * @brief A wrapper around SyncedMemory holders serving as the basic
  *        computational unit through which Layer%s, Net%s, and Solver%s
@@ -20,7 +23,7 @@ class Blob {
  public:
   Blob()
        : data_(), diff_(), num_(0), channels_(0), height_(0), width_(0),
-       count_(0), capacity_(0) {}
+       count_(0), capacity_(0){}
   explicit Blob(const int num, const int channels, const int height,
     const int width);
   /**
@@ -40,6 +43,11 @@ class Blob {
   void Reshape(const int num, const int channels, const int height,
     const int width);
   void ReshapeLike(const Blob& other);
+  shared_ptr<Blob<Dtype> > Reshaped(const int num, const int channels, const int height,
+    const int width);
+  shared_ptr<Blob<Dtype> > ReshapedGPUOnly(const int num, const int channels, const int height,
+    const int width);
+
   inline int num() const { return num_; }
   inline int channels() const { return channels_; }
   inline int height() const { return height_; }
@@ -69,6 +77,9 @@ class Blob {
   void CopyFrom(const Blob<Dtype>& source, bool copy_diff = false,
       bool reshape = false);
 
+  void CopyFrom(const vector<Blob<Dtype>* > &sources, bool copy_diff = false,
+  		bool reshape = false);
+
   inline Dtype data_at(const int n, const int c, const int h,
       const int w) const {
     return *(cpu_data() + offset(n, c, h, w));
@@ -92,8 +103,12 @@ class Blob {
   const Dtype* cpu_data() const;
   void set_cpu_data(Dtype* data);
   const Dtype* gpu_data() const;
+  void set_gpu_data(Dtype* data);
   const Dtype* cpu_diff() const;
+  void set_cpu_diff(Dtype* diff);
   const Dtype* gpu_diff() const;
+  void set_gpu_diff(Dtype* diff);
+
   Dtype* mutable_cpu_data();
   Dtype* mutable_gpu_data();
   Dtype* mutable_cpu_diff();
@@ -130,6 +145,30 @@ class Blob {
    */
   void ShareDiff(const Blob& other);
 
+  shared_ptr<Blob<Dtype> > SliceNumGPUOnly(int start_num, int end_num);
+
+//  void set_net_thread(NetThread<Dtype>* net_thread){
+//  	net_thread_ = net_thread;
+//  }
+//
+//  NetThread<Dtype>* get_net_thread(){return net_thread_;}
+//
+//  void set_param_id(int param_id){
+//  	param_id_ = param_id;
+//  }
+//
+//  int get_param_id(){return param_id_;}
+//
+//  shared_ptr<BlobSolver<Dtype> > get_blob_solver(){
+//  	if(!blob_solver_.get()){
+//  		blob_solver_.reset(GetBlobSolver<Dtype>(
+//  				net_thread_->get_net()->get_solver_param(), this));
+//  	}
+//  	return blob_solver_;
+//  }
+
+//  void ComputeUpdateValue();
+
  protected:
   shared_ptr<SyncedMemory> data_;
   shared_ptr<SyncedMemory> diff_;
@@ -139,6 +178,11 @@ class Blob {
   int width_;
   int count_;
   int capacity_;
+
+//  shared_ptr<BlobSolver<Dtype> > blob_solver_;
+//  NetThread<Dtype> *net_thread_;
+//  int param_id_;
+
 
   DISABLE_COPY_AND_ASSIGN(Blob);
 };  // class Blob

@@ -36,8 +36,8 @@ class ArgMaxLayer : public Layer<Dtype> {
    *   - out_max_val (\b optional bool, default false).
    *     if set, output a vector of pairs (max_ind, max_val) for each image.
    */
-  explicit ArgMaxLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit ArgMaxLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -77,8 +77,8 @@ class ArgMaxLayer : public Layer<Dtype> {
 template <typename Dtype>
 class ConcatLayer : public Layer<Dtype> {
  public:
-  explicit ConcatLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit ConcatLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -155,8 +155,8 @@ class ConcatLayer : public Layer<Dtype> {
 template <typename Dtype>
 class EltwiseLayer : public Layer<Dtype> {
  public:
-  explicit EltwiseLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit EltwiseLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -196,8 +196,8 @@ class EltwiseLayer : public Layer<Dtype> {
 template <typename Dtype>
 class FlattenLayer : public Layer<Dtype> {
  public:
-  explicit FlattenLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit FlattenLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -245,8 +245,8 @@ class FlattenLayer : public Layer<Dtype> {
 template <typename Dtype>
 class InnerProductLayer : public Layer<Dtype> {
  public:
-  explicit InnerProductLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit InnerProductLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -281,8 +281,8 @@ class InnerProductLayer : public Layer<Dtype> {
 template <typename Dtype>
 class MVNLayer : public Layer<Dtype> {
  public:
-  explicit MVNLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit MVNLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -313,8 +313,8 @@ class MVNLayer : public Layer<Dtype> {
 template <typename Dtype>
 class SilenceLayer : public Layer<Dtype> {
  public:
-  explicit SilenceLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit SilenceLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {}
 
@@ -343,8 +343,8 @@ class SilenceLayer : public Layer<Dtype> {
 template <typename Dtype>
 class SoftmaxLayer : public Layer<Dtype> {
  public:
-  explicit SoftmaxLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit SoftmaxLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -376,8 +376,8 @@ class SoftmaxLayer : public Layer<Dtype> {
 template <typename Dtype>
 class CuDNNSoftmaxLayer : public SoftmaxLayer<Dtype> {
  public:
-  explicit CuDNNSoftmaxLayer(const LayerParameter& param)
-      : SoftmaxLayer<Dtype>(param) {}
+  explicit CuDNNSoftmaxLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : SoftmaxLayer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -405,8 +405,8 @@ class CuDNNSoftmaxLayer : public SoftmaxLayer<Dtype> {
 template <typename Dtype>
 class SplitLayer : public Layer<Dtype> {
  public:
-  explicit SplitLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit SplitLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -436,8 +436,9 @@ class SplitLayer : public Layer<Dtype> {
 template <typename Dtype>
 class SliceLayer : public Layer<Dtype> {
  public:
-  explicit SliceLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit SliceLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      :
+			Layer<Dtype>(param, replica_id, net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,

@@ -23,8 +23,8 @@ namespace caffe {
 template <typename Dtype>
 class BaseConvolutionLayer : public Layer<Dtype> {
  public:
-  explicit BaseConvolutionLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit BaseConvolutionLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -158,8 +158,8 @@ class ConvolutionLayer : public BaseConvolutionLayer<Dtype> {
    *  - engine: convolution has CAFFE (matrix multiplication) and CUDNN (library
    *    kernels + stream parallelism) engines.
    */
-  explicit ConvolutionLayer(const LayerParameter& param)
-      : BaseConvolutionLayer<Dtype>(param) {}
+  explicit ConvolutionLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : BaseConvolutionLayer<Dtype>(param,replica_id,net) {}
 
   virtual inline const char* type() const { return "Convolution"; }
 
@@ -193,8 +193,8 @@ class ConvolutionLayer : public BaseConvolutionLayer<Dtype> {
 template <typename Dtype>
 class DeconvolutionLayer : public BaseConvolutionLayer<Dtype> {
  public:
-  explicit DeconvolutionLayer(const LayerParameter& param)
-      : BaseConvolutionLayer<Dtype>(param) {}
+  explicit DeconvolutionLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : BaseConvolutionLayer<Dtype>(param,replica_id,net) {}
 
   virtual inline const char* type() const { return "Deconvolution"; }
 
@@ -229,8 +229,8 @@ class DeconvolutionLayer : public BaseConvolutionLayer<Dtype> {
 template <typename Dtype>
 class CuDNNConvolutionLayer : public ConvolutionLayer<Dtype> {
  public:
-  explicit CuDNNConvolutionLayer(const LayerParameter& param)
-      : ConvolutionLayer<Dtype>(param) {}
+  explicit CuDNNConvolutionLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : ConvolutionLayer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -263,8 +263,8 @@ class CuDNNConvolutionLayer : public ConvolutionLayer<Dtype> {
 template <typename Dtype>
 class Im2colLayer : public Layer<Dtype> {
  public:
-  explicit Im2colLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit Im2colLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -303,8 +303,8 @@ template <typename Dtype> class SplitLayer;
 template <typename Dtype>
 class LRNLayer : public Layer<Dtype> {
  public:
-  explicit LRNLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit LRNLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -379,8 +379,8 @@ class LRNLayer : public Layer<Dtype> {
 template <typename Dtype>
 class PoolingLayer : public Layer<Dtype> {
  public:
-  explicit PoolingLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+  explicit PoolingLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : Layer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -425,8 +425,8 @@ class PoolingLayer : public Layer<Dtype> {
 template <typename Dtype>
 class CuDNNPoolingLayer : public PoolingLayer<Dtype> {
  public:
-  explicit CuDNNPoolingLayer(const LayerParameter& param)
-      : PoolingLayer<Dtype>(param) {}
+  explicit CuDNNPoolingLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+	: PoolingLayer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,

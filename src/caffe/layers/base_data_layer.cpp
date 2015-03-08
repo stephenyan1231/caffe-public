@@ -7,8 +7,8 @@
 namespace caffe {
 
 template <typename Dtype>
-BaseDataLayer<Dtype>::BaseDataLayer(const LayerParameter& param)
-    : Layer<Dtype>(param),
+BaseDataLayer<Dtype>::BaseDataLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+    : Layer<Dtype>(param,replica_id,net),
       transform_param_(param.transform_param()),
       data_transformer_(transform_param_) {
 }

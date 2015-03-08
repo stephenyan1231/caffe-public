@@ -51,9 +51,12 @@ template <typename Dtype>
 class Layer;
 
 template <typename Dtype>
+class Net;
+
+template <typename Dtype>
 class LayerRegistry {
  public:
-  typedef Layer<Dtype>* (*Creator)(const LayerParameter&);
+  typedef Layer<Dtype>* (*Creator)(const LayerParameter&, int, Net<Dtype>*);
   typedef std::map<string, Creator> CreatorRegistry;
 
   static CreatorRegistry& Registry() {
@@ -70,13 +73,13 @@ class LayerRegistry {
   }
 
   // Get a layer using a LayerParameter.
-  static Layer<Dtype>* CreateLayer(const LayerParameter& param) {
-    LOG(INFO) << "Creating layer " << param.name();
+  static Layer<Dtype>* CreateLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net) {
+    LOG(INFO) << "Creating layer " << param.name()<<" replica "<<replica_id;
     const string& type = param.type();
     CreatorRegistry& registry = Registry();
     CHECK_EQ(registry.count(type), 1) << "Unknown layer type: " << type
         << " (known types: " << LayerTypeList() << ")";
-    return registry[type](param);
+    return registry[type](param, replica_id, net);
   }
 
  private:
@@ -103,7 +106,7 @@ template <typename Dtype>
 class LayerRegisterer {
  public:
   LayerRegisterer(const string& type,
-                  Layer<Dtype>* (*creator)(const LayerParameter&)) {
+                  Layer<Dtype>* (*creator)(const LayerParameter&, int, Net<Dtype>*)) {
     // LOG(INFO) << "Registering layer type: " << type;
     LayerRegistry<Dtype>::AddCreator(type, creator);
   }
@@ -116,8 +119,8 @@ class LayerRegisterer {
 
 #define REGISTER_LAYER_CLASS(type)                                             \
   template <typename Dtype>                                                    \
-  Layer<Dtype>* Creator_##type##Layer(const LayerParameter& param) {           \
-    return new type##Layer<Dtype>(param);                                      \
+  Layer<Dtype>* Creator_##type##Layer(const LayerParameter& param, int replica_id, Net<Dtype> *net) {           \
+    return new type##Layer<Dtype>(param, replica_id, net);                                      \
   }                                                                            \
   REGISTER_LAYER_CREATOR(type, Creator_##type##Layer)
 

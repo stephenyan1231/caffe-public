@@ -24,8 +24,8 @@ namespace caffe {
 template <typename Dtype>
 class NeuronLayer : public Layer<Dtype> {
  public:
-  explicit NeuronLayer(const LayerParameter& param)
-     : Layer<Dtype>(param) {}
+  explicit NeuronLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+     : Layer<Dtype>(param, replica_id, net) {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -46,8 +46,8 @@ class NeuronLayer : public Layer<Dtype> {
 template <typename Dtype>
 class AbsValLayer : public NeuronLayer<Dtype> {
  public:
-  explicit AbsValLayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+  explicit AbsValLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : NeuronLayer<Dtype>(param, replica_id, net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -105,8 +105,8 @@ class AbsValLayer : public NeuronLayer<Dtype> {
 template <typename Dtype>
 class BNLLLayer : public NeuronLayer<Dtype> {
  public:
-  explicit BNLLLayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+  explicit BNLLLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : NeuronLayer<Dtype>(param, replica_id, net) {}
 
   virtual inline const char* type() const { return "BNLL"; }
 
@@ -159,8 +159,8 @@ class DropoutLayer : public NeuronLayer<Dtype> {
    *   - dropout_ratio (\b optional, default 0.5).
    *     Sets the probability @f$ p @f$ that any given unit is dropped.
    */
-  explicit DropoutLayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+  explicit DropoutLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : NeuronLayer<Dtype>(param, replica_id, net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -219,8 +219,8 @@ class ExpLayer : public NeuronLayer<Dtype> {
    *   - base (\b optional, default -1 for a value of @f$ e \approx 2.718 @f$)
    *         the base @f$ \gamma @f$
    */
-  explicit ExpLayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+  explicit ExpLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : NeuronLayer<Dtype>(param, replica_id, net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -282,8 +282,8 @@ class PowerLayer : public NeuronLayer<Dtype> {
    *   - shift (\b optional, default 0) the shift @f$ \beta @f$
    *   - power (\b optional, default 1) the power @f$ \gamma @f$
    */
-  explicit PowerLayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+  explicit PowerLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : NeuronLayer<Dtype>(param, replica_id, net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -353,8 +353,8 @@ class ReLULayer : public NeuronLayer<Dtype> {
    *   - negative_slope (\b optional, default 0).
    *     the value @f$ \nu @f$ by which negative values are multiplied.
    */
-  explicit ReLULayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+  explicit ReLULayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : NeuronLayer<Dtype>(param, replica_id, net) {}
 
   virtual inline const char* type() const { return "ReLU"; }
 
@@ -416,8 +416,8 @@ class ReLULayer : public NeuronLayer<Dtype> {
 template <typename Dtype>
 class CuDNNReLULayer : public ReLULayer<Dtype> {
  public:
-  explicit CuDNNReLULayer(const LayerParameter& param)
-      : ReLULayer<Dtype>(param) {}
+  explicit CuDNNReLULayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : ReLULayer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -447,8 +447,8 @@ class CuDNNReLULayer : public ReLULayer<Dtype> {
 template <typename Dtype>
 class SigmoidLayer : public NeuronLayer<Dtype> {
  public:
-  explicit SigmoidLayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+  explicit SigmoidLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : NeuronLayer<Dtype>(param,replica_id,net) {}
 
   virtual inline const char* type() const { return "Sigmoid"; }
 
@@ -498,8 +498,8 @@ class SigmoidLayer : public NeuronLayer<Dtype> {
 template <typename Dtype>
 class CuDNNSigmoidLayer : public SigmoidLayer<Dtype> {
  public:
-  explicit CuDNNSigmoidLayer(const LayerParameter& param)
-      : SigmoidLayer<Dtype>(param) {}
+  explicit CuDNNSigmoidLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : SigmoidLayer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -529,8 +529,8 @@ class CuDNNSigmoidLayer : public SigmoidLayer<Dtype> {
 template <typename Dtype>
 class TanHLayer : public NeuronLayer<Dtype> {
  public:
-  explicit TanHLayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+  explicit TanHLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : NeuronLayer<Dtype>(param,replica_id,net) {}
 
   virtual inline const char* type() const { return "TanH"; }
 
@@ -582,8 +582,8 @@ class TanHLayer : public NeuronLayer<Dtype> {
 template <typename Dtype>
 class CuDNNTanHLayer : public TanHLayer<Dtype> {
  public:
-  explicit CuDNNTanHLayer(const LayerParameter& param)
-      : TanHLayer<Dtype>(param) {}
+  explicit CuDNNTanHLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : TanHLayer<Dtype>(param, replica_id, net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -615,8 +615,8 @@ class ThresholdLayer : public NeuronLayer<Dtype> {
    *   - threshold (\b optional, default 0).
    *     the threshold value @f$ t @f$ to which the input values are compared.
    */
-  explicit ThresholdLayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+  explicit ThresholdLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
+      : NeuronLayer<Dtype>(param,replica_id,net) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 

@@ -34,6 +34,13 @@ class Solver {
   }
   int iter() { return iter_; }
 
+  SolverParameter GetParams(){
+//  	data_mutex_.lock_shared();
+  	SolverParameter param = param_;
+//  	data_mutex_.unlock_shared();
+  	return param;
+  }
+
  protected:
   // Get the update value for the current iteration.
   virtual void ComputeUpdateValue() = 0;
@@ -58,6 +65,8 @@ class Solver {
   int current_step_;
   shared_ptr<Net<Dtype> > net_;
   vector<shared_ptr<Net<Dtype> > > test_nets_;
+  std::vector<int> device_id_;
+//  boost::shared_mutex data_mutex_;
 
   DISABLE_COPY_AND_ASSIGN(Solver);
 };
@@ -76,10 +85,11 @@ class SGDSolver : public Solver<Dtype> {
       : Solver<Dtype>(param_file) { PreSolve(); }
 
   const vector<shared_ptr<Blob<Dtype> > >& history() { return history_; }
+  Dtype GetLearningRate();
 
  protected:
   void PreSolve();
-  Dtype GetLearningRate();
+
   virtual void ComputeUpdateValue();
   virtual void SnapshotSolverState(SolverState * state);
   virtual void RestoreSolverState(const SolverState& state);
@@ -88,6 +98,7 @@ class SGDSolver : public Solver<Dtype> {
   // temp maintains other information that might be needed in computation
   //   of gradients/updates and is not needed in snapshots
   vector<shared_ptr<Blob<Dtype> > > history_, update_, temp_;
+
 
   DISABLE_COPY_AND_ASSIGN(SGDSolver);
 };

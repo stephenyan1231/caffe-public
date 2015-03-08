@@ -925,6 +925,7 @@ const char* UpgradeV1LayerType(const V1LayerParameter_LayerType type) {
 
 void ReadNetParamsFromTextFileOrDie(const string& param_file,
                                     NetParameter* param) {
+	LOG(INFO)<<"start ReadNetParamsFromTextFileOrDie";
   CHECK(ReadProtoFromTextFile(param_file, param))
       << "Failed to parse NetParameter file: " << param_file;
   UpgradeNetAsNeeded(param_file, param);
