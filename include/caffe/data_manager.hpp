@@ -62,7 +62,7 @@ protected:
 
   int forward_count_;
 
-  boost::shared_mutex fetch_data_mutex_;
+  boost::shared_mutex prefetch_data_mutex_;
   boost::mutex forward_count_mutex_;
 
 };

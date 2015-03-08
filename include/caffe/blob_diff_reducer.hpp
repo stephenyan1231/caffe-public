@@ -17,6 +17,7 @@ class BlobDiffReducer {
 	explicit BlobDiffReducer(NetThread<Dtype> *net_thread):
 	net_thread_(net_thread){
 		sb_.reset(new StreamBroadcast<Dtype>);
+		sb_->Init(net_thread_->get_net()->GetDeviceIds());
 	}
 	void ReduceGpuDiff(std::map<int, shared_ptr<Blob<Dtype> > > &shards, Dtype diff_scale);
 

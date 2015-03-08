@@ -182,38 +182,25 @@ class Caffe {
 
   static void SyncDevice();
 
-  static void SyncStream();
-
+//  static void SyncStream();
   static void SyncStream(cudaStream_t stream);
 
+	// restore cublas handle to the default null stream
   static void CublasSetStream(cublasHandle_t handle);
 
   static void CublasSetStream(cublasHandle_t handle, cudaStream_t stream);
 
   static bool CanAccessPeer(int src_device, int tgt_device);
 
-  static cudaStream_t GetDefaultStream();
-
-  static cudaStream_t GetDefaultStream(int device_id);
-
-
-
-
-//  static cublasHandle_t GetCublasHandle();
-//
-//  static cublasHandle_t GetCublasHandle(int device_id);
-
-//  static curandGenerator_t GetCurandGenerator();
-//
-//  static curandGenerator_t GetCurandGenerator(int device_id);
-
+//  static cudaStream_t GetDefaultStream();
+//  static cudaStream_t GetDefaultStream(int device_id);
 
  protected:
 #ifndef CPU_ONLY
   // device_id -> cublasHandle
   map<int, cublasHandle_t> cublas_handle_;
   map<int, curandGenerator_t> curand_generator_;
-  std::map<int, cudaStream_t> default_streams_;
+//  std::map<int, cudaStream_t> default_streams_;
 
   boost::mutex cublas_mutex_;
   boost::mutex default_stream_mutex_;

@@ -263,9 +263,9 @@ void Caffe::SyncDevice() {
 	CUDA_CHECK(cudaDeviceSynchronize());
 }
 
-void Caffe::SyncStream(){
-	SyncStream(Caffe::GetDefaultStream());
-}
+//void Caffe::SyncStream(){
+//	SyncStream(Caffe::GetDefaultStream());
+//}
 
 void Caffe::SyncStream(cudaStream_t stream){
 	CUDA_CHECK(cudaStreamSynchronize(stream));
@@ -289,55 +289,29 @@ bool Caffe::CanAccessPeer(int src_device, int tgt_device){
 	return can_access;
 }
 
-cudaStream_t Caffe::GetDefaultStream() {
-	return GetDefaultStream(GetDeviceId());
-}
-
-cudaStream_t Caffe::GetDefaultStream(int device_id) {
-	if (device_id >= 0) {
-//		Get().stream_mutex_.lock();
-		Get().default_stream_mutex_.lock();
-		if (Get().default_streams_.count(device_id) == 0) {
-			int old_device = GetDeviceId();
-			SetDevice(device_id);
-			CUDA_CHECK(
-					cudaStreamCreateWithFlags(&Get().default_streams_[device_id],
-							cudaStreamNonBlocking));
-			SetDevice(old_device);
-		}
-		cudaStream_t s = Get().default_streams_[device_id];
-		Get().default_stream_mutex_.unlock();
-//		Get().stream_mutex_.unlock();
-		return s;
-	}
-	return 0;
-}
-
-
-
-
-//cublasHandle_t Caffe::GetCublasHandle() {
-//	GetCublasHandle(GetDeviceId());
+//// get default non-null stream on the current device
+//cudaStream_t Caffe::GetDefaultStream() {
+//	return GetDefaultStream(GetDeviceId());
 //}
 //
-//cublasHandle_t Caffe::GetCublasHandle(int device_id) {
-//	Get().cublas_mutex_.lock();
-//	CHECK_GT(Get().cublas_handle_.count(device_id), 0);
-//	cublasHandle_t h = Get().cublas_handle_[device_id];
-//	Get().cublas_mutex_.unlock();
-//	return h;
-//}
-
-//curandGenerator_t Caffe::GetCurandGenerator() {
-//	return GetCurandGenerator(GetDeviceId());
-//}
-//
-//curandGenerator_t Caffe::GetCurandGenerator(int device_id) {
-//	Get().curand_mutex_.lock();
-//	CHECK_GT(Get().curand_generator_.count(device_id), 0);
-//	curandGenerator_t g = Get().curand_generator_[device_id];
-//	Get().curand_mutex_.unlock();
-//	return g;
+//cudaStream_t Caffe::GetDefaultStream(int device_id) {
+//	if (device_id >= 0) {
+////		Get().stream_mutex_.lock();
+//		Get().default_stream_mutex_.lock();
+//		if (Get().default_streams_.count(device_id) == 0) {
+//			int old_device = GetDeviceId();
+//			SetDevice(device_id);
+//			CUDA_CHECK(
+//					cudaStreamCreateWithFlags(&Get().default_streams_[device_id],
+//							cudaStreamNonBlocking));
+//			SetDevice(old_device);
+//		}
+//		cudaStream_t s = Get().default_streams_[device_id];
+//		Get().default_stream_mutex_.unlock();
+////		Get().stream_mutex_.unlock();
+//		return s;
+//	}
+//	return 0;
 //}
 
 class Caffe::RNG::Generator {

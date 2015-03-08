@@ -18,11 +18,11 @@ public:
 
 	}
 
+	void Init(const std::vector<int>& device_ids);
 	void TransferGpuDiff(std::map<int, shared_ptr<Blob<Dtype> > > &blobs,
 			int src_device, Dtype scale_tgt, Dtype scale_src);
 
 protected:
-	void Init(const std::vector<int>& device_ids);
 
 	// device_id -> cuda stream
 	std::map<int, cudaStream_t> streams_;

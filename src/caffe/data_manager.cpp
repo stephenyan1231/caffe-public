@@ -212,15 +212,13 @@ void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 
 	forward_count_mutex_.lock();
 	forward_count_++;
-	if(forward_count_ == 1){
+	if(forward_count_ == 1) {
 		// First, join the thread
 		JoinPrefetchThread();
 	}
 	forward_count_mutex_.unlock();
 
-
-
-//	fetch_data_mutex_.lock_shared();
+//	prefetch_data_mutex_.lock_shared();
 	int batch_size = prefetch_data_.num();
 	int replica_batch_size = divide_up(batch_size, batch_size);
 	int start = replica_batch_size*replica_id;
@@ -240,8 +238,9 @@ void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 
 	int unit_size = prefetch_data_.count() / prefetch_data_.num();
 
-
-	caffe_copy(unit_size * (end - start), prefetch_data_.cpu_data() + prefetch_data_.offset(start), top[0]->mutable_gpu_data());
+	caffe_copy(unit_size * (end - start),
+			prefetch_data_.cpu_data() + prefetch_data_.offset(start),
+			top[0]->mutable_gpu_data());
 
 //	if(Caffe::mode() == Caffe::GPU) {
 //		// TO DO
@@ -272,10 +271,10 @@ void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 	}
 //	LOG(INFO)<<"DataManager<Dtype>::CopyFetchDataToConvThread tag3";
 
-//	fetch_data_mutex_.unlock_shared();
+//	prefetch_data_mutex_.unlock_shared();
 
 	forward_count_mutex_.lock();
-	if(forward_count_ == net_->GetDeviceIds().size()){
+	if(forward_count_ == net_->GetDeviceIds().size()) {
 		// create thread to fetch next batch data
 		CreatePrefetchThread();
 	}

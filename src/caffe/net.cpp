@@ -78,9 +78,7 @@ void Net<Dtype>::Init(const NetParameter& in_param, vector<int> &device_ids) {
 
 template<typename Dtype>
 void Net<Dtype>::PostInit() {
-	LOG(INFO)<<"Net<Dtype>::PostInit num_outputs "<<net_threads_[0]->num_outputs();
 	net_output_blobs_.resize(net_threads_[0]->num_outputs());
-	LOG(INFO)<<"Net<Dtype>::PostInit init net_output_blobs_";
 	for(int i = 0;i < net_threads_[0]->num_outputs();++i) {
 		// assume the net_output_blobs_ stores global accumulative quantities, such as accuracy, loss
 		int num = net_threads_[0]->output_blobs()[i]->num();
@@ -92,7 +90,6 @@ void Net<Dtype>::PostInit() {
 				net_threads_[0]->output_blobs()[i]->width());
 		net_output_blobs_[i] = b;
 	}
-	LOG(INFO)<<"Net<Dtype>::PostInit end post init net_threads_";
 
 	batch_size_ = 0;
 	for(int i=0;i<batch_sizes_.size();++i) {
@@ -103,7 +100,6 @@ void Net<Dtype>::PostInit() {
 		batch_size_ratios_[device_ids_[i]] = (Dtype)batch_sizes_[i] / (Dtype)batch_size_;
 	}
 
-	LOG(INFO)<<"Net<Dtype>::PostInit post init net_threads_";
 	for(int i=0;i<net_threads_.size(); ++i) {
 		net_threads_[i]->PostInit();
 	}
@@ -446,6 +442,19 @@ void Net<Dtype>::ComputeUpdateValue() {
 	}
 
 	for (int i = 0; i < net_threads_.size(); ++i) {
+		net_threads_[i]->set_work_message(AGGREGATE_GRADIENT);
+		net_threads_[i]->StartWork();
+	}
+	for (int i = 0; i < net_threads_.size(); ++i) {
+		net_threads_[i]->FinishWork();
+	}
+
+	for(int i = 0; i< net_threads_.size(); ++i){
+		Caffe::SetDevice(net_threads_[i]->get_device_id());
+		Caffe::SyncDevice();
+	}
+
+	for (int i = 0; i < net_threads_.size(); ++i) {
 		net_threads_[i]->set_work_message(COMPUTE_UPDATE_VALUE);
 		net_threads_[i]->StartWork();
 	}
@@ -554,8 +563,7 @@ INSTANTIATE_CLASS(Net);
 template<typename Dtype>
 NetThread<Dtype>::NetThread(const NetParameter& param, int device_id,
 		int replica_id, Net<Dtype>* net, const SolverParameter &solver_param) :
-		device_id_(device_id), replica_id_(replica_id), net_(net), do_backward_(
-				false), prefilled_(false), do_forward_input_blob_protos(false) {
+		device_id_(device_id), replica_id_(replica_id), net_(net){
 	Caffe::SetDevice(device_id);
 
 //	solver_.reset(GetNetThreadSolver<Dtype>(solver_param, this));
@@ -569,8 +577,6 @@ NetThread<Dtype>::NetThread(const NetParameter& param, int device_id,
 
 template<typename Dtype>
 void NetThread<Dtype>::InitCuda() {
-	LOG(INFO)<<"NetThread<Dtype>::InitCuda";
-
 	Caffe::SetDevice(device_id_);
 	CUDA_CHECK(cudaDeviceSetCacheConfig(cudaFuncCachePreferShared));
 	for (int i = 0; i < net_->GetDeviceIds().size(); ++i) {
@@ -766,7 +772,6 @@ void NetThread<Dtype>::Init(const NetParameter& param) {
 template<typename Dtype>
 void NetThread<Dtype>::PostInit() {
 	Caffe::SetDevice(device_id_);
-	LOG(INFO)<<"NetThread<Dtype>::PostInit";
 	InitCuda();
 
 	if (!test_net_) {
@@ -1250,6 +1255,14 @@ void NetThread<Dtype>::ToProto(NetParameter* param, bool write_diff) const {
 }
 
 template<typename Dtype>
+void NetThread<Dtype>::AggregateGradient(){
+	for (int param_id = 0; param_id < params_solver_.size(); ++param_id) {
+		params_solver_[param_id]->AggregateGradient();
+	}
+}
+
+
+template<typename Dtype>
 void NetThread<Dtype>::ComputeUpdateValue() {
 //	solver_->ComputeUpdateValue();
 //	Caffe::SyncDevice();
@@ -1391,6 +1404,9 @@ void NetThread<Dtype>::InternalThreadEntry() {
 	switch (work_message_.getType()) {
 	case NO_WORK:
 		break;
+	case AGGREGATE_GRADIENT:
+		AggregateGradient();
+		break;
 	case COMPUTE_UPDATE_VALUE:
 		ComputeUpdateValue();
 		break;
@@ -1414,21 +1430,6 @@ void NetThread<Dtype>::InternalThreadEntry() {
 		LOG(WARNING)<<"Unknown working message type";
 		break;
 	}
-
-//	if(do_forward_input_blob_protos){
-//		Forward(input_blob_protos_, &loss_);
-//	}
-//	else{
-//		if (!prefilled_) {
-//			Forward(*bottom_, &loss_);
-//		} else {
-//			ForwardPrefilled(&loss_);
-//		}
-//	}
-//
-//	if (do_backward_) {
-//		Backward();
-//	}
 }
 
 INSTANTIATE_CLASS(NetThread);

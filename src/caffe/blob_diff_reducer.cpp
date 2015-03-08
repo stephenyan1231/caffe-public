@@ -3,6 +3,7 @@
 
 namespace caffe {
 
+// sequentially reduce gradients
 template<typename Dtype>
 void BlobDiffReducer<Dtype>::ReduceGpuDiff(
 		std::map<int, shared_ptr<Blob<Dtype> > > &shards, Dtype diff_scale) {

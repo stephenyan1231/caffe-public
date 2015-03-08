@@ -199,8 +199,8 @@ class Net {
  protected:
   void ForwardBackwardHelper(const vector<Blob<Dtype>* >& bottom, Dtype *loss, bool do_backward);
 
-  SolverParameter solver_param_;
   Solver<Dtype> *solver_;
+  SolverParameter solver_param_;
   vector<int> device_ids_;
   vector<NetThread<Dtype>* > net_threads_;
   vector<map<int, shared_ptr<Layer<Dtype> > > > layer_map_;
@@ -306,51 +306,9 @@ public:
   	JoinNetThread();
   }
 
-//  void StartForwardBackward(const vector<Blob<Dtype>* >  *bottom, bool do_backward) {
-//    // Start a new net thread
-//
-//    prefilled_ = false;
-//    do_backward_ = do_backward;
-//    bottom_ = bottom;
-//    LOG(INFO) << "CreateNetThread";
-//  	CreateNetThread();
-//  }
-
-//  Dtype FinishForwardBackward(){
-//  	LOG(INFO) << "JoinNetThread";
-//  	JoinNetThread();
-//  	return loss_;
-//  }
-//
-//  void StartForwardPrefilled() {
-//    prefilled_ = true;
-//    do_backward_ = false;
-//    LOG(INFO) << "CreateNetThread";
-//  	CreateNetThread();
-//  }
-//  Dtype FinishForwardPrefilled(){
-//  	LOG(INFO) << "JoinNetThread";
-//  	JoinNetThread();
-//  	return loss_;
-//  }
-//
-//  void StartForwardInputBlobProtos(std::string input_blob_protos){
-//  	input_blob_protos_ = input_blob_protos;
-//    do_backward_ = false;
-//    prefilled_ = false;
-//    do_forward_input_blob_protos = true;
-//    LOG(INFO) << "CreateNetThread";
-//  	CreateNetThread();
-//  }
-//
-//  Dtype FinishForwardInputBlobProtos(){
-//  	LOG(INFO) << "JoinNetThread";
-//  	JoinNetThread();
-//  	return loss_;
-//  }
-
   Dtype GetLoss(){return loss_;}
 
+  void AggregateGradient();
   void ComputeUpdateValue();
   /// @brief Updates the network weights based on the diff values computed.
   void Update();
@@ -552,17 +510,14 @@ public:
   virtual void InternalThreadEntry();
 
 //  shared_ptr<NetThreadSolver<Dtype> > solver_;
+  int device_id_;
   int replica_id_;
   std::map<int, NetThread<Dtype>* > replicas_;
-  int device_id_;
 //  const vector<Blob<Dtype>* > *bottom_;
   vector<Blob<Dtype>* > bottom_;
   std::string input_blob_protos_;
   Dtype loss_;
   Net<Dtype>* net_;
-  bool do_backward_;
-  bool prefilled_;
-  bool do_forward_input_blob_protos;
   WorkMessage work_message_;
 //  shared_ptr<BlobDiffReducer<Dtype> > blob_diff_reducer_;
 //  shared_ptr<IBroadcastDiffNetwork<Dtype> > blob_diff_broadcaster_;

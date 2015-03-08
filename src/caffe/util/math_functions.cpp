@@ -104,6 +104,19 @@ template void caffe_copy<unsigned int>(const int N, const unsigned int* X,
 template void caffe_copy<float>(const int N, const float* X, float* Y);
 template void caffe_copy<double>(const int N, const double* X, double* Y);
 
+template <typename Dtype>
+void caffe_cuda_copy_async(const int N, const Dtype* X, Dtype* Y, cudaStream_t stream) {
+	if(X != Y){
+    CUDA_CHECK(cudaMemcpyAsync(Y, X, sizeof(Dtype) * N, cudaMemcpyDefault, stream));
+	}
+}
+
+template void caffe_cuda_copy_async<int>(const int N, const int* X, int* Y, cudaStream_t stream = 0);
+template void caffe_cuda_copy_async<unsigned int>(const int N, const unsigned int* X, unsigned int* Y, cudaStream_t stream = 0);
+template void caffe_cuda_copy_async<float>(const int N, const float* X, float* Y, cudaStream_t stream = 0);
+template void caffe_cuda_copy_async<double>(const int N, const double* X, double* Y, cudaStream_t stream = 0);
+
+
 template <>
 void caffe_scal<float>(const int N, const float alpha, float *X) {
   cblas_sscal(N, alpha, X, 1);

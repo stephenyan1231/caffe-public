@@ -29,6 +29,9 @@ public:
 	virtual void PreSolve() {
 		PreSolve_();
 	}
+
+	void AggregateGradient();
+
 	virtual void ComputeUpdateValue() {
 		ComputeUpdateValue_();
 	}
@@ -51,6 +54,7 @@ public:
 	}
 
 protected:
+
 	virtual void PreSolve_() = 0;
 	virtual void ComputeUpdateValue_() = 0;
 

@@ -56,16 +56,12 @@ void TwoPeeringGPUsDiffBroadcaster<Dtype>::BroadcastGpuDiff(
 	int old_device = Caffe::GetDeviceId();
 	Caffe::SetDevice(tgt_device_);
 	CHECK_EQ(old_device == tgt_device_, 0);
-//	Caffe::CublasSetStream(Caffe::cublas_handle(), Caffe::GetDefaultStream());
-//	Caffe::CublasSetStream(Caffe::cublas_handle(), tgt_stream_);
+	Caffe::CublasSetStream(Caffe::cublas_handle(), tgt_stream_);
 	caffe_gpu_axpby<Dtype>(shards[tgt_device_]->count(), scale_src,
 			shards[this->src_device_]->gpu_diff(), scale_tgt,
 			shards[tgt_device_]->mutable_gpu_diff());
-//	Caffe::SyncStream(tgt_stream_);
-//	Caffe::SyncStream(Caffe::GetDefaultStream());
-
-//	Caffe::CublasSetStream(Caffe::cublas_handle(), Caffe::GetDefaultStream());
-//	Caffe::CublasSetStream(Caffe::cublas_handle());
+	// restore cublas handle to the default null stream
+	Caffe::CublasSetStream(Caffe::cublas_handle());
 	Caffe::SetDevice(old_device);
 }
 

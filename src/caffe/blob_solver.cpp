@@ -39,6 +39,48 @@ void BlobSolver<Dtype>::Init(const SolverParameter& param) {
 //	PreSolve();
 }
 
+
+
+template<typename Dtype>
+void BlobSolver<Dtype>::AggregateGradient(){
+	nvtxMarkA("BlobSolver<Dtype>::AggregateGradient_");
+	NetThread<Dtype> *net_thread = this->net_thread_;
+	std::map<int, NetThread<Dtype>*>& replicas = net_thread->get_replicas();
+	int device_id = net_thread->get_device_id();
+	int param_id = this->param_id_;
+	switch (Caffe::mode()) {
+	case Caffe::CPU: {
+		// TO DO , update for multi-cpu case
+		break;
+	}
+	case Caffe::GPU:
+	{
+#ifndef CPU_ONLY
+		// device id -> Blob
+		std::map<int, shared_ptr<Blob<Dtype> > > shards;
+		for (typename std::map<int, NetThread<Dtype>*>::iterator it =
+				replicas.begin(); it != replicas.end(); ++it) {
+			shards[it->second->get_device_id()] = it->second->GetShardGPUOnly(param_id,
+					net_thread->get_replica_id());
+		}
+	  caffe_gpu_scal<Dtype>(shards[device_id]->count(),
+	  		net_thread->get_net()->GetBatchSizeRatio(device_id),
+	  		shards[device_id]->mutable_gpu_diff());
+		// Reduce everyone's gradient gpu_diff
+		this->get_blob_diff_reducer()->ReduceGpuDiff(shards, (Dtype) 1.0);
+#else
+		NO_GPU;
+#endif
+		break;
+	}
+	default: {
+		LOG(FATAL)<< "Unknown caffe mode: " << Caffe::mode();
+	}
+}
+
+}
+
+
 INSTANTIATE_CLASS(BlobSolver);
 
 template<typename Dtype>
@@ -50,14 +92,6 @@ void BlobSGDSolver<Dtype>::PreSolve_() {
 	const vector<int>& params_shard_size = this->net_thread_->params_shard_size();
 	int param_id = this->param_id_;
 
-//	if((params_shard_size[param_id]*net_params[param_id]->channels()*
-//			net_params[param_id]->height()*net_params[param_id]->width())==0){
-//		LOG(INFO)<<"BlobSGDSolver<Dtype>::PreSolve_ params_shard_size "<<
-//				params_shard_size[param_id]<<
-//				" ch "<<net_params[param_id]->channels()<<
-//				" height "<<net_params[param_id]->height()<<
-//				" width "<<net_params[param_id]->width();
-//	}
 	history_.reset(new Blob<Dtype>(params_shard_size[param_id], 1, 1, 1));
 	update_.reset(new Blob<Dtype>(params_shard_size[param_id], 1, 1, 1));
 	temp_.reset(new Blob<Dtype>(params_shard_size[param_id], 1, 1, 1));
@@ -90,11 +124,9 @@ void BlobSGDSolver<Dtype>::ComputeUpdateValue_() {
 	Dtype local_rate = rate * net_params_lr[param_id];
 	Dtype local_decay = weight_decay * net_params_weight_decay[param_id];
 
-	nvtxMarkA("BlobSGDSolver<Dtype>::ComputeUpdateValue_ m0");
 	switch (Caffe::mode()) {
 	case Caffe::CPU: {
-		LOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_() cpu mode";
-		// TO DO , update for multi-gpu case
+		// TO DO , update for multi-cpu case
 		//
 		// Compute the value to history, and then copy them to the blob's diff.
 		if (local_decay) {
@@ -112,7 +144,6 @@ void BlobSGDSolver<Dtype>::ComputeUpdateValue_() {
 				LOG(FATAL)<< "Unknown regularization type: " << regularization_type;
 			}
 		}
-
 		caffe_cpu_axpby(net_params[param_id]->count(), local_rate,
 				net_params[param_id]->cpu_diff(), momentum,
 				history_->mutable_cpu_data());
@@ -125,92 +156,47 @@ void BlobSGDSolver<Dtype>::ComputeUpdateValue_() {
 	{
 #ifndef CPU_ONLY
 		// Compute the value to history, and then copy them to the blob's diff.
-//		Dtype local_rate = rate * net_params_lr[param_id];
-//		Dtype local_decay = weight_decay * net_params_weight_decay[param_id];
-
-		const Dtype *diff;
-
-		DLOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_ p0";
-
 		// device id -> Blob
 		std::map<int, shared_ptr<Blob<Dtype> > > shards;
 		for (typename std::map<int, NetThread<Dtype>*>::iterator it =
 				replicas.begin(); it != replicas.end(); ++it) {
-//			const vector<shared_ptr<Blob<Dtype> > >& net_params2 =
-//					it->second->params();
 			shards[it->second->get_device_id()] = it->second->GetShardGPUOnly(param_id,
 					net_thread->get_replica_id());
 		}
 
-//		Caffe::CublasSetStream(Caffe::cublas_handle(), Caffe::GetDefaultStream());
-
-		DLOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_ p1";
 		if (local_decay) {
 			if (regularization_type == "L2") {
 				// add weight decay
-				caffe_gpu_axpby<Dtype>(shards[device_id]->count(), local_decay,
+				caffe_gpu_axpy<Dtype>(shards[device_id]->count(), local_decay,
 						shards[device_id]->gpu_data(),
-						net_thread->get_net()->GetBatchSizeRatio(device_id),
 						shards[device_id]->mutable_gpu_diff());
 			} else if (regularization_type == "L1") {
 				caffe_gpu_sign<Dtype>(shards[device_id]->count(),
 						shards[device_id]->gpu_data(),
 						temp_->mutable_gpu_data());
-				caffe_gpu_axpby<Dtype>(shards[device_id]->count(), local_decay,
+				caffe_gpu_axpy<Dtype>(shards[device_id]->count(), local_decay,
 						temp_->gpu_data(),
-						net_thread->get_net()->GetBatchSizeRatio(device_id),
 						shards[device_id]->mutable_gpu_diff());
 			} else {
 				LOG(FATAL)<< "Unknown regularization type: " << regularization_type;
 			}
 		}
-//		diff = shards[device_id]->cpu_diff();
-//		DLOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_ d0 diff "<<
-//				diff[0]<<" "<<diff[shards[device_id]->count()-1];
-		DLOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_ p2";
-		nvtxMarkA("BlobSGDSolver<Dtype>::ComputeUpdateValue_ m1");
-		Caffe::SyncDevice();
-//		Caffe::SyncStream();
-		// Reduce everyone's gradient gpu_diff
-		this->get_blob_diff_reducer()->ReduceGpuDiff(shards, (Dtype) 1.0);
-		nvtxMarkA("BlobSGDSolver<Dtype>::ComputeUpdateValue_ m2");
 
-//		diff = shards[device_id]->cpu_diff();
-//		DLOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_ d1 diff "<<
-//				diff[0]<<" "<<diff[shards[device_id]->count()-1];
-
-//		Caffe::CublasSetStream(Caffe::cublas_handle(), Caffe::GetDefaultStream());
 		caffe_gpu_axpby<Dtype>(shards[device_id]->count(), local_rate,
 				shards[device_id]->gpu_diff(), momentum,
 				history_->mutable_gpu_data());
-//		Caffe::SyncStream();
-		nvtxMarkA("BlobSGDSolver<Dtype>::ComputeUpdateValue_ m3");
 
 		// copy
 		caffe_copy<Dtype>(shards[device_id]->count(),
 				history_->gpu_data(),
 				shards[device_id]->mutable_gpu_diff());
+
 		Caffe::SyncDevice();
-		nvtxMarkA("BlobSGDSolver<Dtype>::ComputeUpdateValue_ m4");
-
-//		diff = shards[device_id]->cpu_diff();
-//		DLOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_ d2 diff "<<
-//				diff[0]<<" "<<diff[shards[device_id]->count()-1];
-
-
-		DLOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_ p3";
+		nvtxMarkA("BlobSGDSolver<Dtype>::ComputeUpdateValue_ m2");
 
 		// broadcast gpu diff to everyone
 		this->get_blob_diff_broadcaster()->BroadcastGpuDiff(shards,
 				(Dtype) 1.0, (Dtype) 0.0);
-		nvtxMarkA("BlobSGDSolver<Dtype>::ComputeUpdateValue_ m5");
-
-		DLOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_ p4";
-
-		Caffe::SetDevice(device_id);
-//		Caffe::CublasSetStream(Caffe::cublas_handle(), Caffe::GetDefaultStream());
-		DLOG(INFO)<<"BlobSGDSolver<Dtype>::ComputeUpdateValue_ p5";
-
 #else
 		NO_GPU;
 #endif

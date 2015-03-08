@@ -37,6 +37,9 @@ template <typename Dtype>
 void caffe_copy(const int N, const Dtype *X, Dtype *Y);
 
 template <typename Dtype>
+void caffe_cuda_copy_async(const int N, const Dtype* X, Dtype* Y, cudaStream_t stream = 0);
+
+template <typename Dtype>
 void caffe_set(const int N, const Dtype alpha, Dtype *X);
 
 inline void caffe_memset(const size_t N, const int alpha, void* X) {
