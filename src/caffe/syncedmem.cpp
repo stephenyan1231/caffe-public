@@ -110,7 +110,6 @@ void SyncedMemory::set_gpu_data(void* data, int device_id){
 	if(own_gpu_data_){
   	int old_device = Caffe::GetDeviceId();
   	Caffe::SetDevice(device_id_);
-  	LOG(INFO)<<"SyncedMemory::set_gpu_data cudaFree memory ";
 		CUDA_CHECK(cudaFree(gpu_ptr_));
 		Caffe::SetDevice(old_device);
 	}

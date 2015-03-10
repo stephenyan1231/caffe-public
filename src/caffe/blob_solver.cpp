@@ -36,65 +36,16 @@ void BlobSolver<Dtype>::Init(const SolverParameter& param) {
 	if (param_.random_seed() >= 0) {
 		Caffe::set_random_seed(param_.random_seed());
 	}
-//	PreSolve();
 }
-
-
-
-template<typename Dtype>
-void BlobSolver<Dtype>::AggregateGradient(){
-	nvtxMarkA("BlobSolver<Dtype>::AggregateGradient_");
-	NetThread<Dtype> *net_thread = this->net_thread_;
-	std::map<int, NetThread<Dtype>*>& replicas = net_thread->get_replicas();
-	int device_id = net_thread->get_device_id();
-	int param_id = this->param_id_;
-	switch (Caffe::mode()) {
-	case Caffe::CPU: {
-		// TO DO , update for multi-cpu case
-		break;
-	}
-	case Caffe::GPU:
-	{
-#ifndef CPU_ONLY
-		// device id -> Blob
-		std::map<int, shared_ptr<Blob<Dtype> > > shards;
-		for (typename std::map<int, NetThread<Dtype>*>::iterator it =
-				replicas.begin(); it != replicas.end(); ++it) {
-			shards[it->second->get_device_id()] = it->second->GetShardGPUOnly(param_id,
-					net_thread->get_replica_id());
-		}
-	  caffe_gpu_scal<Dtype>(shards[device_id]->count(),
-	  		net_thread->get_net()->GetBatchSizeRatio(device_id),
-	  		shards[device_id]->mutable_gpu_diff());
-		// Reduce everyone's gradient gpu_diff
-		this->get_blob_diff_reducer()->ReduceGpuDiff(shards, (Dtype) 1.0);
-#else
-		NO_GPU;
-#endif
-		break;
-	}
-	default: {
-		LOG(FATAL)<< "Unknown caffe mode: " << Caffe::mode();
-	}
-}
-
-}
-
 
 INSTANTIATE_CLASS(BlobSolver);
 
 template<typename Dtype>
 void BlobSGDSolver<Dtype>::PreSolve_() {
-//	const vector<shared_ptr<Blob<Dtype> > >& net_params =
-//			this->blob_->get_net_thread()->params();
-//	const vector<shared_ptr<Blob<Dtype> > >& net_params =
-//			this->net_thread_->params();
 	const vector<int>& params_shard_size = this->net_thread_->params_shard_size();
-	int param_id = this->param_id_;
-
-	history_.reset(new Blob<Dtype>(params_shard_size[param_id], 1, 1, 1));
-	update_.reset(new Blob<Dtype>(params_shard_size[param_id], 1, 1, 1));
-	temp_.reset(new Blob<Dtype>(params_shard_size[param_id], 1, 1, 1));
+	history_.reset(new Blob<Dtype>(params_shard_size[this->param_id_], 1, 1, 1));
+	update_.reset(new Blob<Dtype>(params_shard_size[this->param_id_], 1, 1, 1));
+	temp_.reset(new Blob<Dtype>(params_shard_size[this->param_id_], 1, 1, 1));
 }
 
 template<typename Dtype>
@@ -163,6 +114,11 @@ void BlobSGDSolver<Dtype>::ComputeUpdateValue_() {
 			shards[it->second->get_device_id()] = it->second->GetShardGPUOnly(param_id,
 					net_thread->get_replica_id());
 		}
+	  caffe_gpu_scal<Dtype>(shards[device_id]->count(),
+	  		net_thread->get_net()->GetBatchSizeRatio(device_id),
+	  		shards[device_id]->mutable_gpu_diff());
+		// Reduce everyone's gradient gpu_diff
+		this->get_blob_diff_reducer()->ReduceGpuDiff(shards, (Dtype) 1.0);
 
 		if (local_decay) {
 			if (regularization_type == "L2") {
@@ -181,19 +137,16 @@ void BlobSGDSolver<Dtype>::ComputeUpdateValue_() {
 				LOG(FATAL)<< "Unknown regularization type: " << regularization_type;
 			}
 		}
-
 		caffe_gpu_axpby<Dtype>(shards[device_id]->count(), local_rate,
 				shards[device_id]->gpu_diff(), momentum,
 				history_->mutable_gpu_data());
-
 		// copy
 		caffe_copy<Dtype>(shards[device_id]->count(),
 				history_->gpu_data(),
 				shards[device_id]->mutable_gpu_diff());
-
+		// crucial. Make sure the gradients are ready before broadcasting them
+		// to other replicas
 		Caffe::SyncDevice();
-		nvtxMarkA("BlobSGDSolver<Dtype>::ComputeUpdateValue_ m2");
-
 		// broadcast gpu diff to everyone
 		this->get_blob_diff_broadcaster()->BroadcastGpuDiff(shards,
 				(Dtype) 1.0, (Dtype) 0.0);
@@ -210,24 +163,4 @@ void BlobSGDSolver<Dtype>::ComputeUpdateValue_() {
 }
 
 INSTANTIATE_CLASS(BlobSGDSolver);
-
-//template<typename Dtype>
-//BlobSolver<Dtype>* GetBlobSolver(const SolverParameter& param, int param_id, NetThread<Dtype>* net_thread) {
-//	SolverParameter_SolverType type = param.solver_type();
-//	switch (type) {
-//	case SolverParameter_SolverType_SGD:
-//		return new BlobSGDSolver<Dtype>(param, param_id, net_thread);
-////  case SolverParameter_SolverType_NESTEROV:
-////      return new NesterovSolver<Dtype>(param);
-////  case SolverParameter_SolverType_ADAGRAD:
-////      return new AdaGradSolver<Dtype>(param);
-//	default:
-//		LOG(FATAL)<< "Unknown SolverType: " << type;
-//	}
-//	return (BlobSolver<Dtype>*) NULL;
-//}
-
-//template BlobSolver<float>* GetBlobSolver<float>(const SolverParameter& param, int param_id, NetThread<float>* net_thread);
-//template BlobSolver<double>* GetBlobSolver<double>(const SolverParameter& param, int param_id, NetThread<double>* net_thread);
-
 }// namespace caffe

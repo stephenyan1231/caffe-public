@@ -3,6 +3,14 @@
 
 namespace caffe {
 
+
+template<typename Dtype>
+BlobDiffReducer<Dtype>::BlobDiffReducer(NetThread<Dtype> *net_thread):
+net_thread_(net_thread){
+	sb_.reset(new StreamBroadcast<Dtype>);
+	sb_->Init(net_thread_->get_net()->GetDeviceIds());
+}
+
 // sequentially reduce gradients
 template<typename Dtype>
 void BlobDiffReducer<Dtype>::ReduceGpuDiff(

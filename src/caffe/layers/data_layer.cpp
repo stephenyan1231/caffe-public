@@ -20,34 +20,11 @@ namespace caffe {
 
 template<typename Dtype>
 DataLayer<Dtype>::~DataLayer<Dtype>() {
-//  this->JoinPrefetchThread();
 }
 
 template<typename Dtype>
 void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
-	// Initialize DB
-//  db_.reset(db::GetDB(this->layer_param_.data_param().backend()));
-//  db_->Open(this->layer_param_.data_param().source(), db::READ);
-//  cursor_.reset(db_->NewCursor());
-
-// Check if we should randomly skip a few data points
-//  if (this->layer_param_.data_param().rand_skip()) {
-//    unsigned int skip = caffe_rng_rand() %
-//                        this->layer_param_.data_param().rand_skip();
-//    LOG(INFO) << "Skipping first " << skip << " data points.";
-//    while (skip-- > 0) {
-//      cursor_->Next();
-//    }
-//  }
-//  // Read a data point, and use it to initialize the top blob.
-//  Datum datum;
-//  datum.ParseFromString(cursor_->value());
-//
-//  if (DecodeDatum(&datum)) {
-//    LOG(INFO) << "Decoding Datum";
-//  }
-
 	int num_replicas = this->net_->GetDeviceIds().size();
 	int replica_batch_size = divide_up(
 			this->layer_param_.data_param().batch_size(), num_replicas);
@@ -63,16 +40,9 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 	if (crop_size > 0) {
 		top[0]->Reshape(this_replica_batch_size,
 				datum_channels, crop_size, crop_size);
-//    this->prefetch_data_.Reshape(this->layer_param_.data_param().batch_size(),
-//        datum.channels(), crop_size, crop_size);
-//    this->transformed_data_.Reshape(1, datum.channels(), crop_size, crop_size);
 	} else {
 		top[0]->Reshape(this_replica_batch_size,
 				datum_channels, datum_height, datum_width);
-//    this->prefetch_data_.Reshape(this->layer_param_.data_param().batch_size(),
-//        datum.channels(), datum.height(), datum.width());
-//    this->transformed_data_.Reshape(1, datum.channels(),
-//      datum.height(), datum.width());
 	}
 	LOG(INFO)<< "output data size: " << top[0]->num() << ","
 	<< top[0]->channels() << "," << top[0]->height() << ","
@@ -80,8 +50,6 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 	// label
 	if (this->output_labels_) {
 		top[1]->Reshape(this_replica_batch_size, 1, 1, 1);
-//    this->prefetch_label_.Reshape(this->layer_param_.data_param().batch_size(),
-//        1, 1, 1);
 	}
 }
 
@@ -90,63 +58,7 @@ void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
 	DataManager<Dtype> *dm = this->net_->GetDataManager();
 	dm->CopyFetchDataToConvThread(this->replica_id_, top);
-	DLOG(INFO)<<"DataLayer<Dtype>::Forward_cpu end";
 }
-
-// This function is used to create a thread that prefetches the data.
-//template <typename Dtype>
-//void DataLayer<Dtype>::InternalThreadEntry() {
-//  CPUTimer batch_timer;
-//  batch_timer.Start();
-//  double read_time = 0;
-//  double trans_time = 0;
-//  CPUTimer timer;
-//  CHECK(this->prefetch_data_.count());
-//  CHECK(this->transformed_data_.count());
-//  Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
-//  Dtype* top_label = NULL;  // suppress warnings about uninitialized variables
-//
-//  if (this->output_labels_) {
-//    top_label = this->prefetch_label_.mutable_cpu_data();
-//  }
-//  const int batch_size = this->layer_param_.data_param().batch_size();
-//  for (int item_id = 0; item_id < batch_size; ++item_id) {
-//    timer.Start();
-//    // get a blob
-//    Datum datum;
-//    datum.ParseFromString(cursor_->value());
-//
-//    cv::Mat cv_img;
-//    if (datum.encoded()) {
-//       cv_img = DecodeDatumToCVMat(datum);
-//    }
-//    read_time += timer.MicroSeconds();
-//    timer.Start();
-//
-//    // Apply data transformations (mirror, scale, crop...)
-//    int offset = this->prefetch_data_.offset(item_id);
-//    this->transformed_data_.set_cpu_data(top_data + offset);
-//    if (datum.encoded()) {
-//      this->data_transformer_.Transform(cv_img, &(this->transformed_data_));
-//    } else {
-//      this->data_transformer_.Transform(datum, &(this->transformed_data_));
-//    }
-//    if (this->output_labels_) {
-//      top_label[item_id] = datum.label();
-//    }
-//    trans_time += timer.MicroSeconds();
-//    // go to the next iter
-//    cursor_->Next();
-//    if (!cursor_->valid()) {
-//      DLOG(INFO) << "Restarting data prefetching from start.";
-//      cursor_->SeekToFirst();
-//    }
-//  }
-//  batch_timer.Stop();
-//  DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
-//  DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
-//  DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
-//}
 
 INSTANTIATE_CLASS(DataLayer);
 REGISTER_LAYER_CLASS(Data);

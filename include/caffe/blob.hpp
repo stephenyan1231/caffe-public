@@ -43,8 +43,6 @@ class Blob {
   void Reshape(const int num, const int channels, const int height,
     const int width);
   void ReshapeLike(const Blob& other);
-  shared_ptr<Blob<Dtype> > Reshaped(const int num, const int channels, const int height,
-    const int width);
   shared_ptr<Blob<Dtype> > ReshapedGPUOnly(const int num, const int channels, const int height,
     const int width);
 
@@ -103,11 +101,11 @@ class Blob {
   const Dtype* cpu_data() const;
   void set_cpu_data(Dtype* data);
   const Dtype* gpu_data() const;
-  void set_gpu_data(Dtype* data);
+  void set_gpu_data(Dtype* data, int device_id);
   const Dtype* cpu_diff() const;
   void set_cpu_diff(Dtype* diff);
   const Dtype* gpu_diff() const;
-  void set_gpu_diff(Dtype* diff);
+  void set_gpu_diff(Dtype* diff, int device_id);
 
   Dtype* mutable_cpu_data();
   Dtype* mutable_gpu_data();
@@ -146,28 +144,6 @@ class Blob {
   void ShareDiff(const Blob& other);
 
   shared_ptr<Blob<Dtype> > SliceNumGPUOnly(int start_num, int end_num);
-
-//  void set_net_thread(NetThread<Dtype>* net_thread){
-//  	net_thread_ = net_thread;
-//  }
-//
-//  NetThread<Dtype>* get_net_thread(){return net_thread_;}
-//
-//  void set_param_id(int param_id){
-//  	param_id_ = param_id;
-//  }
-//
-//  int get_param_id(){return param_id_;}
-//
-//  shared_ptr<BlobSolver<Dtype> > get_blob_solver(){
-//  	if(!blob_solver_.get()){
-//  		blob_solver_.reset(GetBlobSolver<Dtype>(
-//  				net_thread_->get_net()->get_solver_param(), this));
-//  	}
-//  	return blob_solver_;
-//  }
-
-//  void ComputeUpdateValue();
 
  protected:
   shared_ptr<SyncedMemory> data_;

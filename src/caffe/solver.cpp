@@ -7,6 +7,7 @@
 #include "caffe/net.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/solver.hpp"
+#include "caffe/blob_solver.hpp"
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/upgrade_proto.hpp"
@@ -362,6 +363,7 @@ void Solver<Dtype>::Restore(const char* state_file) {
 		ReadProtoFromBinaryFile(state.learned_net().c_str(), &net_param);
 		net_->CopyTrainedLayersFrom(net_param);
 	}
+
 	iter_ = state.iter();
 	current_step_ = state.current_step();
 	RestoreSolverState(state);
@@ -538,20 +540,50 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
 template<typename Dtype>
 void SGDSolver<Dtype>::SnapshotSolverState(SolverState* state) {
 	state->clear_history();
-	for (int i = 0; i < history_.size(); ++i) {
-		// Add history
-		BlobProto* history_blob = state->add_history();
-		history_[i]->ToProto(history_blob);
+	const vector<NetThread<Dtype>*>& net_threads = this->net_->GetNetThreads();
+	for(int i = 0; i < net_threads.size(); ++i){
+		const vector<shared_ptr<BlobSolver<Dtype> > >& params_solver =
+				net_threads[i]->params_solver();
+		for(int j = 0; j < params_solver.size(); ++j){
+			BlobSGDSolver<Dtype> *param_solver =
+					dynamic_cast<BlobSGDSolver<Dtype> *>(params_solver[j].get());
+			shared_ptr<Blob<Dtype> > param_history = param_solver->get_history();
+			BlobProto* history_blob = state->add_history();
+			param_history->ToProto(history_blob);
+		}
 	}
+//	for (int i = 0; i < history_.size(); ++i) {
+//		// Add history
+//		BlobProto* history_blob = state->add_history();
+//		history_[i]->ToProto(history_blob);
+//	}
 }
 
 template<typename Dtype>
 void SGDSolver<Dtype>::RestoreSolverState(const SolverState& state) {
-	CHECK_EQ(state.history_size(), history_.size())<< "Incorrect length of history blobs.";
 	LOG(INFO) << "SGDSolver: restoring history";
-	for (int i = 0; i < history_.size(); ++i) {
-		history_[i]->FromProto(state.history(i));
+	const vector<NetThread<Dtype>*>& net_threads = this->net_->GetNetThreads();
+	CHECK_GT(net_threads.size(), 0);
+	const vector<shared_ptr<BlobSolver<Dtype> > >& params_solver =
+			net_threads[0]->params_solver();
+
+	CHECK_EQ(state.history_size(), params_solver.size() * net_threads.size())<< "Incorrect length of history blobs.";
+	for(int ct = 0, i = 0; i < net_threads.size(); ++i){
+		const vector<shared_ptr<BlobSolver<Dtype> > >& params_solver =
+				net_threads[i]->params_solver();
+		for(int j = 0; j < params_solver.size(); ++j, ++ct){
+			BlobSGDSolver<Dtype> *param_solver =
+					dynamic_cast<BlobSGDSolver<Dtype> *>(params_solver[j].get());
+			shared_ptr<Blob<Dtype> > param_history = param_solver->get_history();
+			param_history->FromProto(state.history(ct));
+		}
 	}
+
+//	CHECK_EQ(state.history_size(), history_.size())<< "Incorrect length of history blobs.";
+//	LOG(INFO) << "SGDSolver: restoring history";
+//	for (int i = 0; i < history_.size(); ++i) {
+//		history_[i]->FromProto(state.history(i));
+//	}
 }
 
 template<typename Dtype>

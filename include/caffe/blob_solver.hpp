@@ -20,7 +20,7 @@ template <typename Dtype>
 class IBroadcastDiffNetwork;
 
 template<typename Dtype>
-class BlobSolver {
+class BlobSolver{
 public:
 	explicit BlobSolver(const SolverParameter& param, int param_id, NetThread<Dtype>* net_thread);
 	explicit BlobSolver(const string& param_file, int param_id, NetThread<Dtype>* net_thread);
@@ -29,8 +29,6 @@ public:
 	virtual void PreSolve() {
 		PreSolve_();
 	}
-
-	void AggregateGradient();
 
 	virtual void ComputeUpdateValue() {
 		ComputeUpdateValue_();
@@ -67,7 +65,7 @@ protected:
 	shared_ptr<IBroadcastDiffNetwork<Dtype> > blob_diff_broadcaster_;
 
 DISABLE_COPY_AND_ASSIGN(BlobSolver);
-};
+}; // class BlobSolver
 
 template<typename Dtype>
 class BlobSGDSolver: public BlobSolver<Dtype> {
@@ -79,14 +77,23 @@ public:
 			BlobSolver<Dtype>(param_file, param_id, net_thread) {
 	}
 
+	shared_ptr<Blob<Dtype> > get_history(){
+		return history_;
+	}
+
+
 protected:
 	void PreSolve_();
 	void ComputeUpdateValue_();
 
+  // history maintains the historical momentum data.
+  // update maintains update related data and is not needed in snapshots.
+  // temp maintains other information that might be needed in computation
+  //   of gradients/updates and is not needed in snapshots
 	shared_ptr<Blob<Dtype> > history_, update_, temp_;
 
 DISABLE_COPY_AND_ASSIGN(BlobSGDSolver);
-};
+}; // class BlobSGDSolver
 
 template<typename Dtype>
 BlobSolver<Dtype>* GetBlobSolver(const SolverParameter& param, int param_id, NetThread<Dtype>* net_thread) {

@@ -19,8 +19,9 @@ display: 100
 # The maximum number of iterations
 max_iter: 4000
 # snapshot intermediate results
-snapshot: 4000
-snapshot_prefix: "examples/cifar10/cifar10_quick"
+snapshot: 1000
+snapshot_prefix: "examples/cifar10/cifar10_quick_2gpu"
 # solver mode: CPU or GPU
 solver_mode: GPU
 device_id: 0
+device_id: 1

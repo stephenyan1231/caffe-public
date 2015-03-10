@@ -14,16 +14,11 @@ class NetThread;
 template <typename Dtype>
 class BlobDiffReducer {
  public:
-	explicit BlobDiffReducer(NetThread<Dtype> *net_thread):
-	net_thread_(net_thread){
-		sb_.reset(new StreamBroadcast<Dtype>);
-		sb_->Init(net_thread_->get_net()->GetDeviceIds());
-	}
+	explicit BlobDiffReducer(NetThread<Dtype> *net_thread);
 	void ReduceGpuDiff(std::map<int, shared_ptr<Blob<Dtype> > > &shards, Dtype diff_scale);
 
  protected:
 	NetThread<Dtype> *net_thread_;
-
 	shared_ptr<StreamBroadcast<Dtype> > sb_;
 
 

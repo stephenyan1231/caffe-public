@@ -86,23 +86,6 @@ int train() {
 	caffe::SolverParameter solver_param;
 	caffe::ReadProtoFromTextFileOrDie(FLAGS_solver, &solver_param);
 
-//  // If the gpu flag is not provided, allow the mode and device to be set
-//  // in the solver prototxt.
-//  if (FLAGS_gpu < 0
-//      && solver_param.solver_mode() == caffe::SolverParameter_SolverMode_GPU) {
-//    FLAGS_gpu = solver_param.device_id();
-//  }
-
-	// Set device id and mode
-//  if (FLAGS_gpu >= 0) {
-//    LOG(INFO) << "Use GPU with device ID " << FLAGS_gpu;
-//    Caffe::SetDevice(FLAGS_gpu);
-//    Caffe::set_mode(Caffe::GPU);
-//  } else {
-//    LOG(INFO) << "Use CPU.";
-//    Caffe::set_mode(Caffe::CPU);
-//  }
-
 	std::vector<int> device_ids;
 	if(FLAGS_gpu.length() >= 0) {
 		device_ids = caffe::parse_int_list(FLAGS_gpu);
@@ -158,14 +141,6 @@ int test() {
 	CHECK_GT(FLAGS_weights.size(), 0) << "Need model weights to score.";
 
 	// Set device id and mode
-//  if (FLAGS_gpu >= 0) {
-//    LOG(INFO) << "Use GPU with device ID " << FLAGS_gpu;
-//    Caffe::SetDevice(FLAGS_gpu);
-//    Caffe::set_mode(Caffe::GPU);
-//  } else {
-//    LOG(INFO) << "Use CPU.";
-//    Caffe::set_mode(Caffe::CPU);
-//  }
 	std::vector<int> device_ids;
 	if(FLAGS_gpu.length()>=0) {
 		LOG(INFO) << "Use GPU with device ID " << FLAGS_gpu;
@@ -237,14 +212,6 @@ int time() {
 	CHECK_GT(FLAGS_model.size(), 0)<< "Need a model definition to time.";
 
 	// Set device id and mode
-//  if (FLAGS_gpu >= 0) {
-//    LOG(INFO) << "Use GPU with device ID " << FLAGS_gpu;
-//    Caffe::SetDevice(FLAGS_gpu);
-//    Caffe::set_mode(Caffe::GPU);
-//  } else {
-//    LOG(INFO) << "Use CPU.";
-//    Caffe::set_mode(Caffe::CPU);
-//  }
 	std::vector<int> device_ids;
 	if(FLAGS_gpu.length()>=0) {
 		LOG(INFO) << "Use GPU with device ID " << FLAGS_gpu;

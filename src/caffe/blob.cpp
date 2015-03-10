@@ -33,19 +33,6 @@ void Blob<Dtype>::ReshapeLike(const Blob<Dtype>& other) {
 	Reshape(other.num(), other.channels(), other.height(), other.width());
 }
 
-template<typename Dtype>
-shared_ptr<Blob<Dtype> > Blob<Dtype>::Reshaped(const int num, const int channels, const int height,
-  const int width){
-	CHECK_EQ(count_, num * channels * height * width);
-	shared_ptr<Blob<Dtype> > new_blob = shared_ptr<Blob<Dtype> >
-	(new Blob<Dtype>(num, channels, height, width));
-	new_blob->set_cpu_data(mutable_cpu_data());
-	new_blob->set_gpu_data(mutable_gpu_data());
-	new_blob->set_cpu_diff(mutable_cpu_diff());
-	new_blob->set_gpu_diff(mutable_gpu_diff());
-	return new_blob;
-}
-
 // make sure only the gpu data of the reshaped blob will be used
 // avoid data copy from device to host by omitting set_cpu_data and set_cpu_diff
 template<typename Dtype>
@@ -54,10 +41,8 @@ shared_ptr<Blob<Dtype> > Blob<Dtype>::ReshapedGPUOnly(const int num, const int c
 	CHECK_EQ(count_, num * channels * height * width);
 	shared_ptr<Blob<Dtype> > new_blob = shared_ptr<Blob<Dtype> >
 	(new Blob<Dtype>(num, channels, height, width));
-//	new_blob->set_cpu_data(mutable_cpu_data());
-	new_blob->set_gpu_data(mutable_gpu_data());
-//	new_blob->set_cpu_diff(mutable_cpu_diff());
-	new_blob->set_gpu_diff(mutable_gpu_diff());
+	new_blob->set_gpu_data(mutable_gpu_data(), Caffe::GetDeviceId());
+	new_blob->set_gpu_diff(mutable_gpu_diff(), Caffe::GetDeviceId());
 	return new_blob;
 }
 
@@ -89,9 +74,9 @@ const Dtype* Blob<Dtype>::gpu_data() const {
 }
 
 template<typename Dtype>
-void Blob<Dtype>::set_gpu_data(Dtype* data) {
+void Blob<Dtype>::set_gpu_data(Dtype* data, int device_id) {
 	CHECK(data);
-	data_->set_gpu_data(data);
+	data_->set_gpu_data(data, device_id);
 }
 
 template<typename Dtype>
@@ -113,9 +98,9 @@ const Dtype* Blob<Dtype>::gpu_diff() const {
 }
 
 template<typename Dtype>
-void Blob<Dtype>::set_gpu_diff(Dtype* diff) {
+void Blob<Dtype>::set_gpu_diff(Dtype* diff, int device_id) {
 	CHECK(diff);
-	diff_->set_gpu_data(diff);
+	diff_->set_gpu_data(diff, device_id);
 }
 
 template<typename Dtype>
@@ -162,26 +147,16 @@ shared_ptr<Blob<Dtype> > Blob<Dtype>::SliceNumGPUOnly(int start_num, int end_num
 	shared_ptr<Blob<Dtype> > new_blob = shared_ptr<Blob<Dtype> >
 	(new Blob<Dtype>(end_num - start_num, channels_,
 			height_, width_));
+
 //	new_blob->set_cpu_data(mutable_cpu_data() + offset(start_num));
 //	new_blob->set_cpu_diff(mutable_cpu_diff() + offset(start_num));
-
-	new_blob->set_gpu_data(mutable_gpu_data() + offset(start_num));
-	new_blob->set_gpu_diff(mutable_gpu_diff() + offset(start_num));
+	new_blob->set_gpu_data(mutable_gpu_data() + offset(start_num),
+			Caffe::GetDeviceId());
+	new_blob->set_gpu_diff(mutable_gpu_diff() + offset(start_num),
+			Caffe::GetDeviceId());
 
 	return new_blob;
 }
-
-//template<typename Dtype>
-//void Blob<Dtype>::ComputeUpdateValue(){
-//	get_blob_solver()->ComputeUpdateValue();
-//
-////	// get the learning rate
-////	SGDSolver<Dtype>* solver =
-////			dynamic_cast<SGDSolver<Dtype> *>(net_->get_solver());
-//
-//}
-
-
 
 // The "update" method is used for parameter blobs in a Net, which are stored
 // as Blob<float> or Blob<double> -- hence we do not define it for
@@ -198,6 +173,7 @@ void Blob<Dtype>::Update() {
 	// We will perform update based on where the data is located.
 	switch (data_->head()) {
 	case SyncedMemory::HEAD_AT_CPU:
+		LOG(INFO)<<"Blob<Dtype>::Update HEAD_AT_CPU";
 		// perform computation on CPU
 		caffe_axpy<Dtype>(count_, Dtype(-1),
 				static_cast<const Dtype*>(diff_->cpu_data()),
@@ -206,6 +182,7 @@ void Blob<Dtype>::Update() {
 	case SyncedMemory::HEAD_AT_GPU:
 	case SyncedMemory::SYNCED:
 #ifndef CPU_ONLY
+		DLOG(INFO)<<"Blob<Dtype>::Update HEAD_AT_GPU SYNCED";
 		// perform computation on GPU
 		caffe_gpu_axpy<Dtype>(count_, Dtype(-1),
 				static_cast<const Dtype*>(diff_->gpu_data()),
@@ -217,12 +194,6 @@ void Blob<Dtype>::Update() {
 	default:
 		LOG(FATAL)<< "Syncedmem not initialized.";
 	}
-
-//	const Dtype *cpu_data = static_cast<const Dtype*>(data_->cpu_data());
-//	DLOG(INFO)<<"Blob<Dtype>::Update() cpu_data "<<cpu_data[0]<<" "<<cpu_data[this->count_-1];
-//	const Dtype *cpu_diff = static_cast<const Dtype*>(diff_->cpu_data());
-//	DLOG(INFO)<<"Blob<Dtype>::Update() cpu_diff "<<cpu_diff[0]<<" "<<cpu_diff[this->count_-1];
-
 }
 
 template<> unsigned int Blob<unsigned int>::asum_data() const {

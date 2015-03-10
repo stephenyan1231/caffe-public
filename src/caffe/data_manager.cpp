@@ -27,7 +27,6 @@ DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 				layer_param_.transform_param()), data_transformer_(transform_param_), net_(
 				net) {
 	// Hack
-	LOG(INFO)<<"DataManager top size "<<layer_param_.top_size();
 	if(layer_param_.top_size() > 1) {
 		this->output_labels_ = true;
 	}
@@ -65,14 +64,10 @@ DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 	if (crop_size > 0) {
 		this->prefetch_data_.Reshape(this->layer_param_.data_param().batch_size(),
 				datum.channels(), crop_size, crop_size);
-//		this->fetch_data_.Reshape(this->layer_param_.data_param().batch_size(),
-//				datum.channels(), crop_size, crop_size);
 		this->transformed_data_.Reshape(1, datum.channels(), crop_size, crop_size);
 	} else {
 		this->prefetch_data_.Reshape(this->layer_param_.data_param().batch_size(),
 				datum.channels(), datum.height(), datum.width());
-//		this->fetch_data_.Reshape(this->layer_param_.data_param().batch_size(),
-//				datum.channels(), datum.height(), datum.width());
 		this->transformed_data_.Reshape(1, datum.channels(), datum.height(),
 				datum.width());
 	}
@@ -83,8 +78,6 @@ DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 	if (this->output_labels_) {
 		this->prefetch_label_.Reshape(this->layer_param_.data_param().batch_size(),
 				1, 1, 1);
-//		this->fetch_label_.Reshape(this->layer_param_.data_param().batch_size(),
-//				1, 1, 1);
 	}
 
 	// Now, start the prefetch thread. Before calling prefetch, we make two
@@ -92,20 +85,14 @@ DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 	// simultaneous cudaMalloc calls when the main thread is running. In some
 	// GPUs this seems to cause failures if we do not so.
 	this->prefetch_data_.mutable_cpu_data();
-//	this->fetch_data_.mutable_cpu_data();
 	if (this->output_labels_) {
 		this->prefetch_label_.mutable_cpu_data();
-//		this->fetch_label_.mutable_cpu_data();
 	}
-//	LOG(INFO)<< "Initializing prefetch";
-//	this->CreatePrefetchThread();
-//	LOG(INFO)<< "Prefetch initialized.";
-
 }
 
 template<typename Dtype>
 DataManager<Dtype>::~DataManager() {
-	//TO DO
+	JoinPrefetchThread();
 }
 
 // consider using forward_count_mutex_.lock/unlock when calling CreatePrefetchThread
@@ -178,37 +165,10 @@ void DataManager<Dtype>::InternalThreadEntry() {
 }
 
 template<typename Dtype>
-void DataManager<Dtype>::Forward() {
-//	forward_count_mutex_.lock();
-//	forward_count_++;
-//	if(forward_count_ == 1){
-//		// First, join the thread
-//		JoinPrefetchThread();
-//	}
-//
-//
-//
-//	DLOG(INFO)<< "Thread joined";
-//
-//	// Copy the data
-//	memcpy(fetch_data_.mutable_cpu_data(), prefetch_data_.cpu_data(),
-//			sizeof(Dtype) * prefetch_data_.count());
-//	if (this->output_labels_) {
-//		memcpy(fetch_label_.mutable_cpu_data(), prefetch_label_.cpu_data(),
-//				sizeof(Dtype) * prefetch_label_.count());
-//	}
-//
-//	// Start a new prefetch thread
-//	DLOG(INFO)<< "CreatePrefetchThread";
-//	CreatePrefetchThread();
-//
-//	forward_count_mutex_.unlock();
-}
-
-template<typename Dtype>
 void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 		const vector<Blob<Dtype>*>& top) {
-	DLOG(INFO)<<"DataManager<Dtype>::CopyFetchDataToConvThread caffe mode "<<Caffe::mode();
+	DLOG(INFO)<<"DataManager<Dtype>::CopyFetchDataToConvThread caffe mode "<<Caffe::mode()
+	<<" replica_id "<<replica_id;
 
 	forward_count_mutex_.lock();
 	forward_count_++;
@@ -217,12 +177,14 @@ void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 		JoinPrefetchThread();
 	}
 	forward_count_mutex_.unlock();
+	int num_replicas = net_->GetDeviceIds().size();
 
 //	prefetch_data_mutex_.lock_shared();
 	int batch_size = prefetch_data_.num();
-	int replica_batch_size = divide_up(batch_size, batch_size);
+	int replica_batch_size = divide_up(batch_size, num_replicas);
 	int start = replica_batch_size*replica_id;
 	int end = start + net_->GetBatchSize(replica_id);
+//	LOG(INFO)<<" DataManager<Dtype>::CopyFetchDataToConvThread start "<<start<<" end "<<end;
 	CHECK_EQ(top[0]->num(), end - start);
 	CHECK_EQ(top[0]->channels(),prefetch_data_.channels());
 	CHECK_EQ(top[0]->height(),prefetch_data_.height());

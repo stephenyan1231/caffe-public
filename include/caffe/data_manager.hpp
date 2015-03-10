@@ -31,7 +31,6 @@ public:
 	virtual void CreatePrefetchThread();
 	virtual void JoinPrefetchThread();
 	virtual void InternalThreadEntry();
-	void Forward();
 	void CopyFetchDataToConvThread(int replica_id, const vector<Blob<Dtype>*>& top);
 
 	inline int GetDatumChannels(){return datum_channels_;}

@@ -182,7 +182,6 @@ class Caffe {
 
   static void SyncDevice();
 
-//  static void SyncStream();
   static void SyncStream(cudaStream_t stream);
 
 	// restore cublas handle to the default null stream

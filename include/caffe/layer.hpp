@@ -313,14 +313,14 @@ public:
 		return replica_id_;
 	}
 
-	std::map<int, Layer<Dtype>*>& get_replicas() {
-		return replicas_;
-	}
-
-	void add_replica(Layer<Dtype> *l) {
-		CHECK_EQ(replicas_.count(l->get_replica_id()), 0);
-		replicas_[l->get_replica_id()] = l;
-	}
+//	std::map<int, Layer<Dtype>*>& get_replicas() {
+//		return replicas_;
+//	}
+//
+//	void add_replica(Layer<Dtype> *l) {
+//		CHECK_EQ(replicas_.count(l->get_replica_id()), 0);
+//		replicas_[l->get_replica_id()] = l;
+//	}
 
 protected:
 	/** The protobuf that stores the layer parameters */
@@ -337,7 +337,7 @@ protected:
 	int replica_id_;
 	Net<Dtype> *net_;
 
-	std::map<int, Layer<Dtype>*> replicas_;
+//	std::map<int, Layer<Dtype>*> replicas_;
 
 	/** @brief Using the CPU device, compute the layer output. */
 	virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,

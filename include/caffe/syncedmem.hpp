@@ -50,7 +50,7 @@ class SyncedMemory {
   const void* cpu_data();
   void set_cpu_data(void* data);
   const void* gpu_data();
-  void set_gpu_data(void* data, int device_id = Caffe::GetDeviceId());
+  void set_gpu_data(void* data, int device_id);
   void* mutable_cpu_data();
   void* mutable_gpu_data();
   enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, HEAD_AT_GPU, SYNCED };

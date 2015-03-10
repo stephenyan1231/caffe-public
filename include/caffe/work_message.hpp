@@ -12,7 +12,6 @@ namespace caffe {
 
 enum MESSAGES {
 	NO_WORK,
-	AGGREGATE_GRADIENT,
 	COMPUTE_UPDATE_VALUE,
 	UPDATE_WEIGHTS,
 	FORWARD,
@@ -33,11 +32,8 @@ public:
 		return message_type_;
 	}
 
-
-
 protected:
 	MESSAGES message_type_;
-
 };
 
 } // namespace caffe

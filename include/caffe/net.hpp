@@ -308,7 +308,6 @@ public:
 
   Dtype GetLoss(){return loss_;}
 
-  void AggregateGradient();
   void ComputeUpdateValue();
   /// @brief Updates the network weights based on the diff values computed.
   void Update();
@@ -364,8 +363,12 @@ public:
     return blob_loss_weights_;
   }
   /// @brief returns the parameters
-  inline const vector<shared_ptr<Blob<Dtype> > >& params() {
+  inline vector<shared_ptr<Blob<Dtype> > >& params() {
     return params_;
+  }
+
+  inline const vector<shared_ptr<BlobSolver<Dtype> > >& params_solver(){
+  	return params_solver_;
   }
   /// @brief returns the parameter learning rate multipliers
   inline const vector<float>& params_lr() const { return params_lr_; }
@@ -416,7 +419,7 @@ public:
   	return replicas_;
   }
 
-  shared_ptr<Blob<Dtype> > GetShardGPUOnly(const shared_ptr<Blob<Dtype> > &p, int param_id, int replica_id);
+//  shared_ptr<Blob<Dtype> > GetShardGPUOnly(const shared_ptr<Blob<Dtype> > &p, int param_id, int replica_id);
 
   shared_ptr<Blob<Dtype> > GetShardGPUOnly(int param_id, int replica_id);
 
@@ -522,7 +525,7 @@ public:
 //  shared_ptr<BlobDiffReducer<Dtype> > blob_diff_reducer_;
 //  shared_ptr<IBroadcastDiffNetwork<Dtype> > blob_diff_broadcaster_;
 
-  boost::shared_mutex params_mutex_;
+  boost::mutex params_mutex_;
 
 
   DISABLE_COPY_AND_ASSIGN(NetThread);

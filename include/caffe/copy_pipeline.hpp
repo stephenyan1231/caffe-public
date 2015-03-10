@@ -26,7 +26,6 @@ protected:
 	int src_device_;
 
   DISABLE_COPY_AND_ASSIGN(IBroadcastDiffNetwork);
-
 };
 
 
@@ -57,7 +56,6 @@ public:
 
 protected:
 	int tgt_device_;
-	cudaStream_t tgt_stream_;
 
   DISABLE_COPY_AND_ASSIGN(TwoPeeringGPUsDiffBroadcaster);
 };
@@ -75,8 +73,6 @@ protected:
 
   DISABLE_COPY_AND_ASSIGN(NaiveDiffBroadcaster);
 };
-
-
 
 } // namespace caffe
 

@@ -67,7 +67,7 @@ void SoftmaxWithLossLayer<Dtype>::Forward_cpu(
     }
   }
   if (normalize_) {
-    top[0]->mutable_cpu_data()[0] = loss / count;
+  	top[0]->mutable_cpu_data()[0] = loss / count;
   } else {
     top[0]->mutable_cpu_data()[0] = loss / num;
   }

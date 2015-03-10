@@ -21,9 +21,6 @@
 
 namespace caffe {
 
-//template<typename Dtype>
-//class NetThread;
-
 template<typename Dtype>
 Net<Dtype>::Net(const NetParameter& param, vector<int> device_ids,
 		Solver<Dtype> *solver, SolverParameter solver_param) :
@@ -79,33 +76,32 @@ void Net<Dtype>::Init(const NetParameter& in_param, vector<int> &device_ids) {
 template<typename Dtype>
 void Net<Dtype>::PostInit() {
 	net_output_blobs_.resize(net_threads_[0]->num_outputs());
-	for(int i = 0;i < net_threads_[0]->num_outputs();++i) {
+	for (int i = 0; i < net_threads_[0]->num_outputs(); ++i) {
 		// assume the net_output_blobs_ stores global accumulative quantities, such as accuracy, loss
 		int num = net_threads_[0]->output_blobs()[i]->num();
-		for(int j = 1;j < net_threads_.size();++j) {
+		for (int j = 1; j < net_threads_.size(); ++j) {
 			CHECK_EQ(num, net_threads_[j]->output_blobs()[i]->num());
 		}
-		Blob<Dtype> *b = new Blob<Dtype>(num, net_threads_[0]->output_blobs()[i]->channels(),
+		Blob<Dtype> *b = new Blob<Dtype>(num,
+				net_threads_[0]->output_blobs()[i]->channels(),
 				net_threads_[0]->output_blobs()[i]->height(),
 				net_threads_[0]->output_blobs()[i]->width());
 		net_output_blobs_[i] = b;
 	}
 
 	batch_size_ = 0;
-	for(int i=0;i<batch_sizes_.size();++i) {
+	for (int i = 0; i < batch_sizes_.size(); ++i) {
 		batch_size_ += batch_sizes_[i];
 	}
 	batch_size_ratios_.clear();
-	for(int i=0;i<batch_sizes_.size();++i) {
-		batch_size_ratios_[device_ids_[i]] = (Dtype)batch_sizes_[i] / (Dtype)batch_size_;
+	for (int i = 0; i < batch_sizes_.size(); ++i) {
+		batch_size_ratios_[device_ids_[i]] = (Dtype) batch_sizes_[i]
+				/ (Dtype) batch_size_;
 	}
 
-	for(int i=0;i<net_threads_.size(); ++i) {
+	for (int i = 0; i < net_threads_.size(); ++i) {
 		net_threads_[i]->PostInit();
 	}
-	LOG(INFO)<<"Net<Dtype>::PostInit end";
-
-//	data_manager_->CreatePrefetchThread();
 }
 
 template<typename Dtype>
@@ -140,21 +136,50 @@ void Net<Dtype>::InitNetThreads(const NetParameter& param) {
 			layer_map_[j][i] = thread_layers[j];
 		}
 	}
+
+	// synchronize layer parameters in each net thread
+	const vector<shared_ptr<Blob<Dtype> > >& first_net_thread_params =
+	net_threads_[0]->params();
+
+	switch(Caffe::mode()) {
+		case Caffe::CPU: {
+			for(int i = 1; i < device_ids_.size(); ++i) {
+				vector<shared_ptr<Blob<Dtype> > >& net_thread_params =
+				net_threads_[i]->params();
+				Caffe::SetDevice(device_ids_[i]);
+				CHECK_EQ(first_net_thread_params.size(), net_thread_params.size());
+				for(int j = 0; j < first_net_thread_params.size(); ++j) {
+					CHECK_EQ(first_net_thread_params[j]->count(), net_thread_params[j]->count());
+					const Dtype *first_net_data = first_net_thread_params[j]->cpu_data();
+					Dtype* data = net_thread_params[j]->mutable_cpu_data();
+					caffe_copy(first_net_thread_params[j]->count(), first_net_data, data);
+				}
+			}
+			break;
+		}
+		case Caffe::GPU: {
+			for(int i = 1; i < device_ids_.size(); ++i) {
+				vector<shared_ptr<Blob<Dtype> > >& net_thread_params =
+				net_threads_[i]->params();
+				Caffe::SetDevice(device_ids_[i]);
+				CHECK_EQ(first_net_thread_params.size(), net_thread_params.size());
+				for(int j = 0; j < first_net_thread_params.size(); ++j) {
+					CHECK_EQ(first_net_thread_params[j]->count(), net_thread_params[j]->count());
+					const Dtype *first_net_data = first_net_thread_params[j]->gpu_data();
+					Dtype* data = net_thread_params[j]->mutable_gpu_data();
+					caffe_copy(first_net_thread_params[j]->count(), first_net_data, data);
+				}
+			}
+			break;
+		}
+		default: {
+			LOG(FATAL)<< "Unknown caffe mode: " << Caffe::mode();
+		}
+	}
 }
 
 template<typename Dtype>
 void Net<Dtype>::ConnectReplicas() {
-//	for (int i = 0; i < layer_map_.size(); ++i) {
-//		int n_replicas = layer_map_[i].size();
-//		for (int j = 0; j < n_replicas; ++j) {
-//			Layer<Dtype> *l1 = layer_map_[i][j].get();
-//			for (int k = 0; k < n_replicas; ++k) {
-//				Layer<Dtype> *l2 = layer_map_[i][k].get();
-//				l1->add_replica(l2);
-//			}
-//		}
-//	}
-
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		NetThread<Dtype> *nt1 = net_threads_[i];
 		for (int j = 0; j < net_threads_.size(); ++j) {
@@ -173,7 +198,6 @@ Dtype Net<Dtype>::ForwardBackward(vector<Blob<Dtype>*>& bottom) {
 
 template<typename Dtype>
 void Net<Dtype>::ForwardPrefilled(Dtype* loss) {
-	data_manager_->Forward();
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		net_threads_[i]->set_work_message(FORWARD_PREFILLED);
 		net_threads_[i]->StartWork();
@@ -189,23 +213,11 @@ template<typename Dtype>
 const vector<Blob<Dtype>*>& Net<Dtype>::Forward(
 		const vector<Blob<Dtype>*>& bottom, Dtype *loss) {
 	ForwardBackwardHelper(bottom, loss, false);
-
-//	for (int i = 0; i < net_threads_[0]->num_outputs(); ++i) {
-//		Dtype *tgt_data = net_output_blobs_[i]->mutable_cpu_data();
-//		caffe_memset(net_threads_[0]->output_blobs()[i]->count(), 0, tgt_data);
-//		for (int j = 0; j < net_threads_.size(); ++j) {
-//			const Dtype *src_data = net_threads_[j]->output_blobs()[i]->cpu_data();
-//			for(int k = 0; k < net_threads_[0]->output_blobs()[i]->count(); ++k){
-//				tgt_data[k] += batch_size_ratios_[device_ids_[j]] * src_data[k];
-//			}
-//		}
-//	}
 	return net_output_blobs_;
 }
 
 template<typename Dtype>
 string Net<Dtype>::Forward(const string& input_blob_protos, Dtype* loss) {
-	data_manager_->Forward();
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		net_threads_[i]->set_input_blob_protos(input_blob_protos);
 		net_threads_[i]->set_work_message(FORWARD_INPUT_BLOB_PROTOS);
@@ -214,7 +226,6 @@ string Net<Dtype>::Forward(const string& input_blob_protos, Dtype* loss) {
 	}
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		net_threads_[i]->FinishWork();
-//		losses_[i] = net_threads_[i]->FinishForwardInputBlobProtos();
 	}
 	CollectLoss();
 
@@ -252,22 +263,6 @@ const shared_ptr<Blob<Dtype> > Net<Dtype>::blob_by_name(
 		}
 		blob_ptr.reset(new Blob<Dtype>());
 		blob_ptr->CopyFrom(thread_blobs, false, true);
-//
-//
-//		vector<const shared_ptr<Blob<Dtype> > > therad_blobs;
-//		therad_blobs.resize(net_threads_.size());
-//		int num=0;
-//		for(int i=0;i<net_threads_.size();++i){
-//			therad_blobs[i]=net_threads_[i]->blob_by_name(blob_name);
-//			num+=therad_blobs[i]->num();
-//		}
-//		blob_ptr.reset(new Blob<Dtype>(num, therad_blobs[0]->channels(),
-//				therad_blobs[0]->height(),therad_blobs[0]->width()));
-//		Dtype* data = blob_ptr->mutable_cpu_data();
-//		for(int i=0;i<net_threads_.size();++i){
-//			memcpy(data, therad_blobs[i]->cpu_data(), therad_blobs[i]->count()*sizeof(Dtype));
-//			data += blob_ptr->offset(therad_blobs[i]->num());
-//		}
 	} else {
 		blob_ptr.reset((Blob<Dtype>*) (NULL));
 		LOG(WARNING)<< "Unknown blob name " << blob_name;
@@ -284,7 +279,6 @@ void Net<Dtype>::Backward() {
 
 template<typename Dtype>
 void Net<Dtype>::CollectLoss() {
-//	for (int i = 0; i < 1; ++i) {
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		losses_[i] = GetBatchSizeRatio(device_ids_[i])
 				* net_threads_[i]->get_loss();
@@ -436,20 +430,8 @@ std::string Net<Dtype>::name() {
 
 template<typename Dtype>
 void Net<Dtype>::ComputeUpdateValue() {
-	for(int i = 0; i< net_threads_.size(); ++i){
-		Caffe::SetDevice(net_threads_[i]->get_device_id());
-		Caffe::SyncDevice();
-	}
-
+	int old_device = Caffe::GetDeviceId();
 	for (int i = 0; i < net_threads_.size(); ++i) {
-		net_threads_[i]->set_work_message(AGGREGATE_GRADIENT);
-		net_threads_[i]->StartWork();
-	}
-	for (int i = 0; i < net_threads_.size(); ++i) {
-		net_threads_[i]->FinishWork();
-	}
-
-	for(int i = 0; i< net_threads_.size(); ++i){
 		Caffe::SetDevice(net_threads_[i]->get_device_id());
 		Caffe::SyncDevice();
 	}
@@ -462,14 +444,17 @@ void Net<Dtype>::ComputeUpdateValue() {
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		net_threads_[i]->FinishWork();
 	}
+	Caffe::SetDevice(old_device);
 }
 
 template<typename Dtype>
 void Net<Dtype>::Update() {
-	for(int i = 0; i< net_threads_.size(); ++i){
+	int old_device = Caffe::GetDeviceId();
+	for (int i = 0; i < net_threads_.size(); ++i) {
 		Caffe::SetDevice(net_threads_[i]->get_device_id());
 		Caffe::SyncDevice();
 	}
+	Caffe::SetDevice(old_device);
 
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		net_threads_[i]->set_work_message(UPDATE_WEIGHTS);
@@ -493,7 +478,6 @@ template<typename Dtype>
 void Net<Dtype>::ForwardBackwardHelper(const vector<Blob<Dtype>*>& bottom,
 		Dtype *loss, bool do_backward) {
 	DLOG(INFO)<<"Net<Dtype>::ForwardBackwardHelper bottom.size "<<bottom.size();
-	data_manager_->Forward();
 //	for (int i = 0; i < 1; ++i) {
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		vector<Blob<Dtype>* > thread_bottom(bottom.size(), 0);
@@ -520,13 +504,10 @@ void Net<Dtype>::ForwardBackwardHelper(const vector<Blob<Dtype>*>& bottom,
 			net_threads_[i]->set_work_message(FORWARD);
 		}
 		net_threads_[i]->StartWork();
-//		net_threads_[i]->StartForwardBackward(thread_bottom.get(), do_backward);
 	}
 
-//	for (int i = 0; i < 1; ++i) {
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		net_threads_[i]->FinishWork();
-//		losses_[i] = net_threads_[i]->FinishForwardBackward();
 	}
 
 	// update net net_output_blobs_
@@ -540,16 +521,6 @@ void Net<Dtype>::ForwardBackwardHelper(const vector<Blob<Dtype>*>& bottom,
 				tgt_data[j] += batch_size_ratios_[device_ids_[k]] * src_data[j];
 			}
 		}
-//		for (int j = 0; j < net_threads_.size(); ++j) {
-//			const Dtype *src_data = net_threads_[j]->output_blobs()[i]->cpu_data();
-//			for(int k = 0; k < net_threads_[0]->output_blobs()[i]->count(); ++k){
-//				tgt_data[k] += (batch_size_ratios_[device_ids_[j]] * src_data[k]);
-//				LOG(INFO)<<"Net<Dtype>::ForwardBackwardHelper net_thread "<<j<<
-//						" k "<<k<<" batch_size_ratio "<< batch_size_ratios_[device_ids_[j]] <<
-//						" val "<< src_data[k];
-//
-//			}
-//		}
 	}
 
 	CollectLoss();
@@ -563,15 +534,8 @@ INSTANTIATE_CLASS(Net);
 template<typename Dtype>
 NetThread<Dtype>::NetThread(const NetParameter& param, int device_id,
 		int replica_id, Net<Dtype>* net, const SolverParameter &solver_param) :
-		device_id_(device_id), replica_id_(replica_id), net_(net){
+		device_id_(device_id), replica_id_(replica_id), net_(net) {
 	Caffe::SetDevice(device_id);
-
-//	solver_.reset(GetNetThreadSolver<Dtype>(solver_param, this));
-
-//	blob_diff_reducer_.reset(new BlobDiffReducer<Dtype>(this));
-//	blob_diff_broadcaster_.reset(
-//			IBroadcastDiffNetwork<Dtype>::make(net_->GetDeviceIds(), device_id_));
-
 	Init(param);
 }
 
@@ -601,7 +565,6 @@ void NetThread<Dtype>::Init(const NetParameter& param) {
 //	int n_replicas = net_->GetDeviceIds().size();
 	name_ = param.name();
 	test_net_ = param.state().phase() == 1 ? true : false;
-	LOG(INFO)<<"NetThread<Dtype>::Init test_net_ "<<test_net_;
 
 	map<string, int> blob_name_to_idx;
 	set<string> available_blobs;
@@ -990,13 +953,11 @@ Dtype NetThread<Dtype>::ForwardTo(int end) {
 
 template<typename Dtype>
 const vector<Blob<Dtype>*>& NetThread<Dtype>::ForwardPrefilled(Dtype* loss) {
-	DLOG(INFO)<<"NetThread<Dtype>::ForwardPrefilled";
 	if (loss != NULL) {
 		*loss = ForwardFromTo(0, layers_.size() - 1);
 	} else {
 		ForwardFromTo(0, layers_.size() - 1);
 	}
-	DLOG(INFO)<<"NetThread<Dtype>::ForwardPrefilled completed";
 	return net_output_blobs_;
 }
 
@@ -1255,18 +1216,9 @@ void NetThread<Dtype>::ToProto(NetParameter* param, bool write_diff) const {
 }
 
 template<typename Dtype>
-void NetThread<Dtype>::AggregateGradient(){
-	for (int param_id = 0; param_id < params_solver_.size(); ++param_id) {
-		params_solver_[param_id]->AggregateGradient();
-	}
-}
-
-
-template<typename Dtype>
 void NetThread<Dtype>::ComputeUpdateValue() {
 //	solver_->ComputeUpdateValue();
 //	Caffe::SyncDevice();
-	nvtxMarkA("NetThread<Dtype>::ComputeUpdateValue");
 	for (int param_id = 0; param_id < params_solver_.size(); ++param_id) {
 		params_solver_[param_id]->ComputeUpdateValue();
 	}
@@ -1275,7 +1227,6 @@ void NetThread<Dtype>::ComputeUpdateValue() {
 
 template<typename Dtype>
 void NetThread<Dtype>::Update() {
-	nvtxMarkA("NetThread<Dtype>::Update() m0");
 
 //	Caffe::SyncDevice();
 	// First, accumulate the diffs of any shared parameters into their owner's
@@ -1312,11 +1263,14 @@ void NetThread<Dtype>::Update() {
 	}
 	// Now, update the owned parameters.
 	for (int i = 0; i < params_.size(); ++i) {
-		if (param_owners_[i] >= 0) {continue;}
-		if (debug_info_) {UpdateDebugInfo(i);}
+		if (param_owners_[i] >= 0) {
+			continue;
+		}
+		if (debug_info_) {
+			UpdateDebugInfo(i);
+		}
 		params_[i]->Update();
 	}
-	nvtxMarkA("NetThread<Dtype>::Update() m1");
 }
 
 template<typename Dtype>
@@ -1355,29 +1309,32 @@ const shared_ptr<Layer<Dtype> > NetThread<Dtype>::layer_by_name(
 	return layer_ptr;
 }
 
-template<typename Dtype>
-shared_ptr<Blob<Dtype> > NetThread<Dtype>::GetShardGPUOnly(
-		const shared_ptr<Blob<Dtype> > &p, int param_id, int replica_id) {
-	int n = p->count();
-	shared_ptr<Blob<Dtype> > p2 = p->Reshaped(n, 1, 1, 1);
-	int start_num = params_shard_size_[param_id] * replica_id;
-	int end_num = std::min(start_num + params_shard_size_[param_id], n);
-//	LOG(INFO)<<"NetThread<Dtype>::GetShard start "<<start_num<<" end_num "<<end_num;
-	return p2->SliceNumGPUOnly(start_num, end_num);;
-}
+//template<typename Dtype>
+//shared_ptr<Blob<Dtype> > NetThread<Dtype>::GetShardGPUOnly(
+//		const shared_ptr<Blob<Dtype> > &p, int param_id, int replica_id) {
+//	int n = p->count();
+//	shared_ptr<Blob<Dtype> > p2 = p->Reshaped(n, 1, 1, 1);
+//	int start_num = params_shard_size_[param_id] * replica_id;
+//	int end_num = std::min(start_num + params_shard_size_[param_id], n);
+////	LOG(INFO)<<"NetThread<Dtype>::GetShard start "<<start_num<<" end_num "<<end_num;
+//	return p2->SliceNumGPUOnly(start_num, end_num);;
+//}
 
 template<typename Dtype>
 shared_ptr<Blob<Dtype> > NetThread<Dtype>::GetShardGPUOnly(int param_id,
 		int replica_id) {
-	params_mutex_.lock_shared();
+	int old_device = Caffe::GetDeviceId();
+	Caffe::SetDevice(device_id_);
+	params_mutex_.lock();
+
 	shared_ptr<Blob<Dtype> > p = params_[param_id];
 	int n = p->count();
 	shared_ptr<Blob<Dtype> > p2 = p->ReshapedGPUOnly(n, 1, 1, 1);
 	int start_num = params_shard_size_[param_id] * replica_id;
 	int end_num = std::min(start_num + params_shard_size_[param_id], n);
-//	LOG(INFO)<<"NetThread<Dtype>::GetShard start "<<start_num<<" end_num "<<end_num;
 	shared_ptr<Blob<Dtype> > shard = p2->SliceNumGPUOnly(start_num, end_num);
-	params_mutex_.unlock_shared();
+	params_mutex_.unlock();
+	Caffe::SetDevice(old_device);
 	return shard;
 }
 
@@ -1395,17 +1352,13 @@ template<typename Dtype>
 void NetThread<Dtype>::InternalThreadEntry() {
 	char message_str[1024];
 	sprintf(message_str, "Net thread device id %d", device_id_);
-	nvtxNameOsThread(pthread_self(),message_str);
+	nvtxNameOsThread(pthread_self(), message_str);
 
-//	LOG(INFO)<<"NetThread<Dtype>::InternalThreadEntry device_id_ "<<device_id_;
 	Caffe::SetDevice(device_id_);
 	srand(time(0));
 
 	switch (work_message_.getType()) {
 	case NO_WORK:
-		break;
-	case AGGREGATE_GRADIENT:
-		AggregateGradient();
 		break;
 	case COMPUTE_UPDATE_VALUE:
 		ComputeUpdateValue();

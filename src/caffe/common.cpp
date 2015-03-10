@@ -263,10 +263,6 @@ void Caffe::SyncDevice() {
 	CUDA_CHECK(cudaDeviceSynchronize());
 }
 
-//void Caffe::SyncStream(){
-//	SyncStream(Caffe::GetDefaultStream());
-//}
-
 void Caffe::SyncStream(cudaStream_t stream){
 	CUDA_CHECK(cudaStreamSynchronize(stream));
 }
