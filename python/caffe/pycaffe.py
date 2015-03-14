@@ -2,7 +2,7 @@
 Wrap the internal caffe C++ module (_caffe.so) with a clean, Pythonic
 interface.
 """
-
+from types import MethodType
 from collections import OrderedDict
 from itertools import izip_longest
 import numpy as np
@@ -14,14 +14,17 @@ import caffe.io
 # inheritance) so that nets created by caffe (e.g., by SGDSolver) will
 # automatically have the improved interface.
 
-
 @property
-def _Net_blobs(self):
+def _Net_batch_size(self):
+    return self.blobs(0)[self.inputs[0]].num * self.replica_num  
+    
+def _Net_blobs(self, replica_id):
     """
     An OrderedDict (bottom to top, i.e., input to output) of network
     blobs indexed by name
     """
-    return OrderedDict(zip(self._blob_names, self._blobs))
+    return OrderedDict(zip(self._blob_names, self._blobs(replica_id)))
+#     return OrderedDict(zip(self._blob_names, self._blobs))
 
 
 @property
@@ -73,14 +76,25 @@ def _Net_forward(self, blobs=None, start=None, end=None, **kwargs):
         for in_, blob in kwargs.iteritems():
             if blob.ndim != 4:
                 raise Exception('{} blob is not 4-d'.format(in_))
-            if blob.shape[0] != self.blobs[in_].num:
+            # if blob.shape[0] != self.blobs[in_].num:
+            if blob.shape[0] != self.batch_size:
                 raise Exception('Input is not batch sized')
-            self.blobs[in_].data[...] = blob
+            offset = 0
+            for i in range(self.replica_num):
+                self.blobs(i)[in_].data[...] = blob[offset:offset+self.blobs(i)[in_].num]
+                offset += self.blobs(i)[in_].num
+            # self.blobs[in_].data[...] = blob
 
     self._forward(start_ind, end_ind)
-
+    ret = {}
+    for out in outputs:
+        data_blobs = []
+        for r in range(self.replica_num):
+            data_blobs += [self.blobs(r)[out].data]
+        ret[out] = np.concatenate(data_blobs, axis = 0)
     # Unpack blobs to extract
-    return {out: self.blobs[out].data for out in outputs}
+    return ret
+    # return {out: self.blobs[out].data for out in outputs}
 
 
 def _Net_backward(self, diffs=None, start=None, end=None, **kwargs):
@@ -120,14 +134,26 @@ def _Net_backward(self, diffs=None, start=None, end=None, **kwargs):
         for top, diff in kwargs.iteritems():
             if diff.ndim != 4:
                 raise Exception('{} diff is not 4-d'.format(top))
-            if diff.shape[0] != self.blobs[top].num:
+            # if diff.shape[0] != self.blobs[top].num:
+            if diff.shape[0] != self.batch_size:
                 raise Exception('Diff is not batch sized')
-            self.blobs[top].diff[...] = diff
+            offset = 0
+            for r in range(self.replica_num):
+                self.blobs(r)[top].diff[...] = diff[offset:offset+self.blobs(r)[top].num]
+                offset += self.blobs(r)[top].num
+            # self.blobs[top].diff[...] = diff
 
     self._backward(start_ind, end_ind)
 
+    ret = {}
+    for out in outputs:
+        diff_blobs = []
+        for r in range(self.replica_num):
+            diff_blobs += [self.blobs(r)[out].diff]
+        ret[out] = np.concatenate(diff_blobs, axis = 0)
     # Unpack diffs to extract
-    return {out: self.blobs[out].diff for out in outputs}
+    return ret
+    # return {out: self.blobs[out].diff for out in outputs}
 
 
 def _Net_forward_all(self, blobs=None, **kwargs):
@@ -214,7 +240,7 @@ def _Net_set_mean(self, input_, mean, mode='elementwise'):
     """
     if input_ not in self.inputs:
         raise Exception('Input not in {}'.format(self.inputs))
-    in_shape = self.blobs[input_].data.shape
+    in_shape = self.blobs(0)[input_].data.shape
     if mode == 'elementwise':
         if mean.shape[1:] != in_shape[2:]:
             # Resize mean (which requires H x W x K input).
@@ -296,7 +322,7 @@ def _Net_preprocess(self, input_name, input_):
     input_scale = self.input_scale.get(input_name)
     raw_scale = self.raw_scale.get(input_name)
     channel_order = self.channel_swap.get(input_name)
-    in_size = self.blobs[input_name].data.shape[2:]
+    in_size = self.blobs(0)[input_name].data.shape[2:]
     if caffe_in.shape[:2] != in_size:
         caffe_in = caffe.io.resize_image(caffe_in, in_size)
     if channel_order is not None:
@@ -357,7 +383,8 @@ def _Net_batch(self, blobs):
     batch: {blob name: list of blobs} dict for a single batch.
     """
     num = len(blobs.itervalues().next())
-    batch_size = self.blobs.itervalues().next().num
+    # batch_size = self.blobs.itervalues().next().num
+    batch_size = self.batch_size
     remainder = num % batch_size
     num_batches = num / batch_size
 
@@ -378,7 +405,8 @@ def _Net_batch(self, blobs):
 
 
 # Attach methods to Net.
-Net.blobs = _Net_blobs
+# Net.blobs = _Net_blobs
+Net.blobs = MethodType(_Net_blobs, None, Net)
 Net.params = _Net_params
 Net.forward = _Net_forward
 Net.backward = _Net_backward
@@ -392,3 +420,4 @@ Net.preprocess = _Net_preprocess
 Net.deprocess = _Net_deprocess
 Net.set_input_arrays = _Net_set_input_arrays
 Net._batch = _Net_batch
+Net.batch_size = _Net_batch_size

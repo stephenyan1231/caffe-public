@@ -310,16 +310,17 @@ void Net<Dtype>::Reshape(){
 
 template<typename Dtype>
 const shared_ptr<Blob<Dtype> > Net<Dtype>::blob_by_name(
-		const string& blob_name) {
-	CHECK_GT(net_threads_.size(), 0);
+		const string& blob_name, int replica_id) {
+	CHECK_GT(net_threads_.size(), replica_id);
 	shared_ptr<Blob<Dtype> > blob_ptr;
 	if (net_threads_[0]->has_blob(blob_name)) {
-		vector<Blob<Dtype>*> thread_blobs;
-		for (int i = 0; i < net_threads_.size(); ++i) {
-			thread_blobs.push_back(net_threads_[i]->blob_by_name(blob_name).get());
-		}
-		blob_ptr.reset(new Blob<Dtype>());
-		blob_ptr->CopyFrom(thread_blobs, false, true);
+		return net_threads_[replica_id]->blob_by_name(blob_name);
+//		vector<Blob<Dtype>*> thread_blobs;
+//		for (int i = 0; i < net_threads_.size(); ++i) {
+//			thread_blobs.push_back(net_threads_[i]->blob_by_name(blob_name).get());
+//		}
+//		blob_ptr.reset(new Blob<Dtype>());
+//		blob_ptr->CopyFrom(thread_blobs, false, true);
 	} else {
 		blob_ptr.reset((Blob<Dtype>*) (NULL));
 		LOG(WARNING)<< "Unknown blob name " << blob_name;
@@ -488,7 +489,7 @@ std::string Net<Dtype>::name() {
 
 template<typename Dtype>
 void Net<Dtype>::ComputeUpdateValue() {
-	int old_device;
+	int old_device = 0;
 	if(Caffe::mode() == Caffe::GPU){
 		old_device = Caffe::GetDeviceId();
 		for (int i = 0; i < net_threads_.size(); ++i) {
