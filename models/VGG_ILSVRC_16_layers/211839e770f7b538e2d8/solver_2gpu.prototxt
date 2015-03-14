@@ -1,0 +1,16 @@
+net: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/train_val_2gpu.prototxt"
+test_iter: 100
+test_interval: 10000
+base_lr: 1e-6
+lr_policy: "step"
+gamma: 0.1
+stepsize: 100000
+display: 50
+max_iter: 450000
+momentum: 0.9
+weight_decay: 0.0005
+snapshot: 500
+snapshot_prefix: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/VGG_ILSVRC_16_layers_2gpu"
+solver_mode: GPU
+device_id: 0
+device_id: 1
