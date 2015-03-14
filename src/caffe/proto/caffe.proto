@@ -241,7 +241,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 129 (last added: window_data_param)
+// LayerParameter next available layer-specific ID: 130 (last added: shift_stitch_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -309,6 +309,7 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional WindowDataParameter window_data_param = 129;
+  optional ShiftStitchParameter shift_stitch_param = 130;  
 }
 
 // Message that stores parameters used to apply transformation
@@ -337,6 +338,13 @@ message LossParameter {
   // If true, normalize each batch across all instances (including spatial
   // dimesions, but not ignored instances); else, divide by batch size only.
   optional bool normalize = 2 [default = true];
+}
+
+message ShiftStitchParameter {
+  optional uint32 iter = 1; // number of iterations of stitching operation 
+  repeated uint32 stride = 2; // The stride (equal in Y, X)
+  repeated uint32 stride_h = 3; // The stride height
+  repeated uint32 stride_w = 4; // The stride width
 }
 
 // Message that stores parameters used by AccuracyLayer

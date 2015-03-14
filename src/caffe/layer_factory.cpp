@@ -4,6 +4,8 @@
 #include "caffe/layer_factory.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/vision_layers.hpp"
+#include "caffe/shift_pooling_layer.hpp"
+#include "caffe/shift_stitch_layer.hpp"
 
 namespace caffe {
 
@@ -60,6 +62,30 @@ Layer<Dtype>* GetPoolingLayer(const LayerParameter& param, int replica_id, Net<D
 }
 
 REGISTER_LAYER_CREATOR(Pooling, GetPoolingLayer);
+
+// Get pooling layer according to engine.
+template <typename Dtype>
+Layer<Dtype>* GetShiftPoolingLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net) {
+  PoolingParameter_Engine engine = param.pooling_param().engine();
+  if (engine == PoolingParameter_Engine_DEFAULT) {
+    engine = PoolingParameter_Engine_CAFFE;
+#ifdef USE_CUDNN
+    engine = PoolingParameter_Engine_CUDNN;
+#endif
+  }
+  if (engine == PoolingParameter_Engine_CAFFE) {
+    return new ShiftPoolingLayer<Dtype>(param,replica_id,net);
+#ifdef USE_CUDNN
+  } else if (engine == PoolingParameter_Engine_CUDNN) {
+  	NOT_IMPLEMENTED;
+#endif
+  } else {
+    LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";
+  }
+}
+
+REGISTER_LAYER_CREATOR(ShiftPooling, GetShiftPoolingLayer);
+
 
 // Get relu layer according to engine.
 template <typename Dtype>
