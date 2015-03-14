@@ -5,7 +5,7 @@ namespace caffe {
 
 template<typename Dtype>
 IBroadcastDiffNetwork<Dtype>* IBroadcastDiffNetwork<Dtype>::make(
-		std::vector<int> &devices, int src_device) {
+		const std::vector<int> &devices, int src_device) {
 //	LOG(INFO)<<"IBroadcastDiffNetwork<Dtype>* IBroadcastDiffNetwork";
 	if (devices.size() == 1) {
 		return new NullDiffBroadcaster<Dtype>(devices, src_device);
@@ -27,7 +27,7 @@ INSTANTIATE_CLASS(NullDiffBroadcaster);
 
 template<typename Dtype>
 TwoPeeringGPUsDiffBroadcaster<Dtype>::TwoPeeringGPUsDiffBroadcaster(
-		std::vector<int> &devices, int src_device) :
+		const std::vector<int> &devices, int src_device) :
 		IBroadcastDiffNetwork<Dtype>(devices, src_device) {
 	CHECK_EQ(devices.size(), 2);
 	tgt_device_ = devices[0] == src_device ? devices[1] : devices[0];
@@ -54,7 +54,7 @@ void TwoPeeringGPUsDiffBroadcaster<Dtype>::BroadcastGpuDiff(
 INSTANTIATE_CLASS(TwoPeeringGPUsDiffBroadcaster);
 
 template<typename Dtype>
-NaiveDiffBroadcaster<Dtype>::NaiveDiffBroadcaster(std::vector<int> &devices,
+NaiveDiffBroadcaster<Dtype>::NaiveDiffBroadcaster(const std::vector<int> &devices,
 		int src_device) :
 		IBroadcastDiffNetwork<Dtype>(devices, src_device) {
 

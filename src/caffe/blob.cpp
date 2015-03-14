@@ -18,9 +18,6 @@ void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
 	height_ = height;
 	width_ = width;
 	count_ = num_ * channels_ * height_ * width_;
-	if(count_ == 0){
-		LOG(INFO)<<"Blob<Dtype>::Reshape count == 0";
-	}
 	if (count_ > capacity_) {
 		capacity_ = count_;
 		data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
@@ -173,7 +170,6 @@ void Blob<Dtype>::Update() {
 	// We will perform update based on where the data is located.
 	switch (data_->head()) {
 	case SyncedMemory::HEAD_AT_CPU:
-		LOG(INFO)<<"Blob<Dtype>::Update HEAD_AT_CPU";
 		// perform computation on CPU
 		caffe_axpy<Dtype>(count_, Dtype(-1),
 				static_cast<const Dtype*>(diff_->cpu_data()),
@@ -182,7 +178,6 @@ void Blob<Dtype>::Update() {
 	case SyncedMemory::HEAD_AT_GPU:
 	case SyncedMemory::SYNCED:
 #ifndef CPU_ONLY
-		DLOG(INFO)<<"Blob<Dtype>::Update HEAD_AT_GPU SYNCED";
 		// perform computation on GPU
 		caffe_gpu_axpy<Dtype>(count_, Dtype(-1),
 				static_cast<const Dtype*>(diff_->gpu_data()),

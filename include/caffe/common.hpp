@@ -180,6 +180,11 @@ class Caffe {
 
   static void InitDevice(int device_id);
 
+  static int GetReplicasNum();
+
+  static const vector<int>& GetActiveDevices();
+
+
   static void SyncDevice();
 
   static void SyncStream(cudaStream_t stream);
@@ -206,7 +211,7 @@ class Caffe {
   boost::mutex random_generator_mutex_;
 
 #endif
-  set<int> device_ids_;
+  vector<int> device_ids_;
   shared_ptr<RNG> random_generator_;
 
   Brew mode_;

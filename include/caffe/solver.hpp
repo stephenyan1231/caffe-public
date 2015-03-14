@@ -65,7 +65,6 @@ class Solver {
   int current_step_;
   shared_ptr<Net<Dtype> > net_;
   vector<shared_ptr<Net<Dtype> > > test_nets_;
-  std::vector<int> device_id_;
 //  boost::shared_mutex data_mutex_;
 
   DISABLE_COPY_AND_ASSIGN(Solver);

@@ -77,8 +77,6 @@ void BlobSGDSolver<Dtype>::ComputeUpdateValue_() {
 
 	switch (Caffe::mode()) {
 	case Caffe::CPU: {
-		// TO DO , update for multi-cpu case
-		//
 		// Compute the value to history, and then copy them to the blob's diff.
 		if (local_decay) {
 			if (regularization_type == "L2") {
