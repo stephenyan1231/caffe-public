@@ -164,8 +164,8 @@ class Net {
   }
 
   /// @brief returns the blobs
-  inline const vector<shared_ptr<Blob<Dtype> > >& blobs(int replica_id = 0) const {
-  	CHECK_GT(Caffe::GetActiveDevices().size(), replica_id);
+  inline const vector<shared_ptr<Blob<Dtype> > >& blobs(int replica_id) const {
+  	CHECK_GT(Caffe::GetReplicasNum(), replica_id);
   	return net_threads_[replica_id]->blobs();
   }
 
@@ -215,7 +215,8 @@ class Net {
   	return net_threads_[0]->input_blob_indices();
   }
 
-  const shared_ptr<Blob<Dtype> > blob_by_name(const string& blob_name);
+  const shared_ptr<Blob<Dtype> > blob_by_name(const string& blob_name,
+  		int replica_id);
 
   DataManager<Dtype>* GetDataManager(){return data_manager_.get();}
 
@@ -226,6 +227,8 @@ class Net {
   SolverParameter& get_solver_param(){return solver_param_;}
 
   Solver<Dtype> *get_solver(){return solver_;}
+
+  int get_batch_size(){return batch_size_;}
 
  protected:
   void ForwardBackwardHelper(const vector<Blob<Dtype>* >& bottom, Dtype *loss, bool do_backward);

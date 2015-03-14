@@ -123,8 +123,8 @@ class PyNet {
     WriteProtoToBinaryFile(net_param, filename.c_str());
   }
 
-  vector<PyBlob<float> > blobs() {
-    return vector<PyBlob<float> >(net_->blobs().begin(), net_->blobs().end());
+  vector<PyBlob<float> > Blobs(int replica_id) {
+    return vector<PyBlob<float> >(net_->blobs(replica_id).begin(), net_->blobs(replica_id).end());
   }
 
   vector<PyLayer> layers() {
@@ -150,6 +150,10 @@ class PyNet {
           net_->blob_names()[net_->output_blob_indices()[i]]);
     }
     return output_blob_names;
+  }
+
+  int replica_num(){
+  	return Caffe::GetReplicasNum();
   }
 
   // Input preprocessing configuration attributes. These are public for

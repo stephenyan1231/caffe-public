@@ -167,7 +167,8 @@ BOOST_PYTHON_MODULE(_caffe) {
       .def("_forward",              &PyNet::Forward)
       .def("_backward",             &PyNet::Backward)
       .def("reshape",               &PyNet::Reshape)
-      .add_property("_blobs",       &PyNet::blobs)
+      .def("_blobs",								&PyNet::Blobs)
+//      .add_property("_blobs",       &PyNet::blobs)
       .add_property("layers",       &PyNet::layers)
       .add_property("_blob_names",  &PyNet::blob_names)
       .add_property("_layer_names", &PyNet::layer_names)
@@ -177,6 +178,7 @@ BOOST_PYTHON_MODULE(_caffe) {
       .add_property("input_scale",  &PyNet::input_scale_)
       .add_property("raw_scale",    &PyNet::raw_scale_)
       .add_property("channel_swap", &PyNet::channel_swap_)
+      .add_property("replica_num",  &PyNet::replica_num)
       .def("_set_input_arrays",     &PyNet::set_input_arrays)
       .def("save",                  &PyNet::save);
 
