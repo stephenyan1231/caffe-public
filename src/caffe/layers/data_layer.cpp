@@ -25,7 +25,7 @@ DataLayer<Dtype>::~DataLayer<Dtype>() {
 template<typename Dtype>
 void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
-	int num_replicas = this->net_->GetDeviceIds().size();
+	int num_replicas = Caffe::GetReplicasNum();
 	int replica_batch_size = divide_up(
 			this->layer_param_.data_param().batch_size(), num_replicas);
 	int rest_size = this->layer_param_.data_param().batch_size() - this->replica_id_ * replica_batch_size;

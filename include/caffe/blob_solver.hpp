@@ -45,8 +45,7 @@ public:
 		if (!blob_diff_broadcaster_.get()) {
 			int device_id = net_thread_->get_device_id();
 			blob_diff_broadcaster_.reset(
-					IBroadcastDiffNetwork<Dtype>::make(
-							net_thread_->get_net()->GetDeviceIds(), device_id));
+					IBroadcastDiffNetwork<Dtype>::make(Caffe::GetActiveDevices(), device_id));
 		}
 		return blob_diff_broadcaster_;
 	}

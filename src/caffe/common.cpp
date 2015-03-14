@@ -204,7 +204,7 @@ void Caffe::DeviceQuery() {
 
 int Caffe::GetDeviceId() {
 	int d = 0;
-	if(Caffe::mode() == GPU){
+	if (Caffe::mode() == GPU) {
 		CUDA_CHECK(cudaGetDevice(&d));
 	}
 	return d;
@@ -212,7 +212,7 @@ int Caffe::GetDeviceId() {
 
 cublasHandle_t Caffe::cublas_handle(int device_id) {
 	Get().cublas_mutex_.lock();
-	CHECK_EQ(Get().cublas_handle_.count(device_id),1);
+	CHECK_EQ(Get().cublas_handle_.count(device_id), 1);
 	cublasHandle_t ret = Get().cublas_handle_[device_id];
 	Get().cublas_mutex_.unlock();
 	return ret;
@@ -225,10 +225,10 @@ void Caffe::InitDevices(const std::vector<int> &device_id) {
 }
 
 void Caffe::InitDevice(int device_id) {
-	if (Get().device_ids_.count(device_id) != 0) {
-		return;
+	for (int i = 0; i < Get().device_ids_.size(); ++i) {
+		CHECK(Get().device_ids_[i] != device_id)<<"duplicate device ids "<<device_id;
 	}
-	Get().device_ids_.insert(device_id);
+	Get().device_ids_.push_back(device_id);
 
 	// The call to cudaSetDevice must come before any calls to Get, which
 	// may perform initialization using the GPU.
@@ -259,25 +259,38 @@ void Caffe::InitDevice(int device_id) {
 	SyncDevice();
 }
 
+const vector<int>& Caffe::GetActiveDevices(){
+	return Get().device_ids_;
+}
+
+int Caffe::GetReplicasNum(){
+	if(Caffe::mode() == Caffe::CPU){
+		return 1;
+	}
+	else{
+		return Get().device_ids_.size();
+	}
+}
+
+
 void Caffe::SyncDevice() {
 	CUDA_CHECK(cudaDeviceSynchronize());
 }
 
-void Caffe::SyncStream(cudaStream_t stream){
+void Caffe::SyncStream(cudaStream_t stream) {
 	CUDA_CHECK(cudaStreamSynchronize(stream));
 }
 
-void Caffe::CublasSetStream(cublasHandle_t handle){
+void Caffe::CublasSetStream(cublasHandle_t handle) {
 	CUBLAS_CHECK(cublasSetStream(handle, 0));
 }
 
-void Caffe::CublasSetStream(cublasHandle_t handle, cudaStream_t stream){
+void Caffe::CublasSetStream(cublasHandle_t handle, cudaStream_t stream) {
 	CUBLAS_CHECK(cublasSetStream(handle, stream));
 }
 
-
-bool Caffe::CanAccessPeer(int src_device, int tgt_device){
-	if(src_device == tgt_device){
+bool Caffe::CanAccessPeer(int src_device, int tgt_device) {
+	if (src_device == tgt_device) {
 		return true;
 	}
 	int can_access;
@@ -432,8 +445,8 @@ std::vector<int> parse_int_list(std::string s, std::string delimiter) {
 	return intv;
 }
 
-int divide_up(int n, int m){
-	return (n + m -1) / m;
+int divide_up(int n, int m) {
+	return (n + m - 1) / m;
 }
 
 }  // namespace caffe

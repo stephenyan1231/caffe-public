@@ -167,8 +167,6 @@ void DataManager<Dtype>::InternalThreadEntry() {
 template<typename Dtype>
 void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 		const vector<Blob<Dtype>*>& top) {
-	DLOG(INFO)<<"DataManager<Dtype>::CopyFetchDataToConvThread caffe mode "<<Caffe::mode()
-	<<" replica_id "<<replica_id;
 
 	forward_count_mutex_.lock();
 	forward_count_++;
@@ -177,74 +175,50 @@ void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 		JoinPrefetchThread();
 	}
 	forward_count_mutex_.unlock();
-	int num_replicas = net_->GetDeviceIds().size();
+	int num_replicas = Caffe::GetReplicasNum();
 
 //	prefetch_data_mutex_.lock_shared();
 	int batch_size = prefetch_data_.num();
 	int replica_batch_size = divide_up(batch_size, num_replicas);
 	int start = replica_batch_size*replica_id;
 	int end = start + net_->GetBatchSize(replica_id);
-//	LOG(INFO)<<" DataManager<Dtype>::CopyFetchDataToConvThread start "<<start<<" end "<<end;
 	CHECK_EQ(top[0]->num(), end - start);
 	CHECK_EQ(top[0]->channels(),prefetch_data_.channels());
 	CHECK_EQ(top[0]->height(),prefetch_data_.height());
 	CHECK_EQ(top[0]->width(),prefetch_data_.width());
 
-//	LOG(INFO)<<"DataManager<Dtype>::CopyFetchDataToConvThread tag1";
-//
-//	int old_device = 0;
-//	if(Caffe::mode() == Caffe::GPU) {
-//		old_device = Caffe::GetDeviceId();
-//		Caffe::SetDevice(net_->GetDeviceIds()[replica_id]);
-//	}
-
 	int unit_size = prefetch_data_.count() / prefetch_data_.num();
 
-	caffe_copy(unit_size * (end - start),
-			prefetch_data_.cpu_data() + prefetch_data_.offset(start),
-			top[0]->mutable_gpu_data());
-
-//	if(Caffe::mode() == Caffe::GPU) {
-//		// TO DO
-//		// assume peer-to-peer access is enabled
-//		caffe_copy(unit_size * (end - start), fetch_data_.gpu_data() + fetch_data_.offset(start), top[0]->mutable_gpu_data());
-//	}
-//	else {
-//		caffe_copy(unit_size * (end -start), fetch_data_.cpu_data() + fetch_data_.offset(start), top[0]->mutable_cpu_data());
-//	}
-
-//	LOG(INFO)<<"DataManager<Dtype>::CopyFetchDataToConvThread tag2";
+	if(Caffe::mode() == Caffe::CPU){
+		caffe_copy(unit_size * (end - start),
+				prefetch_data_.cpu_data() + prefetch_data_.offset(start),
+				top[0]->mutable_cpu_data());
+	}else{
+		caffe_copy(unit_size * (end - start),
+				prefetch_data_.cpu_data() + prefetch_data_.offset(start),
+				top[0]->mutable_gpu_data());
+	}
 
 	if(output_labels_) {
 		CHECK_EQ(top[1]->num(), end-start);
 		CHECK_EQ(top[1]->channels(),prefetch_label_.channels());
 		CHECK_EQ(top[1]->height(),prefetch_label_.height());
 		CHECK_EQ(top[1]->width(),prefetch_label_.width());
-		caffe_copy(end-start,prefetch_label_.cpu_data()+prefetch_label_.offset(start),
+		if(Caffe::mode() == Caffe::CPU){
+			caffe_copy(end-start,prefetch_label_.cpu_data()+prefetch_label_.offset(start),
+				top[1]->mutable_cpu_data());
+		}else{
+			caffe_copy(end-start,prefetch_label_.cpu_data()+prefetch_label_.offset(start),
 				top[1]->mutable_gpu_data());
-//		if(Caffe::mode() == Caffe::GPU) {
-//			// TO DO
-//			// assume peer-to-peer access is enabled
-//			caffe_copy(end-start,fetch_label_.gpu_data()+fetch_label_.offset(start),top[1]->mutable_gpu_data());
-//		}
-//		else {
-//			caffe_copy(end-start,fetch_label_.cpu_data()+fetch_label_.offset(start),top[1]->mutable_cpu_data());
-//		}
+		}
 	}
-//	LOG(INFO)<<"DataManager<Dtype>::CopyFetchDataToConvThread tag3";
-
-//	prefetch_data_mutex_.unlock_shared();
 
 	forward_count_mutex_.lock();
-	if(forward_count_ == net_->GetDeviceIds().size()) {
+	if(forward_count_ == num_replicas) {
 		// create thread to fetch next batch data
 		CreatePrefetchThread();
 	}
 	forward_count_mutex_.unlock();
-
-//	if(Caffe::mode() == Caffe::GPU) {
-//		Caffe::SetDevice(old_device);
-//	}
 }
 
 INSTANTIATE_CLASS(DataManager);

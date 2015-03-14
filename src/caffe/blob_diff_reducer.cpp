@@ -8,7 +8,7 @@ template<typename Dtype>
 BlobDiffReducer<Dtype>::BlobDiffReducer(NetThread<Dtype> *net_thread):
 net_thread_(net_thread){
 	sb_.reset(new StreamBroadcast<Dtype>);
-	sb_->Init(net_thread_->get_net()->GetDeviceIds());
+	sb_->Init(Caffe::GetActiveDevices());
 }
 
 // sequentially reduce gradients
@@ -20,7 +20,7 @@ void BlobDiffReducer<Dtype>::ReduceGpuDiff(
 	std::map<int, shared_ptr<Blob<Dtype> > > blobs;
 	Net<Dtype>* net = net_thread->get_net();
 	int device_id = net_thread->get_device_id();
-	std::vector<int>& device_ids = net->GetDeviceIds();
+	const std::vector<int>& device_ids = Caffe::GetActiveDevices();
 
 	blobs[device_id] = shards[device_id];
 	for (int i = 0; i < device_ids.size(); ++i) {

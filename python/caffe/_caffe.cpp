@@ -154,6 +154,8 @@ BOOST_PYTHON_MODULE(_caffe) {
   bp::def("set_phase_train",       &set_phase_train);
   bp::def("set_phase_test",        &set_phase_test);
   bp::def("set_device",            &Caffe::SetDevice);
+  bp::def("init_device",            &Caffe::InitDevice);
+
 
   // below, we prepend an underscore to methods that will be replaced
   // in Python

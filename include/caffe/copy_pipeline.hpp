@@ -13,14 +13,14 @@ class Blob;
 template <typename Dtype>
 class IBroadcastDiffNetwork {
 public:
-	explicit IBroadcastDiffNetwork(std::vector<int> &devices, int src_device):
+	explicit IBroadcastDiffNetwork(const std::vector<int> &devices, int src_device):
 	src_device_(src_device){}
 	virtual ~IBroadcastDiffNetwork(){}
 
 	virtual void BroadcastGpuDiff(std::map<int, shared_ptr<Blob<Dtype> > > &shards,
 			Dtype scale_src, Dtype scale_tgt) = 0;
 
-	static IBroadcastDiffNetwork<Dtype>* make(std::vector<int> &devices, int src_device);
+	static IBroadcastDiffNetwork<Dtype>* make(const std::vector<int> &devices, int src_device);
 
 protected:
 	int src_device_;
@@ -32,7 +32,7 @@ protected:
 template <typename Dtype>
 class NullDiffBroadcaster: public IBroadcastDiffNetwork<Dtype>{
 public:
-	explicit NullDiffBroadcaster(std::vector<int> &devices, int src_device):
+	explicit NullDiffBroadcaster(const std::vector<int> &devices, int src_device):
 	IBroadcastDiffNetwork<Dtype>(devices, src_device){
 
 	}
@@ -48,7 +48,7 @@ protected:
 template <typename Dtype>
 class TwoPeeringGPUsDiffBroadcaster: public IBroadcastDiffNetwork<Dtype>{
 public:
-	explicit TwoPeeringGPUsDiffBroadcaster(std::vector<int> &devices, int src_device);
+	explicit TwoPeeringGPUsDiffBroadcaster(const std::vector<int> &devices, int src_device);
 	~TwoPeeringGPUsDiffBroadcaster();
 
 	void BroadcastGpuDiff(std::map<int, shared_ptr<Blob<Dtype> > > &shards,
@@ -63,7 +63,7 @@ protected:
 template <typename Dtype>
 class NaiveDiffBroadcaster: public IBroadcastDiffNetwork<Dtype>{
 public:
-	explicit NaiveDiffBroadcaster(std::vector<int> &devices, int src_device);
+	explicit NaiveDiffBroadcaster(const std::vector<int> &devices, int src_device);
 	~NaiveDiffBroadcaster();
 
 	void BroadcastGpuDiff(std::map<int, shared_ptr<Blob<Dtype> > > &shards,

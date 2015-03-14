@@ -37,11 +37,12 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
 	if (param_.random_seed() >= 0) {
 		Caffe::set_random_seed(param_.random_seed());
 	}
-	device_id_.resize(param.device_id_size());
+	std::vector<int> device_ids;
+	device_ids.resize(param.device_id_size());
 	for(int i = 0;i < param.device_id_size(); ++i) {
-		device_id_[i] = param.device_id(i);
+		device_ids[i] = param.device_id(i);
 	}
-	Caffe::InitDevices(device_id_);
+	Caffe::InitDevices(device_ids);
 	// Scaffolding code
 	InitTrainNet();
 	InitTestNets();
@@ -86,7 +87,7 @@ void Solver<Dtype>::InitTrainNet() {
 	net_state.MergeFrom(net_param.state());
 	net_state.MergeFrom(param_.train_state());
 	net_param.mutable_state()->CopyFrom(net_state);
-	net_.reset(new Net<Dtype>(net_param, device_id_, this, param_));
+	net_.reset(new Net<Dtype>(net_param, this, param_));
 	net_->PostInit();
 }
 
@@ -158,7 +159,7 @@ void Solver<Dtype>::InitTestNets() {
 		net_params[i].mutable_state()->CopyFrom(net_state);
 		LOG(INFO)<< "Creating test net (#" << i << ") specified by " << sources[i];
 		test_nets_[i].reset(
-				new Net<Dtype>(net_params[i], device_id_, this, param_));
+				new Net<Dtype>(net_params[i], this, param_));
 		test_nets_[i]->set_debug_info(param_.debug_info());
 		test_nets_[i]->PostInit();
 	}

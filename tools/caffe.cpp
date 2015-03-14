@@ -87,7 +87,7 @@ int train() {
 	caffe::ReadProtoFromTextFileOrDie(FLAGS_solver, &solver_param);
 
 	std::vector<int> device_ids;
-	if(FLAGS_gpu.length() >= 0) {
+	if(FLAGS_gpu.length() > 0) {
 		device_ids = caffe::parse_int_list(FLAGS_gpu);
 		LOG(INFO) << "Use GPUs with device IDs below";
 		for(int i = 0; i < device_ids.size(); ++i){
@@ -108,12 +108,9 @@ int train() {
 	}
 	else{
 		LOG(INFO) << "Use CPU.";
+		// for cpu mode, just create a single net thread
 		Caffe::set_mode(Caffe::CPU);
 	}
-
-	LOG(INFO)<<"Caffe::InitDevices";
-	Caffe::InitDevices(device_ids);
-
 
 	LOG(INFO) << "Starting Optimization";
 	shared_ptr<caffe::Solver<float> >
@@ -150,12 +147,13 @@ int test() {
 	else {
 		LOG(INFO) << "Use CPU.";
 		Caffe::set_mode(Caffe::CPU);
-		device_ids.resize(0);
 	}
+
 
 	// Instantiate the caffe net.
 	Caffe::set_phase(Caffe::TEST);
-	Net<float> caffe_net(FLAGS_model, device_ids);
+	Caffe::InitDevices(device_ids);
+	Net<float> caffe_net(FLAGS_model);
 	caffe_net.PostInit();
 	caffe_net.CopyTrainedLayersFrom(FLAGS_weights);
 	LOG(INFO) << "Running for " << FLAGS_iterations << " iterations.";
@@ -223,9 +221,10 @@ int time() {
 		device_ids.resize(0);
 	}
 
+	Caffe::InitDevices(device_ids);
 	// Instantiate the caffe net.
 	Caffe::set_phase(Caffe::TRAIN);
-	Net<float> caffe_net(FLAGS_model, device_ids);
+	Net<float> caffe_net(FLAGS_model);
 	caffe_net.PostInit();
 
 	// Do a clean forward and backward pass, so that memory allocation are done
