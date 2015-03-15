@@ -51,6 +51,7 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // and no padding, so flag for skipping the buffer and transformation.
   is_1x1_ = kernel_w_ == 1 && kernel_h_ == 1
       && stride_h_ == 1 && stride_w_ == 1 && pad_h_ == 0 && pad_w_ == 0;
+  init_from_inner_product_ = conv_param.init_from_inner_product();
   // Configure output channels and groups.
   channels_ = bottom[0]->channels();
   num_output_ = this->layer_param_.convolution_param().num_output();

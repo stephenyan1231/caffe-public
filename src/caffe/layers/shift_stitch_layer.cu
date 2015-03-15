@@ -41,7 +41,7 @@ void ShiftStitchLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 		} else {
 			src_blob = tgt_blob;
 		}
-		if (i != iter_ - 1) {
+		if (i == (iter_ - 1)) {
 			tgt_blob = top[0];
 		} else {
 			tgt_blob = new Blob<Dtype>(iter_out_num, channels_, iter_out_height,

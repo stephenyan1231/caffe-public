@@ -449,8 +449,13 @@ void Blob<Dtype>::CopyFrom(const vector<Blob<Dtype>*> &sources, bool copy_diff,
 }
 
 template<typename Dtype>
-void Blob<Dtype>::FromProto(const BlobProto& proto) {
-	Reshape(proto.num(), proto.channels(), proto.height(), proto.width());
+void Blob<Dtype>::FromProto(const BlobProto& proto, bool enforce_shape) {
+	if(enforce_shape){
+		Reshape(proto.num(), proto.channels(), proto.height(), proto.width());
+	}else{
+		CHECK_EQ(count_, proto.num() * proto.channels() * proto.height() * proto.width())
+				<<"Copy blob data without enforcing shape. Target blob should have same count as that of source blob";
+	}
 	// copy data
 	Dtype* data_vec = mutable_cpu_data();
 	for (int i = 0; i < count_; ++i) {

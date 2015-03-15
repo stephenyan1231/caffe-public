@@ -23,6 +23,8 @@ void ShiftStitchLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 		for (int i = 0; i < iter_; ++i) {
 			stride_h_[i] = pool_param.stride(i);
 			stride_w_[i] = pool_param.stride(i);
+			DLOG(INFO)<<"ShiftStitchLayer<Dtype>::LayerSetUp i "<<i<<" stride_h_ "
+					<<stride_h_[i]<<" stride_w_ "<<stride_w_[i];
 		}
 	} else {
 		CHECK_EQ(iter_, pool_param.stride_h_size());
@@ -69,7 +71,7 @@ void ShiftStitchLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 		} else {
 			src_blob = tgt_blob;
 		}
-		if (i != iter_ - 1) {
+		if (i == (iter_ - 1)) {
 			tgt_blob = top[0];
 		} else {
 			tgt_blob = new Blob<Dtype>(iter_out_num, channels_, iter_out_height,

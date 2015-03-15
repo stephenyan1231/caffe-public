@@ -75,6 +75,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   int height_out_, width_out_;
   bool bias_term_;
   bool is_1x1_;
+  bool init_from_inner_product_;
 
  private:
   // wrap im2col/col2im so we don't have to remember the (long) argument lists

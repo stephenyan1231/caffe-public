@@ -86,7 +86,6 @@ Layer<Dtype>* GetShiftPoolingLayer(const LayerParameter& param, int replica_id, 
 
 REGISTER_LAYER_CREATOR(ShiftPooling, GetShiftPoolingLayer);
 
-
 // Get relu layer according to engine.
 template <typename Dtype>
 Layer<Dtype>* GetReLULayer(const LayerParameter& param, int replica_id, Net<Dtype> *net) {

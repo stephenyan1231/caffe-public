@@ -1265,16 +1265,33 @@ void NetThread<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
 			DLOG(INFO)<< "Ignoring source layer " << source_layer_name;
 			continue;
 		}
-		DLOG(INFO)<< "Copying source layer " << source_layer_name;
+		LOG(INFO)<< "Copying source layer " << source_layer_name;
 		vector<shared_ptr<Blob<Dtype> > >& target_blobs =
 				layers_[target_layer_id]->blobs();
 		CHECK_EQ(target_blobs.size(), source_layer.blobs_size())<< "Incompatible number of blobs for layer " << source_layer_name;
+		shared_ptr<Layer<Dtype> > target_layer = layers_[target_layer_id];
+		bool conv_init_from_inner_product = false;
+		if(source_layer.type() == std::string("InnerProduct") &&
+				std::string(target_layer->type()) == std::string("Convolution")){
+		  ConvolutionParameter conv_param = target_layer->layer_param().convolution_param();
+		  conv_init_from_inner_product = conv_param.init_from_inner_product();
+		}
 		for (int j = 0; j < target_blobs.size(); ++j) {
-			CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
-			CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
-			CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
-			CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
-			target_blobs[j]->FromProto(source_layer.blobs(j));
+			if(!conv_init_from_inner_product){
+				CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
+				CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
+				CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
+				CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
+				target_blobs[j]->FromProto(source_layer.blobs(j));
+			}
+			else{
+				LOG(INFO)<<"conv_init_from_inner_product true";
+				CHECK_EQ(target_blobs[j]->num()*target_blobs[j]->channels()*
+						target_blobs[j]->height()*target_blobs[j]->width(),
+						source_layer.blobs(j).num()*source_layer.blobs(j).channels()*
+						source_layer.blobs(j).height()*source_layer.blobs(j).width());
+				target_blobs[j]->FromProto(source_layer.blobs(j), false);
+			}
 		}
 	}
 }
