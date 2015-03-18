@@ -1290,7 +1290,7 @@ void NetThread<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
 						target_blobs[j]->height()*target_blobs[j]->width(),
 						source_layer.blobs(j).num()*source_layer.blobs(j).channels()*
 						source_layer.blobs(j).height()*source_layer.blobs(j).width());
-				target_blobs[j]->FromProto(source_layer.blobs(j), false);
+				target_blobs[j]->FromProto(source_layer.blobs(j));
 			}
 		}
 	}
