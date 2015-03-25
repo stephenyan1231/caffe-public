@@ -10,7 +10,7 @@ template <typename Dtype>
 BaseDataLayer<Dtype>::BaseDataLayer(const LayerParameter& param, int replica_id, Net<Dtype> *net)
     : Layer<Dtype>(param,replica_id,net),
       transform_param_(param.transform_param()),
-      data_transformer_(transform_param_) {
+      data_transformer_(transform_param_, param.phase()) {
 }
 
 template <typename Dtype>

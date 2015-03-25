@@ -45,8 +45,8 @@ class Net {
   void Init(const NetParameter& in_param);
   void PostInit();
 
-  void InitDataManager(const NetParameter& param);
-  void InitNetThreads(const NetParameter& param);
+  void InitDataManager(NetParameter& param);
+  void InitNetThreads(NetParameter& param);
   void ConnectReplicas();
 
   void SetBatchSize(int replica_id, int batch_size){
@@ -228,12 +228,16 @@ class Net {
 
   Solver<Dtype> *get_solver(){return solver_;}
 
+  Phase get_phase(){return phase_;}
+
   int get_batch_size(){return batch_size_;}
 
  protected:
   void ForwardBackwardHelper(const vector<Blob<Dtype>* >& bottom, Dtype *loss, bool do_backward);
 
   Solver<Dtype> *solver_;
+  /// @brief The phase: TRAIN or TEST
+  Phase phase_;
   SolverParameter solver_param_;
   vector<NetThread<Dtype>* > net_threads_;
   vector<map<int, shared_ptr<Layer<Dtype> > > > layer_map_;
@@ -253,7 +257,7 @@ class Net {
 template <typename Dtype>
 class NetThread : public InternalThread{
 public:
-  explicit NetThread(const NetParameter& param, int device_id, int replica_id,
+  explicit NetThread(NetParameter& param, int device_id, int replica_id,
   		Net<Dtype> *net, const SolverParameter &solver_param);
   virtual ~NetThread() {}
 
@@ -282,7 +286,7 @@ public:
   void InitCuda();
 
   /// @brief Initialize a network with a NetParameter.
-  void Init(const NetParameter& param);
+  void Init(NetParameter& param);
 
   void PostInit();
   /**

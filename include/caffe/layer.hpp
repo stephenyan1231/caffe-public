@@ -37,6 +37,7 @@ public:
 	explicit Layer(const LayerParameter& param, int replica_id, Net<Dtype> *net) :
 			layer_param_(param), replica_id_(replica_id), net_(net) {
 		// The only thing we do is to copy blobs if there are any.
+    phase_ = param.phase();
 		if (layer_param_.blobs_size() > 0) {
 			blobs_.resize(layer_param_.blobs_size());
 			for (int i = 0; i < layer_param_.blobs_size(); ++i) {
@@ -325,6 +326,8 @@ public:
 protected:
 	/** The protobuf that stores the layer parameters */
 	LayerParameter layer_param_;
+  /** The phase: TRAIN or TEST */
+  Phase phase_;
 	/** The vector that stores the learnable parameters as a set of blobs. */
 	vector<shared_ptr<Blob<Dtype> > > blobs_;
 	/** Vector indicating whether to compute the diff of each param blob. */

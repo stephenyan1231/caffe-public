@@ -46,6 +46,7 @@ Net<Dtype>::Net(const string& param_file,
 
 template<typename Dtype>
 void Net<Dtype>::Init(const NetParameter& in_param) {
+	phase_ = in_param.state().phase();
 	losses_.resize(Caffe::GetReplicasNum());
 	batch_sizes_.resize(Caffe::GetReplicasNum());
 
@@ -102,12 +103,15 @@ void Net<Dtype>::PostInit() {
 }
 
 template<typename Dtype>
-void Net<Dtype>::InitDataManager(const NetParameter& param) {
+void Net<Dtype>::InitDataManager(NetParameter& param) {
 	// Hack
 	for (int layer_id = 0; layer_id < param.layer_size(); ++layer_id) {
-		const LayerParameter& layer_param = param.layer(layer_id);
-		if (layer_param.type() == std::string("Data")) {
-			data_manager_.reset(new DataManager<Dtype>(layer_param, this));
+		LayerParameter* layer_param = param.mutable_layer(layer_id);
+		if (layer_param->type() == std::string("Data")) {
+	    if (!layer_param->has_phase()) {
+	    	layer_param->set_phase(phase_);
+	    }
+			data_manager_.reset(new DataManager<Dtype>(*layer_param, this));
 			data_manager_->CreatePrefetchThread();
 			break;
 		}
@@ -116,7 +120,7 @@ void Net<Dtype>::InitDataManager(const NetParameter& param) {
 }
 
 template<typename Dtype>
-void Net<Dtype>::InitNetThreads(const NetParameter& param) {
+void Net<Dtype>::InitNetThreads(NetParameter& param) {
 	LOG(INFO)<<"solver train net "<<solver_param_.net();
 	const std::vector<int>& device_ids = Caffe::GetActiveDevices();
 
@@ -625,7 +629,7 @@ void Net<Dtype>::ForwardBackwardHelper(const vector<Blob<Dtype>*>& bottom,
 INSTANTIATE_CLASS(Net);
 
 template<typename Dtype>
-NetThread<Dtype>::NetThread(const NetParameter& param, int device_id,
+NetThread<Dtype>::NetThread(NetParameter& param, int device_id,
 		int replica_id, Net<Dtype>* net, const SolverParameter &solver_param) :
 		device_id_(device_id), replica_id_(replica_id), net_(net) {
 	if(device_id_ >= 0){
@@ -654,7 +658,7 @@ void NetThread<Dtype>::InitCuda() {
 }
 
 template<typename Dtype>
-void NetThread<Dtype>::Init(const NetParameter& param) {
+void NetThread<Dtype>::Init(NetParameter& param) {
 
 	// Basically, build all the layers and set up its connections.
 	name_ = param.name();
@@ -678,6 +682,10 @@ void NetThread<Dtype>::Init(const NetParameter& param) {
 	top_id_vecs_.resize(param.layer_size());
 	bottom_need_backward_.resize(param.layer_size());
 	for (int layer_id = 0; layer_id < param.layer_size(); ++layer_id) {
+    // Inherit phase from net if unset.
+    if (!param.layer(layer_id).has_phase()) {
+      param.mutable_layer(layer_id)->set_phase(net_->get_phase());
+    }
 		const LayerParameter& layer_param = param.layer(layer_id);
 		layers_.push_back(
 				shared_ptr<Layer<Dtype> >(

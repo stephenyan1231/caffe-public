@@ -24,8 +24,8 @@ template<typename Dtype>
 DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 		Net<Dtype> *net) :
 		InternalThread(), layer_param_(data_layer_param), transform_param_(
-				layer_param_.transform_param()), data_transformer_(transform_param_), net_(
-				net) {
+				layer_param_.transform_param()),
+				data_transformer_(transform_param_, data_layer_param.phase()), net_(net) {
 	// Hack
 	if(layer_param_.top_size() > 1) {
 		this->output_labels_ = true;
