@@ -241,7 +241,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 129 (last added: window_data_param)
+// LayerParameter next available layer-specific ID: 132 (last added: fine2coarse_prob_layer_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -312,6 +312,9 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional WindowDataParameter window_data_param = 129;
+  optional MultinomialLogisticSparsityLossParameter multinomial_logistic_sparsity_loss_param = 130;
+  optional CompactProbilisticAverageProbLayerParameter compact_probabilistic_average_prob_layer_param = 131;
+  optional Fine2CoarseProbLayerParameter fine2coarse_prob_layer_param = 132;  
 }
 
 // Message that stores parameters used to apply transformation
@@ -705,6 +708,25 @@ message WindowDataParameter {
   optional string root_folder = 13 [default = ""];
 }
 
+message MultinomialLogisticSparsityLossParameter {
+	optional float sparsity_lamda = 1 [default = 0];
+	repeated float target_sparsity = 2;
+}
+
+message CompactClassifyLayerParameter {
+	repeated uint32 class_id = 1;
+}
+
+message CompactProbilisticAverageProbLayerParameter {
+	required uint32 num_class = 1; 
+	repeated CompactClassifyLayerParameter compact_classify_layer_param = 2;
+}
+
+message Fine2CoarseProbLayerParameter {
+	required uint32 num_coarse = 1;
+	repeated uint32 fine2coarse = 2;
+}
+	
 // DEPRECATED: use LayerParameter.
 message V1LayerParameter {
   repeated string bottom = 2;

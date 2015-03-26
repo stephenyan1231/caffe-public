@@ -113,6 +113,11 @@ class Net {
 
   void CopyTrainedLayersFrom(const NetParameter& param);
   void CopyTrainedLayersFrom(const string trained_filename);
+  void CopyTrainedLayersFrom(const std::vector<string> &trained_filenames);
+
+  void CopyTrainedLayersFromSuffixMatch(const NetParameter& param);
+  void CopyTrainedLayersFromSuffixMatch(const string trained_filename);
+  void CopyTrainedLayersFromSuffixMatch(const std::vector<string> &trained_filenames);
   /// @brief Writes the net to a proto.
   void ToProto(NetParameter* param, bool write_diff = false) const;
   // Helpers for Init.
@@ -363,6 +368,9 @@ public:
    */
   void CopyTrainedLayersFrom(const NetParameter& param);
   void CopyTrainedLayersFrom(const string trained_filename);
+
+  void CopyTrainedLayersFromSuffixMatch(const NetParameter& param);
+  void CopyTrainedLayersFromSuffixMatch(const string trained_filename);
   /// @brief Writes the net to a proto.
   void ToProto(NetParameter* param, bool write_diff = false) const;
 
