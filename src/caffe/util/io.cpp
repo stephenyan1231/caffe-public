@@ -99,6 +99,33 @@ cv::Mat ReadImageToCVMat(const string& filename) {
   return ReadImageToCVMat(filename, 0, 0, true);
 }
 
+cv::Mat ReadImageToCVMat(const string& filename,
+    const int short_side_size, const bool is_color){
+  cv::Mat cv_img;
+  int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
+    CV_LOAD_IMAGE_GRAYSCALE);
+  cv::Mat cv_img_origin = cv::imread(filename, cv_read_flag);
+  if (!cv_img_origin.data) {
+    LOG(ERROR) << "Could not open or find file " << filename;
+    return cv_img_origin;
+  }
+
+  if (short_side_size > 0) {
+  	int width = 0, height = 0;
+  	if(cv_img_origin.rows < cv_img_origin.cols){
+  		height = short_side_size;
+  		width = ceil((float(cv_img_origin.cols)/float(cv_img_origin.rows)) * height);
+  	}else{
+  		width = short_side_size;
+  		height = ceil((float(cv_img_origin.rows)/float(cv_img_origin.cols)) * width);
+  	}
+    cv::resize(cv_img_origin, cv_img, cv::Size(width, height));
+  } else {
+    cv_img = cv_img_origin;
+  }
+  return cv_img;
+}
+
 bool ReadImageToDatum(const string& filename, const int label,
     const int height, const int width, const bool is_color, Datum* datum) {
   cv::Mat cv_img = ReadImageToCVMat(filename, height, width, is_color);
@@ -110,6 +137,19 @@ bool ReadImageToDatum(const string& filename, const int label,
     return false;
   }
 }
+
+bool ReadImageToDatum(const string& filename, const int label,
+    const int short_side_size, const bool is_color, Datum* datum){
+  cv::Mat cv_img = ReadImageToCVMat(filename, short_side_size, is_color);
+  if (cv_img.data) {
+    CVMatToDatum(cv_img, datum);
+    datum->set_label(label);
+    return true;
+  } else {
+    return false;
+  }
+}
+
 
 bool ReadFileToDatum(const string& filename, const int label,
     Datum* datum) {
@@ -204,6 +244,25 @@ void CVMatToDatum(const cv::Mat& cv_img, Datum* datum) {
   }
   datum->set_data(buffer);
 }
+
+cv::Mat* DatumToCVMat(const Datum &datum) {
+	int datum_channels = datum.channels();
+	int datum_height = datum.height();
+	int datum_width = datum.width();
+	// support 3 channels only now
+	CHECK_EQ(datum_channels, 3);
+	cv::Mat* cv_img = new cv::Mat(datum_height, datum_width, CV_8UC3);
+	for (int h = 0; h < datum_height; ++h) {
+		for (int w = 0; w < datum_width; ++w) {
+			for (int c = 0; c < datum_channels; ++c) {
+				int datum_index = (c * datum_height + h) * datum_width + w;
+				cv_img->at<cv::Vec3b>(h, w)[c] = datum.data()[datum_index];
+			}
+		}
+	}
+	return cv_img;
+}
+
 
 // Verifies format of data stored in HDF5 file and reshapes blob accordingly.
 template <typename Dtype>

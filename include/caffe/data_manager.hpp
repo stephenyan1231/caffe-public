@@ -19,53 +19,74 @@
 
 namespace caffe {
 
-template <typename Dtype>
+template<typename Dtype>
 class Net;
 
-template <typename Dtype>
-class DataManager :public InternalThread{
+template<typename Dtype>
+class BaseDataManager: public InternalThread {
+public:
+	explicit BaseDataManager(const LayerParameter& data_layer_param,
+			Net<Dtype> *net);
+	~BaseDataManager();
+
+	inline int GetDatumChannels() {
+		return datum_channels_;
+	}
+	inline int GetDatumHeight() {
+		return datum_height_;
+	}
+	inline int GetDatumWidth() {
+		return datum_width_;
+	}
+
+	virtual void CreatePrefetchThread();
+	virtual void JoinPrefetchThread();
+	virtual void InternalThreadEntry() = 0;
+	virtual void CopyFetchDataToConvThread(int replica_id,
+			const vector<Blob<Dtype>*>& top) = 0;
+
+protected:
+	virtual void CreatePrefetchThread_() = 0;
+
+	LayerParameter layer_param_;
+	Net<Dtype> *net_;
+
+	shared_ptr<db::DB> db_;
+	shared_ptr<db::Cursor> cursor_;
+
+	int datum_channels_, datum_height_, datum_width_;
+
+	int forward_count_;
+	boost::mutex forward_count_mutex_;
+};
+
+template<typename Dtype>
+class DataManager: public BaseDataManager<Dtype> {
 public:
 	explicit DataManager(const LayerParameter& data_layer_param, Net<Dtype> *net);
 	~DataManager();
 
-	virtual void CreatePrefetchThread();
-	virtual void JoinPrefetchThread();
+//	virtual void JoinPrefetchThread();
 	virtual void InternalThreadEntry();
-	void CopyFetchDataToConvThread(int replica_id, const vector<Blob<Dtype>*>& top);
-
-	inline int GetDatumChannels(){return datum_channels_;}
-	inline int GetDatumHeight(){return datum_height_;}
-	inline int GetDatumWidth(){return datum_width_;}
+	virtual void CopyFetchDataToConvThread(int replica_id,
+			const vector<Blob<Dtype>*>& top);
 
 protected:
-  Blob<Dtype> prefetch_data_;
-  Blob<Dtype> prefetch_label_;
-  Blob<Dtype> transformed_data_;
+	virtual void CreatePrefetchThread_();
 
-//  Blob<Dtype> fetch_data_;
-//  Blob<Dtype> fetch_label_;
+	Blob<Dtype> prefetch_data_;
+	Blob<Dtype> prefetch_label_;
+	Blob<Dtype> transformed_data_;
 
+//	int datum_channels_, datum_height_, datum_width_;
 
-  LayerParameter layer_param_;
-  bool output_labels_;
+	bool output_labels_;
 	TransformationParameter transform_param_;
 	DataTransformer<Dtype> data_transformer_;
 
-
-  shared_ptr<db::DB> db_;
-  shared_ptr<db::Cursor> cursor_;
-
-  Net<Dtype> *net_;
-
-  int datum_channels_, datum_height_,datum_width_;
-
-  int forward_count_;
-
-  boost::shared_mutex prefetch_data_mutex_;
-  boost::mutex forward_count_mutex_;
+	boost::shared_mutex prefetch_data_mutex_;
 
 };
-
 
 }  // namespace caffe
 

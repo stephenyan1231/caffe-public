@@ -116,4 +116,18 @@ def read_text(fn):
 def write_text(fn,text):
     f=open(fn,'w')
     f.writelines(text)
-    f.close()  
+    f.close()
+    
+def top_k_accuracy(pred_labels, gt_labels, top_k):
+    accu={}
+    for k in top_k:
+        assert pred_labels.shape[1]>=k
+        count=0
+        num=len(gt_labels)
+        for i in range(num):
+            for j in range(k):
+                if pred_labels[i,j]==gt_labels[i]:
+                    count+=1
+                    break
+        accu[str(k)]=float(count)/float(num)
+    return accu    

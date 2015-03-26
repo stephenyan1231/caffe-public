@@ -109,6 +109,10 @@ inline bool ReadImageToDatum(const string& filename, const int label,
   return ReadImageToDatum(filename, label, 0, 0, true, datum);
 }
 
+bool ReadImageToDatum(const string& filename, const int label,
+    const int short_side_size, const bool is_color, Datum* datum);
+
+
 bool DecodeDatum(const int height, const int width, const bool is_color,
   Datum* datum);
 
@@ -135,6 +139,10 @@ cv::Mat ReadImageToCVMat(const string& filename,
 
 cv::Mat ReadImageToCVMat(const string& filename);
 
+cv::Mat ReadImageToCVMat(const string& filename,
+    const int short_side_size, const bool is_color);
+
+
 cv::Mat DecodeDatumToCVMat(const Datum& datum,
     const int height, const int width, const bool is_color);
 
@@ -147,6 +155,8 @@ cv::Mat DecodeDatumToCVMat(const Datum& datum,
 cv::Mat DecodeDatumToCVMat(const Datum& datum);
 
 void CVMatToDatum(const cv::Mat& cv_img, Datum* datum);
+
+cv::Mat* DatumToCVMat(const Datum &datum);
 
 template <typename Dtype>
 void hdf5_load_nd_dataset_helper(

@@ -21,65 +21,89 @@
 namespace caffe {
 
 template<typename Dtype>
+BaseDataManager<Dtype>::BaseDataManager(const LayerParameter& data_layer_param,
+		Net<Dtype> *net) :
+		InternalThread(), layer_param_(data_layer_param), net_(net) {
+}
+
+template<typename Dtype>
+BaseDataManager<Dtype>::~BaseDataManager() {
+	JoinPrefetchThread();
+}
+
+// consider using forward_count_mutex_.lock/unlock when calling CreatePrefetchThread
+template<typename Dtype>
+void BaseDataManager<Dtype>::CreatePrefetchThread() {
+	CreatePrefetchThread_();
+	forward_count_ = 0;
+	CHECK(StartInternalThread()) << "Thread execution failed";
+}
+
+template<typename Dtype>
+void BaseDataManager<Dtype>::JoinPrefetchThread() {
+	CHECK(WaitForInternalThreadToExit()) << "Thread joining failed";
+}
+
+INSTANTIATE_CLASS(BaseDataManager);
+
+template<typename Dtype>
 DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 		Net<Dtype> *net) :
-		InternalThread(), layer_param_(data_layer_param), transform_param_(
-				layer_param_.transform_param()),
-				data_transformer_(transform_param_, data_layer_param.phase()), net_(net) {
+		BaseDataManager<Dtype>(data_layer_param, net), transform_param_(
+				data_layer_param.transform_param()),
+				data_transformer_(transform_param_, data_layer_param.phase()) {
 	// Hack
-	if(layer_param_.top_size() > 1) {
+	if (data_layer_param.top_size() > 1) {
 		this->output_labels_ = true;
-	}
-	else {
+	} else {
 		this->output_labels_ = false;
 	}
 
-	db_.reset(db::GetDB(this->layer_param_.data_param().backend()));
-	db_->Open(this->layer_param_.data_param().source(), db::READ);
-	cursor_.reset(db_->NewCursor());
+	this->db_.reset(db::GetDB(data_layer_param.data_param().backend()));
+	this->db_->Open(data_layer_param.data_param().source(), db::READ);
+	this->cursor_.reset(this->db_->NewCursor());
 
 	// Check if we should randomly skip a few data points
-	if (this->layer_param_.data_param().rand_skip()) {
+	if (data_layer_param.data_param().rand_skip()) {
 		unsigned int skip = caffe_rng_rand()
-		% this->layer_param_.data_param().rand_skip();
-		LOG(INFO)<< "Skipping first " << skip << " data points.";
+				% data_layer_param.data_param().rand_skip();
+		LOG(INFO) << "Skipping first " << skip << " data points.";
 		while (skip-- > 0) {
-			cursor_->Next();
+			this->cursor_->Next();
 		}
 	}
 
 	// Read a data point, and use it to initialize the top blob.
 	Datum datum;
-	datum.ParseFromString(cursor_->value());
+	datum.ParseFromString(this->cursor_->value());
 
 	if (DecodeDatum(&datum)) {
-		LOG(INFO)<< "Decoding Datum";
+		LOG(INFO) << "Decoding Datum";
 	}
-	datum_channels_ = datum.channels();
-	datum_height_ = datum.height();
-	datum_width_ = datum.width();
+	this->datum_channels_ = datum.channels();
+	this->datum_height_ = datum.height();
+	this->datum_width_ = datum.width();
 
 	// image
-	int crop_size = this->layer_param_.transform_param().crop_size();
+	int crop_size = data_layer_param.transform_param().crop_size();
 	if (crop_size > 0) {
-		this->prefetch_data_.Reshape(this->layer_param_.data_param().batch_size(),
+		this->prefetch_data_.Reshape(data_layer_param.data_param().batch_size(),
 				datum.channels(), crop_size, crop_size);
 		this->transformed_data_.Reshape(1, datum.channels(), crop_size, crop_size);
 	} else {
-		this->prefetch_data_.Reshape(this->layer_param_.data_param().batch_size(),
+		this->prefetch_data_.Reshape(data_layer_param.data_param().batch_size(),
 				datum.channels(), datum.height(), datum.width());
 		this->transformed_data_.Reshape(1, datum.channels(), datum.height(),
 				datum.width());
 	}
-	LOG(INFO)<< "DataManager: prefetch data size: " << this->prefetch_data_.num() << ","
-	<< this->prefetch_data_.channels() << "," << this->prefetch_data_.height() << ","
-	<< this->prefetch_data_.width();
+	LOG(INFO) << "DataManager: prefetch data size: " << this->prefetch_data_.num()
+			<< "," << this->prefetch_data_.channels() << ","
+			<< this->prefetch_data_.height() << "," << this->prefetch_data_.width();
 	// label
 	if (this->output_labels_) {
-		this->prefetch_label_.Reshape(this->layer_param_.data_param().batch_size(),
-				1, 1, 1);
+		this->prefetch_label_.Reshape(data_layer_param.data_param().batch_size(), 1,
+				1, 1);
 	}
-
 	// Now, start the prefetch thread. Before calling prefetch, we make two
 	// cpu_data calls so that the prefetch thread does not accidentally make
 	// simultaneous cudaMalloc calls when the main thread is running. In some
@@ -92,20 +116,7 @@ DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 
 template<typename Dtype>
 DataManager<Dtype>::~DataManager() {
-	JoinPrefetchThread();
-}
 
-// consider using forward_count_mutex_.lock/unlock when calling CreatePrefetchThread
-template<typename Dtype>
-void DataManager<Dtype>::CreatePrefetchThread() {
-	forward_count_ = 0;
-	this->data_transformer_.InitRand();
-	CHECK(StartInternalThread()) << "Thread execution failed";
-}
-
-template<typename Dtype>
-void DataManager<Dtype>::JoinPrefetchThread() {
-	CHECK(WaitForInternalThreadToExit()) << "Thread joining failed";
 }
 
 template<typename Dtype>
@@ -117,6 +128,9 @@ void DataManager<Dtype>::InternalThreadEntry() {
 	CPUTimer timer;
 	CHECK(this->prefetch_data_.count());
 	CHECK(this->transformed_data_.count());
+	if (this->output_labels_) {
+		CHECK(this->prefetch_label_.count());
+	}
 	Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
 	Dtype* top_label = NULL;  // suppress warnings about uninitialized variables
 
@@ -128,7 +142,7 @@ void DataManager<Dtype>::InternalThreadEntry() {
 		timer.Start();
 		// get a blob
 		Datum datum;
-		datum.ParseFromString(cursor_->value());
+		datum.ParseFromString(this->cursor_->value());
 
 		cv::Mat cv_img;
 		if (datum.encoded()) {
@@ -151,76 +165,84 @@ void DataManager<Dtype>::InternalThreadEntry() {
 		trans_time += timer.MicroSeconds();
 
 		// go to the next iter
-		cursor_->Next();
-		if (!cursor_->valid()) {
-			DLOG(INFO)<< "Restarting data prefetching from start.";
-			cursor_->SeekToFirst();
+		this->cursor_->Next();
+		if (!this->cursor_->valid()) {
+			DLOG(INFO) << "Restarting data prefetching from start.";
+			this->cursor_->SeekToFirst();
 		}
 	}
 	batch_timer.Stop();
 
-	DLOG(INFO)<< "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
-	DLOG(INFO)<< "     Read time: " << read_time / 1000 << " ms.";
-	DLOG(INFO)<< "Transform time: " << trans_time / 1000 << " ms.";
+	DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
+	DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
+	DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
 }
 
 template<typename Dtype>
 void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 		const vector<Blob<Dtype>*>& top) {
 
-	forward_count_mutex_.lock();
-	forward_count_++;
-	if(forward_count_ == 1) {
+	this->forward_count_mutex_.lock();
+	this->forward_count_++;
+	if (this->forward_count_ == 1) {
 		// First, join the thread
-		JoinPrefetchThread();
+		this->JoinPrefetchThread();
+//		JoinPrefetchThread();
 	}
-	forward_count_mutex_.unlock();
+	this->forward_count_mutex_.unlock();
 	int num_replicas = Caffe::GetReplicasNum();
-
 //	prefetch_data_mutex_.lock_shared();
 	int batch_size = prefetch_data_.num();
 	int replica_batch_size = divide_up(batch_size, num_replicas);
-	int start = replica_batch_size*replica_id;
-	int end = start + net_->GetBatchSize(replica_id);
+	int start = replica_batch_size * replica_id;
+	int end = start + this->net_->GetBatchSize(replica_id);
+
 	CHECK_EQ(top[0]->num(), end - start);
-	CHECK_EQ(top[0]->channels(),prefetch_data_.channels());
-	CHECK_EQ(top[0]->height(),prefetch_data_.height());
-	CHECK_EQ(top[0]->width(),prefetch_data_.width());
+	CHECK_EQ(top[0]->channels(), prefetch_data_.channels());
+	CHECK_EQ(top[0]->height(), prefetch_data_.height());
+	CHECK_EQ(top[0]->width(), prefetch_data_.width());
 
 	int unit_size = prefetch_data_.count() / prefetch_data_.num();
 
-	if(Caffe::mode() == Caffe::CPU){
+	if (Caffe::mode() == Caffe::CPU) {
 		caffe_copy(unit_size * (end - start),
 				prefetch_data_.cpu_data() + prefetch_data_.offset(start),
 				top[0]->mutable_cpu_data());
-	}else{
+	} else {
 		caffe_copy(unit_size * (end - start),
 				prefetch_data_.cpu_data() + prefetch_data_.offset(start),
 				top[0]->mutable_gpu_data());
 	}
 
-	if(output_labels_) {
-		CHECK_EQ(top[1]->num(), end-start);
-		CHECK_EQ(top[1]->channels(),prefetch_label_.channels());
-		CHECK_EQ(top[1]->height(),prefetch_label_.height());
-		CHECK_EQ(top[1]->width(),prefetch_label_.width());
-		if(Caffe::mode() == Caffe::CPU){
-			caffe_copy(end-start,prefetch_label_.cpu_data()+prefetch_label_.offset(start),
-				top[1]->mutable_cpu_data());
-		}else{
-			caffe_copy(end-start,prefetch_label_.cpu_data()+prefetch_label_.offset(start),
-				top[1]->mutable_gpu_data());
+	if (output_labels_) {
+		CHECK_EQ(top[1]->num(), end - start);
+		CHECK_EQ(top[1]->channels(), prefetch_label_.channels());
+		CHECK_EQ(top[1]->height(), prefetch_label_.height());
+		CHECK_EQ(top[1]->width(), prefetch_label_.width());
+		if (Caffe::mode() == Caffe::CPU) {
+			caffe_copy(end - start,
+					prefetch_label_.cpu_data() + prefetch_label_.offset(start),
+					top[1]->mutable_cpu_data());
+		} else {
+			caffe_copy(end - start,
+					prefetch_label_.cpu_data() + prefetch_label_.offset(start),
+					top[1]->mutable_gpu_data());
 		}
 	}
 
-	forward_count_mutex_.lock();
-	if(forward_count_ == num_replicas) {
+	this->forward_count_mutex_.lock();
+	if (this->forward_count_ == num_replicas) {
 		// create thread to fetch next batch data
-		CreatePrefetchThread();
+		this->CreatePrefetchThread();
 	}
-	forward_count_mutex_.unlock();
+	this->forward_count_mutex_.unlock();
+}
+
+// consider using forward_count_mutex_.lock/unlock when calling CreatePrefetchThread
+template<typename Dtype>
+void DataManager<Dtype>::CreatePrefetchThread_() {
+	this->data_transformer_.InitRand();
 }
 
 INSTANTIATE_CLASS(DataManager);
-
 }  // namespace caffe
