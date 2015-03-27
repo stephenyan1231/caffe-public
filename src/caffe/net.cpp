@@ -30,6 +30,9 @@ Net<Dtype>::Net(const NetParameter& param, Solver<Dtype> *solver,
 
 template<typename Dtype>
 Net<Dtype>::~Net() {
+	if(data_manager_){
+		delete data_manager_;
+	}
 	for (int i = 0; i < net_output_blobs_.size(); ++i) {
 		delete net_output_blobs_[i];
 	}
@@ -104,18 +107,26 @@ void Net<Dtype>::PostInit() {
 template<typename Dtype>
 void Net<Dtype>::InitDataManager(NetParameter& param) {
 	// Hack
+	data_manager_ = NULL;
 	for (int layer_id = 0; layer_id < param.layer_size(); ++layer_id) {
 		LayerParameter* layer_param = param.mutable_layer(layer_id);
 		if (layer_param->type() == std::string("Data")) {
 			if (!layer_param->has_phase()) {
 				layer_param->set_phase(phase_);
 			}
-			data_manager_.reset(new DataManager<Dtype>(*layer_param, this));
+			data_manager_ = new DataManager<Dtype>(*layer_param, this);
+			data_manager_->CreatePrefetchThread();
+			break;
+		}
+		else if(layer_param->type() == std::string("DataVariableSize")){
+			if (!layer_param->has_phase()) {
+				layer_param->set_phase(phase_);
+			}
+			data_manager_ = new DataVariableSizeManager<Dtype>(*layer_param, this);
 			data_manager_->CreatePrefetchThread();
 			break;
 		}
 	}
-
 }
 
 template<typename Dtype>

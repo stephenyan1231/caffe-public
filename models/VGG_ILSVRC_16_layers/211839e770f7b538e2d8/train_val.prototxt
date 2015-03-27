@@ -15,7 +15,7 @@ layer {
     mirror: true
   }
   data_param {
-    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_size384_lmdb"
+    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_short_384_lmdb"
     batch_size: 64
     backend: LMDB
   }
@@ -33,10 +33,10 @@ layer {
     mean_value: 104
     mean_value: 117
     mean_value: 123
-    mirror: true
+    mirror: false
   }
   data_param {
-    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_size384_lmdb"
+    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_short_384_lmdb"
     batch_size: 10
     backend: LMDB
   }

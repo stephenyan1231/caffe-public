@@ -56,7 +56,7 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 template<typename Dtype>
 void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
-	DataManager<Dtype> *dm = this->net_->GetDataManager();
+	BaseDataManager<Dtype> *dm = this->net_->GetDataManager();
 	dm->CopyFetchDataToConvThread(this->replica_id_, top);
 }
 

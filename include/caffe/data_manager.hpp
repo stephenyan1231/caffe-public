@@ -11,6 +11,7 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/data_transformer.hpp"
+#include "caffe/data_variable_size_transformer.hpp"
 #include "caffe/filler.hpp"
 #include "caffe/internal_thread.hpp"
 #include "caffe/layer.hpp"
@@ -87,6 +88,44 @@ protected:
 	boost::shared_mutex prefetch_data_mutex_;
 
 };
+
+template<typename Dtype>
+class DataVariableSizeManager: public BaseDataManager<Dtype> {
+public:
+	explicit DataVariableSizeManager(const LayerParameter& data_layer_param, Net<Dtype> *net);
+	~DataVariableSizeManager();
+
+//	virtual void JoinPrefetchThread();
+	virtual void InternalThreadEntry();
+	virtual void CopyFetchDataToConvThread(int replica_id,
+			const vector<Blob<Dtype>*>& top);
+
+//	inline int GetDatumMaxHeight(){return datum_max_height_;}
+//	inline int GetDatumMaxWidth(){return datum_max_width_;}
+
+protected:
+	virtual void CreatePrefetchThread_();
+
+	/*
+	 * prefetch_data height and width are set to the maximum height/width across all batches
+	 * */
+	Blob<Dtype> prefetch_data_;
+	std::vector<Blob<Dtype>* > prefetch_data_reorganized_;
+	Blob<Dtype> prefetch_data_size_;
+	Blob<Dtype> replicas_batch_data_max_size_;
+
+	Blob<Dtype> prefetch_label_;
+	Blob<Dtype> transformed_data_;
+
+
+
+	int datum_max_pixel_num_;
+
+	bool output_labels_;
+	TransformationParameter transform_param_;
+	DataVariableSizeTransformer<Dtype> data_transformer_;
+};
+
 
 }  // namespace caffe
 

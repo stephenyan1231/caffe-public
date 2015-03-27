@@ -223,7 +223,7 @@ class Net {
   const shared_ptr<Blob<Dtype> > blob_by_name(const string& blob_name,
   		int replica_id);
 
-  DataManager<Dtype>* GetDataManager(){return data_manager_.get();}
+  BaseDataManager<Dtype>* GetDataManager(){return data_manager_;}
 
   const vector<NetThread<Dtype>*>& GetNetThreads() const{
 		return net_threads_;
@@ -246,7 +246,7 @@ class Net {
   SolverParameter solver_param_;
   vector<NetThread<Dtype>* > net_threads_;
   vector<map<int, shared_ptr<Layer<Dtype> > > > layer_map_;
-  shared_ptr<DataManager<Dtype> > data_manager_;
+  BaseDataManager<Dtype> *data_manager_;
   vector<Dtype> losses_;
   vector<Blob<Dtype>*> net_output_blobs_;
   int batch_size_;

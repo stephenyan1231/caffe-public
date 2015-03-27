@@ -241,7 +241,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 132 (last added: fine2coarse_prob_layer_param)
+// LayerParameter next available layer-specific ID: 133 (last added: data_variable_size_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -314,7 +314,8 @@ message LayerParameter {
   optional WindowDataParameter window_data_param = 129;
   optional MultinomialLogisticSparsityLossParameter multinomial_logistic_sparsity_loss_param = 130;
   optional CompactProbilisticAverageProbLayerParameter compact_probabilistic_average_prob_layer_param = 131;
-  optional Fine2CoarseProbLayerParameter fine2coarse_prob_layer_param = 132;  
+  optional Fine2CoarseProbLayerParameter fine2coarse_prob_layer_param = 132;
+  optional DataVariableSizeParameter data_variable_size_param = 133;
 }
 
 // Message that stores parameters used to apply transformation
@@ -336,7 +337,8 @@ message TransformationParameter {
   repeated float mean_value = 5;
   
   optional uint32 resize_short_side_min = 6 [default = 0];
-  optional uint32 resize_short_side_max = 7 [default = 0];  
+  optional uint32 resize_short_side_max = 7 [default = 0];
+  optional bool force_mirror = 8 [default = false];
 }
 
 // Message that stores parameters shared by loss layers
@@ -430,6 +432,26 @@ message DataParameter {
   // DEPRECATED. See TransformationParameter. Specify if we want to randomly mirror
   // data.
   optional bool mirror = 6 [default = false];
+}
+
+// Message that stores parameters used by DataSegmentationLayer
+message DataVariableSizeParameter {
+  enum DB {
+    LEVELDB = 0;
+    LMDB = 1;
+  }
+  // Specify the data source.
+  optional string source = 1;
+  // Specify the batch size.
+  optional uint32 batch_size = 4;
+  // The rand_skip variable is for the data layer to skip a few data points
+  // to avoid all asynchronous sgd clients to start at the same point. The skip
+  // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
+  // be larger than the number of keys in the database.
+  optional uint32 rand_skip = 7 [default = 0];
+  optional DB backend = 8 [default = LEVELDB];
+  optional string mean_file = 3;
+  optional uint32 max_pixel_num = 5 [default = 0];
 }
 
 // Message that stores parameters used by DropoutLayer

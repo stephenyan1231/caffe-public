@@ -70,6 +70,17 @@ DB* GetDB(DataParameter::DB backend) {
   }
 }
 
+DB* GetDB(DataVariableSizeParameter::DB backend) {
+  switch (backend) {
+  case DataVariableSizeParameter_DB_LEVELDB:
+    return new LevelDB();
+  case DataVariableSizeParameter_DB_LMDB:
+    return new LMDB();
+  default:
+    LOG(FATAL) << "Unknown database backend";
+  }
+}
+
 DB* GetDB(const string& backend) {
   if (backend == "leveldb") {
     return new LevelDB();
