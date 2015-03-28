@@ -75,6 +75,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
 		datum_height = resized_datum.height();
 		datum_width = resized_datum.width();
 		data = &resized_datum.data();
+		delete cv_origin_img;
 	}
 
 

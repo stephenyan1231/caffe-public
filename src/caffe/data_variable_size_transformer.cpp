@@ -77,6 +77,7 @@ void DataVariableSizeTransformer<Dtype>::Transform(const Datum& datum,
 		datum_height = resized_datum.height();
 		datum_width = resized_datum.width();
 		data = &resized_datum.data();
+		delete cv_origin_img;
 	}
 
 	CHECK_GE(max_pixel_num, datum_height * datum_width);
