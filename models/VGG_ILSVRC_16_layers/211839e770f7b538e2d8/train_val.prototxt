@@ -13,9 +13,11 @@ layer {
     mean_value: 117
     mean_value: 123
     mirror: true
+    resize_short_side_min: 256
+    resize_short_side_max: 512    
   }
   data_param {
-    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_short_384_lmdb"
+    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_short_512_lmdb"
     batch_size: 64
     backend: LMDB
   }
@@ -34,9 +36,11 @@ layer {
     mean_value: 117
     mean_value: 123
     mirror: false
+    resize_short_side_min: 256
+    resize_short_side_max: 256    
   }
   data_param {
-    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_short_384_lmdb"
+    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_short_512_lmdb"
     batch_size: 10
     backend: LMDB
   }

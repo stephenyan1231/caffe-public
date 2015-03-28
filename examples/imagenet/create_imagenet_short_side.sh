@@ -6,8 +6,8 @@ EXAMPLE=examples/imagenet
 DATA=data/ilsvrc12
 TOOLS=build/tools
 
-TRAIN_DATA_ROOT=/home/zyan3/data/imagenet/ilsvrc12/ILSVRC2012_img_train/
-VAL_DATA_ROOT=/home/zyan3/data/imagenet/ilsvrc12/ILSVRC2012_img_val/
+TRAIN_DATA_ROOT=/home/zyan3/local/data/imagenet/ilsvrc12/ILSVRC2012_img_train/
+VAL_DATA_ROOT=/home/zyan3/local/data/imagenet/ilsvrc12/ILSVRC2012_img_val/
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
@@ -15,7 +15,7 @@ RESIZE=true
 if $RESIZE; then
   RESIZE_HEIGHT=0
   RESIZE_WIDTH=0
-  RESIZE_SHORT_SIDE=256
+  RESIZE_SHORT_SIDE=512
 else
   RESIZE_HEIGHT=0
   RESIZE_WIDTH=0
@@ -45,7 +45,7 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --shuffle \
     $TRAIN_DATA_ROOT \
     $DATA/train.txt \
-    /home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_short_256_lmdb
+    /home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_short_512_lmdb
 
 echo "Creating val lmdb..."
 
@@ -55,6 +55,6 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_short_side=$RESIZE_SHORT_SIDE \
     $VAL_DATA_ROOT \
     $DATA/val.txt \
-    /home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_short_256_lmdb
+    /home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_short_512_lmdb
 
 echo "Done."

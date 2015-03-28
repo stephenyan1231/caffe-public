@@ -1,6 +1,6 @@
-net: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/train_val_multiscale_train_2gpu.prototxt"
+net: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/train_val_multiscale_train.prototxt"
 test_iter: 100
-test_interval: 10000
+test_interval: 1000
 base_lr: 1e-6
 lr_policy: "step"
 gamma: 0.1

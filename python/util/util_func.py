@@ -159,3 +159,9 @@ def unpickle(filename):
     
     fo.close()
     return dict
+
+def find_layer_id(lay_names,lay_name):
+    for i in range(len(lay_names)):
+        if lay_names[i]==lay_name:
+            return i
+    return -1

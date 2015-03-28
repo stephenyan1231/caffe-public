@@ -65,6 +65,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
 			resize_height = resize_short_side;
 			resize_width = ceil((float(cv_origin_img->cols)/float(cv_origin_img->rows))*resize_height);
 		}
+
 		cv::Mat cv_img;
 		cv::resize(*cv_origin_img, cv_img, cv::Size(resize_width, resize_height));
 		CVMatToDatum(cv_img, &resized_datum);
@@ -414,7 +415,8 @@ void DataTransformer<Dtype>::Transform(Blob<Dtype>* input_blob,
 template<typename Dtype>
 void DataTransformer<Dtype>::InitRand() {
 	const bool needs_rand = param_.mirror()
-			|| (phase_ == TRAIN && param_.crop_size());
+			|| (phase_ == TRAIN && param_.crop_size()) ||
+			(param_.resize_short_side_min() > 0 && param_.resize_short_side_max() > 0);
 	if (needs_rand) {
 		const unsigned int rng_seed = caffe_rng_rand();
 		rng_.reset(new Caffe::RNG(rng_seed));
