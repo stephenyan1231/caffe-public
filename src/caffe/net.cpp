@@ -30,7 +30,7 @@ Net<Dtype>::Net(const NetParameter& param, Solver<Dtype> *solver,
 
 template<typename Dtype>
 Net<Dtype>::~Net() {
-	if(data_manager_){
+	if (data_manager_) {
 		delete data_manager_;
 	}
 	for (int i = 0; i < net_output_blobs_.size(); ++i) {
@@ -117,8 +117,7 @@ void Net<Dtype>::InitDataManager(NetParameter& param) {
 			data_manager_ = new DataManager<Dtype>(*layer_param, this);
 			data_manager_->CreatePrefetchThread();
 			break;
-		}
-		else if(layer_param->type() == std::string("DataVariableSize")){
+		} else if (layer_param->type() == std::string("DataVariableSize")) {
 			if (!layer_param->has_phase()) {
 				layer_param->set_phase(phase_);
 			}
@@ -372,12 +371,12 @@ void Net<Dtype>::CopyTrainedLayersFrom(const string trained_filename) {
 }
 
 template<typename Dtype>
-void Net<Dtype>::CopyTrainedLayersFrom(const std::vector<string> &trained_filenames){
+void Net<Dtype>::CopyTrainedLayersFrom(
+		const std::vector<string> &trained_filenames) {
 	for (int i = 0; i < trained_filenames.size(); ++i) {
 		CopyTrainedLayersFrom(trained_filenames[i]);
 	}
 }
-
 
 template<typename Dtype>
 void Net<Dtype>::CopyTrainedLayersFromSuffixMatch(const NetParameter& param) {
@@ -1318,12 +1317,30 @@ void NetThread<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
 		vector<shared_ptr<Blob<Dtype> > >& target_blobs =
 				layers_[target_layer_id]->blobs();
 		CHECK_EQ(target_blobs.size(), source_layer.blobs_size())<< "Incompatible number of blobs for layer " << source_layer_name;
+
+		shared_ptr<Layer<Dtype> > target_layer = layers_[target_layer_id];
+		bool conv_init_from_inner_product = false;
+		if (source_layer.type() == std::string("InnerProduct")
+				&& std::string(target_layer->type()) == std::string("Convolution")) {
+			ConvolutionParameter conv_param =
+					target_layer->layer_param().convolution_param();
+			conv_init_from_inner_product = conv_param.init_from_inner_product();
+		}
+
 		for (int j = 0; j < target_blobs.size(); ++j) {
-			CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
-			CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
-			CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
-			CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
-			target_blobs[j]->FromProto(source_layer.blobs(j));
+			if (!conv_init_from_inner_product) {
+				CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
+				CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
+				CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
+				CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
+				target_blobs[j]->FromProto(source_layer.blobs(j));
+			} else {
+				CHECK_EQ(target_blobs[j]->count(),
+						source_layer.blobs(j).num() * source_layer.blobs(j).channels()
+								* source_layer.blobs(j).height()
+								* source_layer.blobs(j).width());
+				target_blobs[j]->FromProto(source_layer.blobs(j));
+			}
 		}
 	}
 }
@@ -1347,8 +1364,9 @@ void NetThread<Dtype>::CopyTrainedLayersFromSuffixMatch(
 			const LayerParameter& source_layer = param.layer(source_layer_id);
 			if (layer_names_[i].length() < source_layer.name().length())
 				continue;
-			if (layer_names_[i].substr(layer_names_[i].length()-source_layer.name().length(), source_layer.name().length())
-					== source_layer.name())
+			if (layer_names_[i].substr(
+					layer_names_[i].length() - source_layer.name().length(),
+					source_layer.name().length()) == source_layer.name())
 				break;
 		}
 		if (source_layer_id == num_source_layers)

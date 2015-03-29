@@ -241,7 +241,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 133 (last added: data_variable_size_param)
+// LayerParameter next available layer-specific ID: 134 (last added: spatial_accuracy_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -316,6 +316,8 @@ message LayerParameter {
   optional CompactProbilisticAverageProbLayerParameter compact_probabilistic_average_prob_layer_param = 131;
   optional Fine2CoarseProbLayerParameter fine2coarse_prob_layer_param = 132;
   optional DataVariableSizeParameter data_variable_size_param = 133;
+  optional SpatialAccuracyParameter spatial_accuracy_param = 134;
+  
 }
 
 // Message that stores parameters used to apply transformation
@@ -403,6 +405,7 @@ message ConvolutionParameter {
     CUDNN = 2;
   }
   optional Engine engine = 15 [default = DEFAULT];
+  optional bool init_from_inner_product = 16 [default = false];
 }
 
 // Message that stores parameters used by DataLayer
@@ -452,6 +455,16 @@ message DataVariableSizeParameter {
   optional DB backend = 8 [default = LEVELDB];
   optional string mean_file = 3;
   optional uint32 max_pixel_num = 5 [default = 0];
+}
+
+// Message that stores parameters used by SpatialAccuracyLayer
+message SpatialAccuracyParameter {
+  // When computing accuracy, count as correct by comparing the true label to
+  // the top k scoring classes.  By default, only compare to the top scoring
+  // class (i.e. argmax).
+  optional uint32 top_k = 1 [default = 1];
+  optional uint32 spatial_subsample_height_factor = 2 [default = 1];
+  optional uint32 spatial_subsample_width_factor = 3 [default = 1];
 }
 
 // Message that stores parameters used by DropoutLayer

@@ -239,12 +239,9 @@ void Caffe::InitDevice(int device_id) {
 //  }
 	SetDevice(device_id);
 
-	LOG(INFO)<<"Caffe::InitDevice(int device_id) p1";
 	cublasHandle_t cublas_handle;
 	CUBLAS_CHECK(cublasCreate(&cublas_handle));
 	Get().cublas_handle_[device_id] = cublas_handle;
-
-	LOG(INFO)<<"Caffe::InitDevice(int device_id) p2";
 
 	curandGenerator_t curand_generator;
 	CURAND_CHECK(
@@ -254,7 +251,6 @@ void Caffe::InitDevice(int device_id) {
 	CURAND_CHECK(
 			curandSetPseudoRandomGeneratorSeed(Get().curand_generator_[device_id],
 					cluster_seedgen()));
-	LOG(INFO)<<"Caffe::InitDevice(int device_id) p3";
 
 	SyncDevice();
 }

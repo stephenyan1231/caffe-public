@@ -23,7 +23,7 @@ mkdir ${OUTDIR}
 
 imax=`expr ${n_clusters} - 1`
 #for i in `seq 0 ${imax}`
-for i in `seq 60 1 63`
+for i in `seq 65 1 67`
 do
 	id=`printf "%02d" $i`
 	echo $id

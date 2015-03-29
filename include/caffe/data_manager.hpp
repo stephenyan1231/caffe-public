@@ -48,6 +48,7 @@ public:
 
 protected:
 	virtual void CreatePrefetchThread_() = 0;
+	void SetBatchSize(int total_batch_size);
 
 	LayerParameter layer_param_;
 	Net<Dtype> *net_;

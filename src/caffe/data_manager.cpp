@@ -44,6 +44,17 @@ void BaseDataManager<Dtype>::JoinPrefetchThread() {
 	CHECK(WaitForInternalThreadToExit()) << "Thread joining failed";
 }
 
+template<typename Dtype>
+void BaseDataManager<Dtype>::SetBatchSize(int total_batch_size){
+	int replica_batch_size = divide_up(total_batch_size, Caffe::GetReplicasNum());
+	for(int i = 0; i < Caffe::GetReplicasNum(); ++i){
+		int rest_size = total_batch_size - i * replica_batch_size;
+		int this_replica_batch_size = std::min(replica_batch_size, rest_size);
+		this->net_->SetBatchSize(i, this_replica_batch_size);
+	}
+}
+
+
 INSTANTIATE_CLASS(BaseDataManager);
 
 template<typename Dtype>
@@ -52,6 +63,7 @@ DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 		BaseDataManager<Dtype>(data_layer_param, net), transform_param_(
 				data_layer_param.transform_param()), data_transformer_(transform_param_,
 				data_layer_param.phase()) {
+	this->SetBatchSize(this->layer_param_.data_param().batch_size());
 	// Hack
 	if (data_layer_param.top_size() > 1) {
 		this->output_labels_ = true;
@@ -252,6 +264,9 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 		BaseDataManager<Dtype>(data_layer_param, net), transform_param_(
 				data_layer_param.transform_param()), data_transformer_(transform_param_,
 				data_layer_param.phase()) {
+	DataVariableSizeParameter data_variable_size_param =
+			data_layer_param.data_variable_size_param();
+	this->SetBatchSize(data_variable_size_param.batch_size());
 	// Hack
 	if (data_layer_param.top_size() > 1) {
 		this->output_labels_ = true;
@@ -259,8 +274,7 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 		this->output_labels_ = false;
 	}
 
-	DataVariableSizeParameter data_variable_size_param =
-			data_layer_param.data_variable_size_param();
+
 	datum_max_pixel_num_ = data_variable_size_param.max_pixel_num();
 
 	this->db_.reset(
@@ -282,6 +296,7 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 	// Read a data point, and use it to initialize the top blob.
 	Datum datum;
 	datum.ParseFromString(this->cursor_->value());
+	this->datum_channels_ = datum.channels();
 
 	// image
 	this->prefetch_data_.Reshape(data_variable_size_param.batch_size(),
@@ -404,7 +419,6 @@ void DataVariableSizeManager<Dtype>::InternalThreadEntry() {
 				max_height;
 		(replicas_batch_data_max_size + replicas_batch_data_max_size_.offset(i))[1] =
 				max_width;
-		LOG(INFO)<<"replica "<<i<<" max_height "<<max_height<<" max_width "<<max_width;
 		/* re-organize memory layout in prefetch_data so that the first (channels*max_height*max_width) data are
 		 * initialized properly
 		 * */

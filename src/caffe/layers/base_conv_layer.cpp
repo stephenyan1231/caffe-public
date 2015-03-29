@@ -12,6 +12,7 @@ template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   // Configure the kernel size, padding, stride, and inputs.
+	LOG(INFO)<<"BaseConvolutionLayer<Dtype>::LayerSetUp layer name "<<this->layer_param_.name();
   ConvolutionParameter conv_param = this->layer_param_.convolution_param();
   CHECK(!conv_param.has_kernel_size() !=
       !(conv_param.has_kernel_h() && conv_param.has_kernel_w()))
@@ -84,6 +85,9 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
         conv_out_channels_, conv_in_channels_ / group_, kernel_h_, kernel_w_));
     shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
         this->layer_param_.convolution_param().weight_filler()));
+    LOG(INFO)<<"this->blobs_[0] shape "<<this->blobs_[0]->num()<<" "<<
+    		this->blobs_[0]->channels()<<" "<<this->blobs_[0]->height()<<" "<<
+    		this->blobs_[0]->width();
     weight_filler->Fill(this->blobs_[0].get());
     // If necessary, initialize and fill the biases:
     // 1 x 1 x 1 x output channels
@@ -91,6 +95,7 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       this->blobs_[1].reset(new Blob<Dtype>(1, 1, 1, num_output_));
       shared_ptr<Filler<Dtype> > bias_filler(GetFiller<Dtype>(
           this->layer_param_.convolution_param().bias_filler()));
+      LOG(INFO)<<"this->blobs_[1] count "<<this->blobs_[1]->count();
       bias_filler->Fill(this->blobs_[1].get());
     }
   }
@@ -147,8 +152,10 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   // Set up the all ones "bias multiplier" for adding biases by BLAS
   if (bias_term_) {
     bias_multiplier_.Reshape(1, 1, 1, height_out_ * width_out_);
-    caffe_set(bias_multiplier_.count(), Dtype(1),
-        bias_multiplier_.mutable_cpu_data());
+    if(bias_multiplier_.count() > 0){
+      caffe_set(bias_multiplier_.count(), Dtype(1),
+           bias_multiplier_.mutable_cpu_data());
+    }
   }
 }
 

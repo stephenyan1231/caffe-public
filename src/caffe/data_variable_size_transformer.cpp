@@ -87,10 +87,9 @@ void DataVariableSizeTransformer<Dtype>::Transform(const Datum& datum,
 
 	const Dtype scale = param_.scale();
 	bool do_mirror = true;
-	if(phase_ == TRAIN){
+	if (phase_ == TRAIN) {
 		do_mirror = param_.mirror() && Rand(2);
-	}
-	else{
+	} else {
 		do_mirror = param_.force_mirror();
 	}
 //	const bool do_mirror = param_.mirror() && Rand(2);
@@ -168,7 +167,10 @@ void DataVariableSizeTransformer<Dtype>::Transform(const Datum& datum,
 template<typename Dtype>
 void DataVariableSizeTransformer<Dtype>::InitRand() {
 	const bool needs_rand = param_.mirror()
-			|| (phase_ == TRAIN && param_.crop_size());
+			|| (phase_ == TRAIN && param_.crop_size())
+			|| (param_.resize_short_side_min() > 0
+					&& param_.resize_short_side_max() > 0);
+
 	if (needs_rand) {
 		const unsigned int rng_seed = caffe_rng_rand();
 		rng_.reset(new Caffe::RNG(rng_seed));

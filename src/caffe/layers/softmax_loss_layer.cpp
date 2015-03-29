@@ -13,14 +13,20 @@ template <typename Dtype>
 void SoftmaxWithLossLayer<Dtype>::LayerSetUp(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   LossLayer<Dtype>::LayerSetUp(bottom, top);
+  LOG(INFO)<<"SoftmaxWithLossLayer<Dtype>::LayerSetUp t1";
   LayerParameter softmax_param(this->layer_param_);
   softmax_param.set_type("Softmax");
   softmax_layer_.reset(LayerRegistry<Dtype>::CreateLayer(softmax_param, this->replica_id_, this->net_));
+  LOG(INFO)<<"SoftmaxWithLossLayer<Dtype>::LayerSetUp t2";
+
   softmax_bottom_vec_.clear();
   softmax_bottom_vec_.push_back(bottom[0]);
   softmax_top_vec_.clear();
   softmax_top_vec_.push_back(&prob_);
+  LOG(INFO)<<"SoftmaxWithLossLayer<Dtype>::LayerSetUp t2.5";
+
   softmax_layer_->SetUp(softmax_bottom_vec_, softmax_top_vec_);
+  LOG(INFO)<<"SoftmaxWithLossLayer<Dtype>::LayerSetUp t3";
 
   has_ignore_label_ =
     this->layer_param_.loss_param().has_ignore_label();
@@ -28,6 +34,8 @@ void SoftmaxWithLossLayer<Dtype>::LayerSetUp(
     ignore_label_ = this->layer_param_.loss_param().ignore_label();
   }
   normalize_ = this->layer_param_.loss_param().normalize();
+  LOG(INFO)<<"SoftmaxWithLossLayer<Dtype>::LayerSetUp t4";
+
 }
 
 template <typename Dtype>

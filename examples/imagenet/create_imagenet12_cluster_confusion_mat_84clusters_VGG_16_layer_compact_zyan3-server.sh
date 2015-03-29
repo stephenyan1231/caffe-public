@@ -24,7 +24,7 @@ mkdir ${OUTDIR}
 imax=`expr ${n_clusters} - 1`
 #for i in `seq 0 ${imax}`
 # for i in `seq 1 1 40`
-for i in `seq 20 1 39`
+for i in `seq 30 1 39`
 do
 	id=`printf "%02d" $i`
 	echo $id
