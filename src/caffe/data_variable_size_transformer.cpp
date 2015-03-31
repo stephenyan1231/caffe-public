@@ -119,7 +119,7 @@ void DataVariableSizeTransformer<Dtype>::Transform(const Datum& datum,
 	// Old version: copy datum image data into the upper-left corner of transformed_data
 	// New version: put datum image data in a continuous memory section of transformed_data
 	Dtype datum_element;
-	int top_index, data_index;
+	int top_index;
 	caffe_memset(sizeof(Dtype) * max_pixel_num * datum_channels, 0,
 			transformed_data);
 	for (int data_index = 0, c = 0; c < datum_channels; ++c) {

@@ -45,6 +45,7 @@ public:
 				blobs_[i]->FromProto(layer_param_.blobs(i));
 			}
 		}
+		conserve_gpu_memory_test_ = param.conserve_gpu_memory_test();
 	}
 	virtual ~Layer() {
 	}
@@ -339,6 +340,7 @@ protected:
 
 	int replica_id_;
 	Net<Dtype> *net_;
+  bool conserve_gpu_memory_test_;
 
 //	std::map<int, Layer<Dtype>*> replicas_;
 

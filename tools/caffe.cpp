@@ -149,7 +149,6 @@ int test() {
 		Caffe::set_mode(Caffe::CPU);
 	}
 
-
 	// Instantiate the caffe net.
 	Caffe::set_phase(Caffe::TEST);
 	Caffe::InitDevices(device_ids);

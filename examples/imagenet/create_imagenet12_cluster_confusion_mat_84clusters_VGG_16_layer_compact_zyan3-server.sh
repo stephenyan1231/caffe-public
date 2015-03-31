@@ -24,16 +24,16 @@ mkdir ${OUTDIR}
 imax=`expr ${n_clusters} - 1`
 #for i in `seq 0 ${imax}`
 # for i in `seq 1 1 40`
-for i in `seq 30 1 39`
+for i in `seq 68 1 68`
 do
 	id=`printf "%02d" $i`
 	echo $id
 
-	DB_TR_NM=imagenet_cluster${id}_VGG_16_layer_short_512_train_lmdb	
-	rm -rf ${OUTDIR}/${DB_TR_NM} 
+#	DB_TR_NM=imagenet_cluster${id}_VGG_16_layer_short_512_train_lmdb	
+#	rm -rf ${OUTDIR}/${DB_TR_NM} 
 
-	GLOG_logtostderr=1 ${BUILD_EXAMPLE}/convert_imageset_selective_label.bin ${TRAIN_DATA_ROOT} $DATA/train.txt \
-	${DATA}/$INDIR/exp_cluster${id}_label_map.txt ${DATA}/$INDIR/train_${id}_compact.txt ${OUTDIR}/${DB_TR_NM} \
+#	GLOG_logtostderr=1 ${BUILD_EXAMPLE}/convert_imageset_selective_label.bin ${TRAIN_DATA_ROOT} $DATA/train.txt \
+#	${DATA}/$INDIR/exp_cluster${id}_label_map.txt ${DATA}/$INDIR/train_${id}_compact.txt ${OUTDIR}/${DB_TR_NM} \
 	--resize_short_side=512 --shuffle --backend=lmdb
 
 	DB_VAL_NM=imagenet_cluster${id}_VGG_16_layer_short_512_val_lmdb	

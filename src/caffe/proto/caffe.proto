@@ -241,7 +241,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 134 (last added: spatial_accuracy_param)
+// LayerParameter next available layer-specific ID: 136 (last added: conserve_gpu_memory_test)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -317,6 +317,8 @@ message LayerParameter {
   optional Fine2CoarseProbLayerParameter fine2coarse_prob_layer_param = 132;
   optional DataVariableSizeParameter data_variable_size_param = 133;
   optional SpatialAccuracyParameter spatial_accuracy_param = 134;
+  optional ShiftStitchParameter shift_stitch_param = 135;
+  optional bool conserve_gpu_memory_test = 136 [default = false];
   
 }
 
@@ -465,6 +467,13 @@ message SpatialAccuracyParameter {
   optional uint32 top_k = 1 [default = 1];
   optional uint32 spatial_subsample_height_factor = 2 [default = 1];
   optional uint32 spatial_subsample_width_factor = 3 [default = 1];
+}
+
+message ShiftStitchParameter {
+  optional uint32 iter = 1; // number of iterations of stitching operation 
+  repeated uint32 stride = 2; // The stride (equal in Y, X)
+  repeated uint32 stride_h = 3; // The stride height
+  repeated uint32 stride_w = 4; // The stride width
 }
 
 // Message that stores parameters used by DropoutLayer

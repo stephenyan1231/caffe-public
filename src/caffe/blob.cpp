@@ -19,6 +19,8 @@ void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
 	width_ = width;
 	count_ = num_ * channels_ * height_ * width_;
 	if (count_ > capacity_) {
+//		LOG(INFO)<<"Blob<Dtype>::Reshape capacity "<<capacity_<<"--->"<<count_<<" "
+//				<<count_*sizeof(Dtype);
 		capacity_ = count_;
 		data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
 		diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
@@ -30,12 +32,47 @@ void Blob<Dtype>::ReshapeLike(const Blob<Dtype>& other) {
 	Reshape(other.num(), other.channels(), other.height(), other.width());
 }
 
+template<typename Dtype>
+void Blob<Dtype>::ReshapeForceMemoryFree(const int num, const int channels, const int height,
+		const int width) {
+	CHECK_GE(num, 0);
+	CHECK_GE(channels, 0);
+	CHECK_GE(height, 0);
+	CHECK_GE(width, 0);
+
+	num_ = num;
+	channels_ = channels;
+	height_ = height;
+	width_ = width;
+	count_ = num_ * channels_ * height_ * width_;
+	if (count_ != capacity_) {
+//		LOG(INFO)<<"Blob<Dtype>::ReshapeForceMemoryFree capacity_ "<<capacity_<<
+//				"--->"<<count_;
+//		this->gpu_data();
+//		LOG(INFO)<<"Blob<Dtype>::ReshapeForceMemoryFree "<<capacity_<<"---->"<<count_
+//				<<" "<<count_*sizeof(Dtype);
+		capacity_ = count_;
+		data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
+		diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
+//		if(capacity_ > 0){
+//			data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
+//			diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
+//		} else {
+//			LOG(INFO)<<"release managed SyncedMemory";
+//			data_.reset();
+//			diff_.reset();
+//		}
+	}
+}
+
 // make sure only the gpu data of the reshaped blob will be used
 // avoid data copy from device to host by omitting set_cpu_data and set_cpu_diff
 template<typename Dtype>
 shared_ptr<Blob<Dtype> > Blob<Dtype>::ReshapedGPUOnly(const int num, const int channels, const int height,
   const int width){
 	CHECK_EQ(count_, num * channels * height * width);
+	LOG(INFO)<<"Blob<Dtype>::ReshapedGPUOnly count "<<count_<<" "
+			<<count_*sizeof(Dtype);
 	shared_ptr<Blob<Dtype> > new_blob = shared_ptr<Blob<Dtype> >
 	(new Blob<Dtype>(num, channels, height, width));
 	new_blob->set_gpu_data(mutable_gpu_data(), Caffe::GetDeviceId());

@@ -45,15 +45,14 @@ void BaseDataManager<Dtype>::JoinPrefetchThread() {
 }
 
 template<typename Dtype>
-void BaseDataManager<Dtype>::SetBatchSize(int total_batch_size){
+void BaseDataManager<Dtype>::SetBatchSize(int total_batch_size) {
 	int replica_batch_size = divide_up(total_batch_size, Caffe::GetReplicasNum());
-	for(int i = 0; i < Caffe::GetReplicasNum(); ++i){
+	for (int i = 0; i < Caffe::GetReplicasNum(); ++i) {
 		int rest_size = total_batch_size - i * replica_batch_size;
 		int this_replica_batch_size = std::min(replica_batch_size, rest_size);
 		this->net_->SetBatchSize(i, this_replica_batch_size);
 	}
 }
-
 
 INSTANTIATE_CLASS(BaseDataManager);
 
@@ -274,7 +273,6 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 		this->output_labels_ = false;
 	}
 
-
 	datum_max_pixel_num_ = data_variable_size_param.max_pixel_num();
 
 	this->db_.reset(
@@ -383,8 +381,7 @@ void DataVariableSizeManager<Dtype>::InternalThreadEntry() {
 			this->data_transformer_.Transform(datum, &(this->transformed_data_),
 					datum_height, datum_width);
 		}
-		(prefetch_data_size + prefetch_data_size_.offset(item_id))[0] =
-				datum_height;
+		(prefetch_data_size + prefetch_data_size_.offset(item_id))[0] = datum_height;
 		(prefetch_data_size + prefetch_data_size_.offset(item_id))[1] = datum_width;
 
 		if (this->output_labels_) {
@@ -422,6 +419,9 @@ void DataVariableSizeManager<Dtype>::InternalThreadEntry() {
 		/* re-organize memory layout in prefetch_data so that the first (channels*max_height*max_width) data are
 		 * initialized properly
 		 * */
+//		LOG(INFO)<<"DataVariableSizeManager<Dtype>::InternalThreadEntry max_height "<<max_height<<
+//		" max_width "<<max_width<<" count "<<
+//		(end-start)*this->datum_channels_*max_height*max_width;
 		prefetch_data_reorganized_[i]->Reshape(end - start, this->datum_channels_,
 				max_height, max_width);
 		Dtype* prefetch_data_reorgnized =
@@ -491,7 +491,7 @@ void DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 //	CHECK_EQ(top[0]->height(), prefetch_data_.height());
 //	CHECK_EQ(top[0]->width(), prefetch_data_.width());
 
-	int unit_size = prefetch_data_.count() / prefetch_data_.num();
+//	int unit_size = prefetch_data_.count() / prefetch_data_.num();
 
 	if (Caffe::mode() == Caffe::CPU) {
 //		caffe_copy(unit_size * (end - start),

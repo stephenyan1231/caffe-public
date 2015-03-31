@@ -589,7 +589,6 @@ void Net<Dtype>::ShareTrainedLayersWith(const Net<Dtype>* other) {
 template<typename Dtype>
 void Net<Dtype>::ForwardBackwardHelper(const vector<Blob<Dtype>*>& bottom,
 		Dtype *loss, bool do_backward) {
-//	const std::vector<int>& device_ids = Caffe::GetActiveDevices();
 	int old_device = 0;
 	for (int i = 0; i < net_threads_.size(); ++i) {
 		vector<Blob<Dtype>*> thread_bottom(bottom.size(), 0);
@@ -639,20 +638,12 @@ void Net<Dtype>::ForwardBackwardHelper(const vector<Blob<Dtype>*>& bottom,
 	// update net net_output_blobs_
 	for (int i = 0; i < net_threads_[0]->num_outputs(); ++i) {
 		Dtype *tgt_data = net_output_blobs_[i]->mutable_cpu_data();
-		DLOG(INFO)<<"Net<Dtype>::ForwardBackwardHelper t8 ";
 		caffe_memset(sizeof(Dtype) * net_threads_[0]->output_blobs()[i]->count(), 0,
 				tgt_data);
-		DLOG(INFO)<<"Net<Dtype>::ForwardBackwardHelper t9 ";
 		for (int j = 0; j < net_threads_[0]->output_blobs()[i]->count(); ++j) {
 			for (int k = 0; k < net_threads_.size(); ++k) {
-				DLOG(INFO)<<"Net<Dtype>::ForwardBackwardHelper t10 ";
-
 				const Dtype *src_data = net_threads_[k]->output_blobs()[i]->cpu_data();
-				DLOG(INFO)<<"Net<Dtype>::ForwardBackwardHelper t11 ";
-
 				tgt_data[j] += batch_size_ratios_[net_threads_[k]->get_device_id()] * src_data[j];
-				DLOG(INFO)<<"Net<Dtype>::ForwardBackwardHelper t12 ";
-
 			}
 		}
 	}

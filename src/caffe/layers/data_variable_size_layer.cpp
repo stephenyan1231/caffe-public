@@ -34,13 +34,11 @@ void DataVariableSizeLayer<Dtype>::DataLayerSetUp(
 //	this->net_->SetBatchSize(this->replica_id_, this_replica_batch_size);
 
 	int this_replica_batch_size = this->net_->GetBatchSize(this->replica_id_);
-
 	DataVariableSizeManager<Dtype> *dm = dynamic_cast<DataVariableSizeManager<
 			Dtype>*>(this->net_->GetDataManager());
 
 
 	int datum_channels = dm->GetDatumChannels();
-	LOG(INFO)<<"DataVariableSizeLayer<Dtype>::DataLayerSetUp datum_channels "<<datum_channels;
 //	int datum_height = dm->GetDatumMaxHeight();
 //	int datum_width = dm->GetDatumMaxWidth();
 //	// image
@@ -51,17 +49,18 @@ void DataVariableSizeLayer<Dtype>::DataLayerSetUp(
 //	<< top[0]->channels() << "," << top[0]->height() << ","
 //	<< top[0]->width();
 
-	top[1]->Reshape(this_replica_batch_size, 1, 1, 2);
-	// label
-	if (this->output_labels_) {
-		top[2]->Reshape(this_replica_batch_size, 1, 1, 1);
-	}
+
 }
 
 template<typename Dtype>
 void DataVariableSizeLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   			const vector<Blob<Dtype>*>& top){
-
+	int this_replica_batch_size = this->net_->GetBatchSize(this->replica_id_);
+	top[1]->Reshape(this_replica_batch_size, 1, 1, 2);
+	// label
+	if (this->output_labels_) {
+		top[2]->Reshape(this_replica_batch_size, 1, 1, 1);
+	}
 }
 
 template<typename Dtype>

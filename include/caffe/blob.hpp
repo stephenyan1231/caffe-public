@@ -43,6 +43,8 @@ class Blob {
   void Reshape(const int num, const int channels, const int height,
     const int width);
   void ReshapeLike(const Blob& other);
+  void ReshapeForceMemoryFree(const int num, const int channels, const int height,
+    const int width);
   shared_ptr<Blob<Dtype> > ReshapedGPUOnly(const int num, const int channels, const int height,
     const int width);
 

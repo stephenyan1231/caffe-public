@@ -49,6 +49,7 @@ DEFINE_string(backend, "lmdb",
 DEFINE_int32(resize_width, 0, "Width images are resized to");
 DEFINE_int32(resize_height, 0, "Height images are resized to");
 DEFINE_int32(resize_short_side, 0, "Size of short side images are resized to");
+DEFINE_int32(resize_long_side, 0, "Size of long side images are resized to");
 DEFINE_bool(check_size, false,
     "When this option is on, check that all the datum have the same size");
 DEFINE_bool(encoded, false,
@@ -137,6 +138,9 @@ int main(int argc, char** argv) {
   int resize_height = std::max<int>(0, FLAGS_resize_height);
   int resize_width = std::max<int>(0, FLAGS_resize_width);
   int resize_short_side = std::max<int>(0, FLAGS_resize_short_side);
+  int resize_long_side = std::max<int>(0, FLAGS_resize_long_side);
+  CHECK(!(resize_short_side > 0 && resize_long_side))
+  <<"at most one of resize_short_side and resize_long_side can be non-zero";
   if(resize_height > 0 && resize_width > 0){
   	LOG(INFO)<<"resize_height "<<resize_height<<" resize_width "<<resize_width;
   }
@@ -210,9 +214,9 @@ int main(int argc, char** argv) {
 	  out_listfile<<lines[line_id].first<<" "<<label2<<std::endl;
 
 	  bool status;
-	  if(resize_short_side > 0){
-      status = ReadImageToDatum(root_folder + lines[line_id].first,
-          label2, resize_short_side, is_color, &datum);
+	  if(resize_short_side > 0 || resize_long_side > 0){
+      status = ReadImageToDatumShortLongSide(root_folder + lines[line_id].first,
+          label2, resize_short_side, resize_long_side, is_color, &datum);
 	  } else {
 	  	status = ReadImageToDatum(root_folder + lines[line_id].first,
 				  label2, resize_height, resize_width, is_color, &datum);

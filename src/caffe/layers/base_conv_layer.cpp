@@ -12,7 +12,6 @@ template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   // Configure the kernel size, padding, stride, and inputs.
-	LOG(INFO)<<"BaseConvolutionLayer<Dtype>::LayerSetUp layer name "<<this->layer_param_.name();
   ConvolutionParameter conv_param = this->layer_param_.convolution_param();
   CHECK(!conv_param.has_kernel_size() !=
       !(conv_param.has_kernel_h() && conv_param.has_kernel_w()))
@@ -127,6 +126,10 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   compute_output_shape();
   for (int top_id = 0; top_id < top.size(); ++top_id) {
     top[top_id]->Reshape(num_, num_output_, height_out_, width_out_);
+    DLOG(INFO)<<"BaseConvolutionLayer<Dtype>::Reshape "<<this->layer_param_.name()
+    		<<" top "<<top_id<<" replica id "<<this->replica_id_<<" shape "<<num_<<" "<<num_output_<<" "<<height_out_<<" "<<width_out_<<
+    		" count "<<top[top_id]->count()<<
+    		" "<<top[top_id]->count()*sizeof(Dtype);
   }
   if (reverse_dimensions()) {
     conv_in_height_ = height_out_;
@@ -148,10 +151,13 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     col_buffer_.Reshape(1, kernel_dim_, height_, width_);
   } else {
     col_buffer_.Reshape(1, kernel_dim_, height_out_, width_out_);
+//  	LOG(INFO)<<"col_buffer_ reshape count "<<col_buffer_.count()<<" "<<col_buffer_.count()*sizeof(Dtype);
   }
   // Set up the all ones "bias multiplier" for adding biases by BLAS
   if (bias_term_) {
     bias_multiplier_.Reshape(1, 1, 1, height_out_ * width_out_);
+//    LOG(INFO)<<"layer "<<this->layer_param_.name()<<" bias_multiplier_ reshape count "<<bias_multiplier_.count()
+//    		<<" "<<bias_multiplier_.count()*sizeof(Dtype);
     if(bias_multiplier_.count() > 0){
       caffe_set(bias_multiplier_.count(), Dtype(1),
            bias_multiplier_.mutable_cpu_data());

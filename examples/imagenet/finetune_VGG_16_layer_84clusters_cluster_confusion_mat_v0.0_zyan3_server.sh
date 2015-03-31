@@ -13,7 +13,7 @@ imax=`expr ${n_clusters} - 1`
 echo ${imax}
 
 # for i in `seq 0 ${imax}`
-for i in `seq 21 1 39`
+for i in `seq 68 1 74`
 do
 	/home/zyan3/proj/caffe_private_hdcnn/
 	id=`printf "%02d" $i`
