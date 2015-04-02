@@ -7,14 +7,17 @@
 namespace caffe {
 
 SyncedMemory::~SyncedMemory() {
+//	size_t free, total;
   if (cpu_ptr_ && own_cpu_data_) {
     CaffeFreeHost(cpu_ptr_);
   }
 
 #ifndef CPU_ONLY
   if (gpu_ptr_ && own_gpu_data_) {
-//  	LOG(INFO)<<"SyncedMemory::~SyncedMemory free gpu memory size "<<size_;
     CUDA_CHECK(cudaFree(gpu_ptr_));
+//    cudaMemGetInfo(&free, &total);
+//  	LOG(INFO)<<"SyncedMemory::~SyncedMemory "<<size_/(1e6)<<" free "<<free/(1e6)
+//  			<<" total "<<total/(1e6);
   }
 #endif  // CPU_ONLY
 }
@@ -52,14 +55,17 @@ inline void SyncedMemory::to_cpu() {
 }
 
 inline void SyncedMemory::to_gpu() {
+//	size_t free, total;
 #ifndef CPU_ONLY
 	int old_device = 0;
   switch (head_) {
   case UNINITIALIZED:
   	old_device = Caffe::GetDeviceId();
   	Caffe::SetDevice(device_id_);
-//  	LOG(INFO)<<"SyncedMemory::to_gpu new gpu memory "<<size_;
     CUDA_CHECK(cudaMalloc(&gpu_ptr_, size_));
+//    cudaMemGetInfo(&free, &total);
+//  	LOG(INFO)<<"SyncedMemory::to_gpu new gpu memory "<<size_/(1e6)<<" free "<<free/(1e6)
+//  			<<" total "<<total/(1e6);
     caffe_gpu_memset(size_, 0, gpu_ptr_);
     Caffe::SetDevice(old_device);
     head_ = HEAD_AT_GPU;
@@ -69,8 +75,10 @@ inline void SyncedMemory::to_gpu() {
   	old_device = Caffe::GetDeviceId();
   	Caffe::SetDevice(device_id_);
     if (gpu_ptr_ == NULL) {
-//    	LOG(INFO)<<"SyncedMemory::to_gpu new gpu memory "<<size_;
       CUDA_CHECK(cudaMalloc(&gpu_ptr_, size_));
+//      cudaMemGetInfo(&free, &total);
+//    	LOG(INFO)<<"SyncedMemory::to_gpu new gpu memory "<<size_/(1e6)<<" free "<<free/(1e6)
+//    			<<" total "<<total/(1e6);
       own_gpu_data_ = true;
     }
     caffe_gpu_memcpy(size_, cpu_ptr_, gpu_ptr_);

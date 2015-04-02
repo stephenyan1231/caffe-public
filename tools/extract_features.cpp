@@ -142,7 +142,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
     shared_ptr<db::DB> db(db::GetDB(argv[++arg_pos]));
     db->Open(dataset_names.at(i), db::NEW);
     feature_dbs.push_back(db);
-    shared_ptr<db::Transaction> txn(db->NewTransaction());
+    shared_ptr<db::Transaction> txn(db->NewTransaction(false));
     txns.push_back(txn);
   }
 

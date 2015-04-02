@@ -3,11 +3,11 @@
 
 layer_name=stitch_fc7
 config=longside_1024
-working_dir=examples/uniform_set/VGG_ILSVRC_16_layers_parser_fc7
-mkdir ${working_dir}
+save_dir=examples/uniform_set/VGG_ILSVRC_16_layers_parser_fc7
+mkdir ${save_dir}
 db_name=${layer_name}_${config}_lmdb
-rm -rf ${working_dir}/${db_name}
+rm -rf ${save_dir}/${db_name}
 
 GLOG_logtostderr=1 ./build/tools/extract_features models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/VGG_ILSVRC_16_layers.caffemodel \
  models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/parser_fc7_train_val_downsample.prototxt  \
- stitch_fc7 ${working_dir}/${db_name} 115  lmdb 1 GPU 0
+ stitch_fc7 ${save_dir}/${db_name} 2  lmdb 1 GPU 0

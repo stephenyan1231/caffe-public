@@ -126,10 +126,10 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   compute_output_shape();
   for (int top_id = 0; top_id < top.size(); ++top_id) {
     top[top_id]->Reshape(num_, num_output_, height_out_, width_out_);
-    DLOG(INFO)<<"BaseConvolutionLayer<Dtype>::Reshape "<<this->layer_param_.name()
-    		<<" top "<<top_id<<" replica id "<<this->replica_id_<<" shape "<<num_<<" "<<num_output_<<" "<<height_out_<<" "<<width_out_<<
-    		" count "<<top[top_id]->count()<<
-    		" "<<top[top_id]->count()*sizeof(Dtype);
+//    LOG(INFO)<<"BaseConvolutionLayer<Dtype>::Reshape "<<this->layer_param_.name()
+//    		<<" top "<<top_id<<" replica id "<<this->replica_id_<<" shape "<<num_<<" "<<num_output_<<" "<<height_out_<<" "<<width_out_<<
+//    		" count "<<top[top_id]->count()<<
+//    		" "<<top[top_id]->count()*sizeof(Dtype);
   }
   if (reverse_dimensions()) {
     conv_in_height_ = height_out_;
@@ -300,6 +300,12 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_bias(Dtype* bias,
   caffe_gpu_gemv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
       input, bias_multiplier_.gpu_data(), 1., bias);
 }
+
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::force_free_col_buffer_bias_multiplier_gpu_memory(){
+	this->col_buffer_.ReshapeForceMemoryFree(0, 0, 0, 0);
+	this->bias_multiplier_.ReshapeForceMemoryFree(0, 0, 0, 0);}
+
 
 #endif  // !CPU_ONLY
 

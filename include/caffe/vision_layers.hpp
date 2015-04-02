@@ -56,6 +56,8 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   void weight_gpu_gemm(const Dtype* col_input, const Dtype* output, Dtype*
       weights);
   void backward_gpu_bias(Dtype* bias, const Dtype* input);
+
+  void force_free_col_buffer_bias_multiplier_gpu_memory();
 #endif
 
   // reverse_dimensions should return true iff we are implementing deconv, so

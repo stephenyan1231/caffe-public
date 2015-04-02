@@ -33,7 +33,8 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 		for (int i = 0; i < bottom.size(); ++i) {
 			bottom[i]->ReshapeForceMemoryFree(0, 0, 0, 0);
 		}
-//		LOG(INFO)<<"ConvolutionLayer<Dtype>::Forward_gpu free memory";
+		this->force_free_col_buffer_bias_multiplier_gpu_memory();
+//		LOG(INFO)<<this->layer_param_.name()<<" ConvolutionLayer<Dtype>::Forward_gpu free memory";
 	}
 }
 

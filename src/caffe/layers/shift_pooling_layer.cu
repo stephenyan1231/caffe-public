@@ -44,11 +44,15 @@ __global__ void ShiftMaxPoolForward(const int nthreads,
 				}
 			}
 		}
-		top_data[index] = maxval;
-		if (mask) {
-			mask[index] = maxidx;
+		if(maxidx == -1){
+			top_data[index] = 0;
 		} else {
-			top_mask[index] = maxidx;
+			top_data[index] = maxval;
+		}
+		if (mask) {
+			mask[index] = -1;
+		} else {
+			top_mask[index] = -1;
 		}
 	}
 }
