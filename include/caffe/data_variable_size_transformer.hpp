@@ -38,6 +38,9 @@ class DataVariableSizeTransformer {
   void Transform(const Datum& datum, Blob<Dtype>* transformed_blob,
   		int& datum_height, int& datum_width);
 
+  void Transform(const cv::Mat& cv_img, Blob<Dtype>* transformed_blob,
+  		int& img_height, int& img_width);
+
  protected:
    /**
    * @brief Generates a random integer from Uniform({0, 1, ..., n-1}).

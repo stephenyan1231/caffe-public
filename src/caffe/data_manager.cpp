@@ -176,18 +176,9 @@ void DataManager<Dtype>::InternalThreadEntry() {
 		Datum datum;
 		int item_label = -1;
 		if(selective_list_.size() > 0){
-		  const int kMaxKeyLength = 256;
-			char key_cstr[kMaxKeyLength];
-//			std::string key_str = selective_list_[selective_list_cursor_].img_name;
 			std::string item_img_name = selective_list_[selective_list_cursor_].img_name;
 			item_label = selective_list_[selective_list_cursor_].label;
-	    int length = snprintf(key_cstr, kMaxKeyLength, "%s",
-	    		item_img_name.c_str());
-//	    LOG(INFO)<<"key_cstr "<<std::string(key_cstr)<<" "<<std::string(key_cstr).length()
-//	    		<<" item_label "<<item_label;
-			datum.ParseFromString(this->transaction_->GetValue(std::string(key_cstr)));
-//			LOG(INFO)<<"get value from database datum shape"<<datum.channels()<<" "
-//					<<datum.height()<<" "<<datum.width()<<" "<<datum.label();
+			datum.ParseFromString(this->transaction_->GetValue(item_img_name));
 			datum.set_label(item_label);
 			selective_list_cursor_++;
 			if(selective_list_cursor_ == selective_list_.size()){
@@ -248,7 +239,6 @@ void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 	}
 	this->forward_count_mutex_.unlock();
 	int num_replicas = Caffe::GetReplicasNum();
-//	prefetch_data_mutex_.lock_shared();
 	int batch_size = prefetch_data_.num();
 	int replica_batch_size = divide_up(batch_size, num_replicas);
 	int start = replica_batch_size * replica_id;
@@ -308,7 +298,8 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 		const LayerParameter& data_layer_param, Net<Dtype> *net) :
 		BaseDataManager<Dtype>(data_layer_param, net), transform_param_(
 				data_layer_param.transform_param()), data_transformer_(transform_param_,
-				data_layer_param.phase()) {
+				data_layer_param.phase()),
+				selective_list_fn_(data_layer_param.data_variable_size_param().selective_list()) {
 	DataVariableSizeParameter data_variable_size_param =
 			data_layer_param.data_variable_size_param();
 	this->SetBatchSize(data_variable_size_param.batch_size());
@@ -319,6 +310,21 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 		this->output_labels_ = false;
 	}
 
+	if(selective_list_fn_ != std::string("")){
+		LOG(INFO)<<"use selective list file "<<selective_list_fn_;
+		std::ifstream selective_list_f(selective_list_fn_.c_str());
+		std::string line;
+		SelectiveItem item;
+		while(std::getline(selective_list_f, line)){
+		  std::stringstream ss(line);
+		  ss>>item.img_name>>item.label;
+		  selective_list_.push_back(item);
+		}
+		LOG(INFO)<<"selective list length "<<selective_list_.size();
+		selective_list_cursor_ = 0;
+		shuffle(selective_list_.begin(), selective_list_.end());
+	}
+
 	datum_max_pixel_num_ = data_variable_size_param.max_pixel_num();
 
 	this->db_.reset(
@@ -326,6 +332,7 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 	this->db_->Open(data_layer_param.data_variable_size_param().source(),
 			db::READ);
 	this->cursor_.reset(this->db_->NewCursor());
+	this->transaction_.reset(this->db_->NewTransaction(true));
 
 	// Check if we should randomly skip a few data points
 	if (data_layer_param.data_variable_size_param().rand_skip()) {
@@ -340,6 +347,10 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 	// Read a data point, and use it to initialize the top blob.
 	Datum datum;
 	datum.ParseFromString(this->cursor_->value());
+	if (DecodeDatum(&datum)) {
+		LOG(INFO)<< "Decoding Datum";
+	}
+
 	this->datum_channels_ = datum.channels();
 
 	// image
@@ -365,10 +376,7 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 		this->prefetch_label_.mutable_cpu_data();
 	}
 
-	LOG(INFO)<<"DataVariableSizeManager<Dtype>::DataVariableSizeManager replicas num "
-	<<Caffe::GetReplicasNum();
 	replicas_batch_data_max_size_.Reshape(Caffe::GetReplicasNum(), 1, 1, 2);
-
 	prefetch_data_reorganized_.resize(Caffe::GetReplicasNum());
 	for (int i = 0; i < Caffe::GetReplicasNum(); ++i) {
 		prefetch_data_reorganized_[i] = new Blob<Dtype>();
@@ -380,7 +388,6 @@ DataVariableSizeManager<Dtype>::~DataVariableSizeManager() {
 	for (int i = 0; i < Caffe::GetReplicasNum(); ++i) {
 		delete prefetch_data_reorganized_[i];
 	}
-
 }
 
 template<typename Dtype>
@@ -408,7 +415,19 @@ void DataVariableSizeManager<Dtype>::InternalThreadEntry() {
 		timer.Start();
 		// get a blob
 		Datum datum;
-		datum.ParseFromString(this->cursor_->value());
+		if(selective_list_.size() > 0){
+			std::string item_img_name = selective_list_[selective_list_cursor_].img_name;
+			int item_label = selective_list_[selective_list_cursor_].label;
+			datum.ParseFromString(this->transaction_->GetValue(item_img_name));
+			datum.set_label(item_label);
+			selective_list_cursor_++;
+			if(selective_list_cursor_ == selective_list_.size()){
+				selective_list_cursor_ = 0;
+				shuffle(selective_list_.begin(), selective_list_.end());
+			}
+		}else{
+			datum.ParseFromString(this->cursor_->value());
+		}
 
 		cv::Mat cv_img;
 		if (datum.encoded()) {
@@ -422,7 +441,8 @@ void DataVariableSizeManager<Dtype>::InternalThreadEntry() {
 		this->transformed_data_.set_cpu_data(prefetch_data + offset);
 		int datum_height = 0, datum_width = 0;
 		if (datum.encoded()) {
-			NOT_IMPLEMENTED;
+			this->data_transformer_.Transform(cv_img, &(this->transformed_data_), datum_height,
+					datum_width);
 		} else {
 			this->data_transformer_.Transform(datum, &(this->transformed_data_),
 					datum_height, datum_width);
@@ -513,7 +533,6 @@ void DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 	}
 	this->forward_count_mutex_.unlock();
 	int num_replicas = Caffe::GetReplicasNum();
-//	prefetch_data_mutex_.lock_shared();
 	int batch_size = prefetch_data_.num();
 	int replica_batch_size = divide_up(batch_size, num_replicas);
 	int start = replica_batch_size * replica_id;

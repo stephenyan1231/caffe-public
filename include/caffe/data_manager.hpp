@@ -96,11 +96,6 @@ protected:
 	std::string selective_list_fn_;
 	std::vector<SelectiveItem> selective_list_;
 	int selective_list_cursor_;
-//	char key_char[DATA_MANAGER_MAX_KEY_LENGTH];
-
-
-	boost::shared_mutex prefetch_data_mutex_;
-
 };
 
 template<typename Dtype>
@@ -138,6 +133,9 @@ protected:
 	bool output_labels_;
 	TransformationParameter transform_param_;
 	DataVariableSizeTransformer<Dtype> data_transformer_;
+	std::string selective_list_fn_;
+	std::vector<SelectiveItem> selective_list_;
+	int selective_list_cursor_;
 };
 
 

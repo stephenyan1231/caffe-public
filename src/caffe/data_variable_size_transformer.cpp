@@ -99,8 +99,6 @@ void DataVariableSizeTransformer<Dtype>::Transform(const Datum& datum,
 
 	CHECK_GT(datum_channels, 0);
 
-	Dtype* mean = NULL;
-
 	if (has_mean_values) {
 		CHECK(mean_values_.size() == 1 || mean_values_.size() == datum_channels)
 																																								<< "Specify either 1 mean_value or as many as channels: "
@@ -116,7 +114,6 @@ void DataVariableSizeTransformer<Dtype>::Transform(const Datum& datum,
 	int height = datum_height;
 	int width = datum_width;
 
-	// Old version: copy datum image data into the upper-left corner of transformed_data
 	// New version: put datum image data in a continuous memory section of transformed_data
 	Dtype datum_element;
 	int top_index;
@@ -162,6 +159,97 @@ void DataVariableSizeTransformer<Dtype>::Transform(const Datum& datum,
 	Transform(datum, transformed_data,
 			transformed_blob->height() * transformed_blob->width(), datum_height,
 			datum_width);
+}
+
+template<typename Dtype>
+void DataVariableSizeTransformer<Dtype>::Transform(const cv::Mat& cv_img,
+		Blob<Dtype>* transformed_blob, int& img_height, int& img_width) {
+	int max_pixel_num = transformed_blob->height() * transformed_blob->width();
+	CHECK(cv_img.depth() == CV_8U) << "Image data type must be unsigned byte";
+	const int img_channels = cv_img.channels();
+	img_height = cv_img.rows;
+	img_width = cv_img.cols;
+
+	const int channels = transformed_blob->channels();
+	const int height = transformed_blob->height();
+	const int width = transformed_blob->width();
+	const int num = transformed_blob->num();
+
+	const int resize_short_side_min = param_.resize_short_side_min();
+	const int resize_short_side_max = param_.resize_short_side_max();
+	const cv::Mat *cv_img_ptr = &cv_img;
+	cv::Mat cv_resize_img;
+	if (resize_short_side_min > 0 && resize_short_side_max > 0) {
+		CHECK_GE(resize_short_side_max, resize_short_side_min);
+		const int resize_short_side = resize_short_side_min
+				+ Rand(resize_short_side_max - resize_short_side_min + 1);
+		int resize_width = 0, resize_height = 0;
+		if (cv_img.rows > cv_img.cols) {
+			resize_width = resize_short_side;
+			resize_height = ceil(
+					(float(cv_img.rows) / float(cv_img.cols)) * resize_width);
+		} else {
+			resize_height = resize_short_side;
+			resize_width = ceil(
+					(float(cv_img.cols) / float(cv_img.rows)) * resize_height);
+		}
+		cv::resize(cv_img, cv_resize_img, cv::Size(resize_width, resize_height));
+		cv_img_ptr = &cv_resize_img;
+		img_height = resize_height;
+		img_width = resize_width;
+	}
+	CHECK_GE(max_pixel_num, img_height * img_width);
+	CHECK_EQ(channels, img_channels);
+	CHECK_GE(num, 1);
+
+	const Dtype scale = param_.scale();
+	bool do_mirror = true;
+	if (phase_ == TRAIN) {
+		do_mirror = param_.mirror() && Rand(2);
+	} else {
+		do_mirror = param_.force_mirror();
+	}
+
+	const bool has_mean_values = mean_values_.size() > 0;
+	CHECK_EQ(has_mean_values, true);
+	CHECK_GT(img_channels, 0);
+
+	if (has_mean_values) {
+		CHECK(mean_values_.size() == 1 || mean_values_.size() == img_channels)
+																																								<< "Specify either 1 mean_value or as many as channels: "
+																																								<< img_channels;
+		if (img_channels > 1 && mean_values_.size() == 1) {
+			// Replicate the mean_value for simplicity
+			for (int c = 1; c < img_channels; ++c) {
+				mean_values_.push_back(mean_values_[0]);
+			}
+		}
+	}
+
+	Dtype* transformed_data = transformed_blob->mutable_cpu_data();
+	caffe_memset(sizeof(Dtype) * max_pixel_num * img_channels, 0,
+			transformed_data);
+	int top_index = 0, img_index = 0;
+	for (int h = 0; h < img_height; ++h) {
+		const uchar* ptr = (*cv_img_ptr).ptr<uchar>(h);
+		img_index = 0;
+		for (int w = 0; w < img_width; ++w) {
+			for (int c = 0; c < channels; ++c) {
+				if (do_mirror) {
+					top_index = (c * img_height + h) * img_width + (img_width - 1 - w);
+				} else {
+					top_index = (c * img_height + h) * img_width + w;
+				}
+				Dtype pixel = static_cast<Dtype>(ptr[img_index++]);
+				if (has_mean_values) {
+					transformed_data[top_index] = (pixel - mean_values_[c]) * scale;
+				} else {
+					NOT_IMPLEMENTED;
+				}
+			}
+
+		}
+	}
 }
 
 template<typename Dtype>

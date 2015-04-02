@@ -459,6 +459,8 @@ message DataVariableSizeParameter {
   optional DB backend = 8 [default = LEVELDB];
   optional string mean_file = 3;
   optional uint32 max_pixel_num = 5 [default = 0];
+  
+  optional string selective_list = 9;
 }
 
 // Message that stores parameters used by SpatialAccuracyLayer
