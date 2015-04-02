@@ -550,9 +550,9 @@ void DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 //	top[0]->Reshape(end - start, prefetch_data_.channels(), batch_max_height,
 //			batch_max_width);
 	top[0]->ReshapeLike(*prefetch_data_reorganized_[replica_id]);
-	LOG(INFO)<<"DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread top 0 shape "
-			<<top[0]->num()<<" "<<top[0]->channels()<<" "<<top[0]->height()<<" "
-			<<top[0]->width();
+//	LOG(INFO)<<"DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread top 0 shape "
+//			<<top[0]->num()<<" "<<top[0]->channels()<<" "<<top[0]->height()<<" "
+//			<<top[0]->width();
 
 //	CHECK_EQ(top[0]->num(), end - start);
 //	CHECK_EQ(top[0]->channels(), prefetch_data_.channels());
