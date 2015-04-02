@@ -5,7 +5,7 @@
 
 namespace caffe { namespace db {
 
-const size_t LMDB_MAP_SIZE = 1099511627776;  // 1 TB
+const size_t LMDB_MAP_SIZE = 1099511627776*2;  // 2 TB
 
 void LevelDB::Open(const string& source, Mode mode) {
   leveldb::Options options;
@@ -43,9 +43,13 @@ LMDBCursor* LMDB::NewCursor() {
   return new LMDBCursor(mdb_txn, mdb_cursor);
 }
 
-LMDBTransaction* LMDB::NewTransaction() {
+LMDBTransaction* LMDB::NewTransaction(bool readonly) {
   MDB_txn* mdb_txn;
-  MDB_CHECK(mdb_txn_begin(mdb_env_, NULL, 0, &mdb_txn));
+  if(readonly){
+    MDB_CHECK(mdb_txn_begin(mdb_env_, NULL, MDB_RDONLY, &mdb_txn));
+  } else {
+    MDB_CHECK(mdb_txn_begin(mdb_env_, NULL, 0, &mdb_txn));
+  }
   MDB_CHECK(mdb_dbi_open(mdb_txn, NULL, 0, &mdb_dbi_));
   return new LMDBTransaction(&mdb_dbi_, mdb_txn);
 }
@@ -58,6 +62,15 @@ void LMDBTransaction::Put(const string& key, const string& value) {
   mdb_value.mv_size = value.size();
   MDB_CHECK(mdb_put(mdb_txn_, *mdb_dbi_, &mdb_key, &mdb_value, 0));
 }
+
+string LMDBTransaction::GetValue(const string& key){
+	MDB_val mdb_key, mdb_value;
+	mdb_key.mv_data = const_cast<char*>(key.data());
+	mdb_key.mv_size = key.size();
+  MDB_CHECK(mdb_get(mdb_txn_, *mdb_dbi_, &mdb_key, &mdb_value));
+	return string(static_cast<const char*>(mdb_value.mv_data),mdb_value.mv_size);
+}
+
 
 DB* GetDB(DataParameter::DB backend) {
   switch (backend) {

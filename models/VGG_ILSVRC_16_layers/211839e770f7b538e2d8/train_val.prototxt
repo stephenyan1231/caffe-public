@@ -18,8 +18,9 @@ layer {
   }
   data_param {
     source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_short_512_lmdb"
-    batch_size: 64
+    batch_size: 100
     backend: LMDB
+    selective_list: ""
   }
 }
 layer {
@@ -43,6 +44,7 @@ layer {
     source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_short_512_lmdb"
     batch_size: 10
     backend: LMDB
+    selective_list: ""
   }
 }
 

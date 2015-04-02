@@ -23,6 +23,7 @@ inline void SyncedMemory::to_cpu() {
 	int old_device = 0;
   switch (head_) {
   case UNINITIALIZED:
+//  	LOG(INFO)<<"SyncedMemory::to_cpu new cpu memory size "<<size_;
     CaffeMallocHost(&cpu_ptr_, size_);
     caffe_memset(size_, 0, cpu_ptr_);
     head_ = HEAD_AT_CPU;
@@ -31,6 +32,7 @@ inline void SyncedMemory::to_cpu() {
   case HEAD_AT_GPU:
 #ifndef CPU_ONLY
     if (cpu_ptr_ == NULL) {
+//    	LOG(INFO)<<"SyncedMemory::to_cpu new cpu memory size "<<size_;
       CaffeMallocHost(&cpu_ptr_, size_);
       own_cpu_data_ = true;
     }

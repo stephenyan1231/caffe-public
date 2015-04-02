@@ -36,25 +36,27 @@ if [ ! -d "$VAL_DATA_ROOT" ]; then
   exit 1
 fi
 
+# echo "Creating val lmdb..."
+
+# GLOG_logtostderr=1 $TOOLS/convert_imageset \
+#     --resize_height=$RESIZE_HEIGHT \
+#     --resize_width=$RESIZE_WIDTH \
+#     --resize_short_side=$RESIZE_SHORT_SIDE \
+#     $VAL_DATA_ROOT \
+#     $DATA/val.txt \
+#     /home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_short_512_lmdb
+
 echo "Creating train lmdb..."
 
 GLOG_logtostderr=1 $TOOLS/convert_imageset \
-    --resize_height=$RESIZE_HEIGHT \
-    --resize_width=$RESIZE_WIDTH \
-    --resize_short_side=$RESIZE_SHORT_SIDE \
-    --shuffle \
-    $TRAIN_DATA_ROOT \
-    $DATA/train.txt \
-    /home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_short_512_lmdb
+     --resize_height=$RESIZE_HEIGHT \
+     --resize_width=$RESIZE_WIDTH \
+     --resize_short_side=$RESIZE_SHORT_SIDE \
+     --shuffle \
+     $TRAIN_DATA_ROOT \
+     $DATA/train.txt \
+     /home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_short_512_lmdb
 
-echo "Creating val lmdb..."
 
-GLOG_logtostderr=1 $TOOLS/convert_imageset \
-    --resize_height=$RESIZE_HEIGHT \
-    --resize_width=$RESIZE_WIDTH \
-    --resize_short_side=$RESIZE_SHORT_SIDE \
-    $VAL_DATA_ROOT \
-    $DATA/val.txt \
-    /home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_short_512_lmdb
 
 echo "Done."

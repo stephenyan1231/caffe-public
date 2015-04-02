@@ -33,6 +33,7 @@ class Transaction {
   virtual ~Transaction() { }
   virtual void Put(const string& key, const string& value) = 0;
   virtual void Commit() = 0;
+  virtual string GetValue(const string& key) = 0;
 
   DISABLE_COPY_AND_ASSIGN(Transaction);
 };
@@ -44,7 +45,7 @@ class DB {
   virtual void Open(const string& source, Mode mode) = 0;
   virtual void Close() = 0;
   virtual Cursor* NewCursor() = 0;
-  virtual Transaction* NewTransaction() = 0;
+  virtual Transaction* NewTransaction(bool readonly = false) = 0;
 
   DISABLE_COPY_AND_ASSIGN(DB);
 };
@@ -75,6 +76,11 @@ class LevelDBTransaction : public Transaction {
     CHECK(status.ok()) << "Failed to write batch to leveldb "
                        << std::endl << status.ToString();
   }
+  virtual string GetValue(const string& key){
+  	NOT_IMPLEMENTED;
+  	return string("");
+  }
+
 
  private:
   leveldb::DB* db_;
@@ -97,9 +103,13 @@ class LevelDB : public DB {
   virtual LevelDBCursor* NewCursor() {
     return new LevelDBCursor(db_->NewIterator(leveldb::ReadOptions()));
   }
-  virtual LevelDBTransaction* NewTransaction() {
+  virtual LevelDBTransaction* NewTransaction(bool readonly = false) {
+  	// how to enable readonly for leveldb database
+  	NOT_IMPLEMENTED;
     return new LevelDBTransaction(db_);
   }
+
+//  virtual std::string GetValue(char* key, int key_length);
 
  private:
   leveldb::DB* db_;
@@ -153,6 +163,7 @@ class LMDBTransaction : public Transaction {
     : mdb_dbi_(mdb_dbi), mdb_txn_(mdb_txn) { }
   virtual void Put(const string& key, const string& value);
   virtual void Commit() { MDB_CHECK(mdb_txn_commit(mdb_txn_)); }
+  virtual string GetValue(const string& key);
 
  private:
   MDB_dbi* mdb_dbi_;
@@ -174,7 +185,8 @@ class LMDB : public DB {
     }
   }
   virtual LMDBCursor* NewCursor();
-  virtual LMDBTransaction* NewTransaction();
+  virtual LMDBTransaction* NewTransaction(bool readonly = false);
+//  virtual std::string GetValue(char* key, int key_length);
 
  private:
   MDB_env* mdb_env_;

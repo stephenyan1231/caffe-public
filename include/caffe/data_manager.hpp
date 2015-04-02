@@ -55,12 +55,20 @@ protected:
 
 	shared_ptr<db::DB> db_;
 	shared_ptr<db::Cursor> cursor_;
+	shared_ptr<db::Transaction> transaction_;
 
 	int datum_channels_, datum_height_, datum_width_;
 
 	int forward_count_;
 	boost::mutex forward_count_mutex_;
 };
+
+typedef struct {
+	std::string img_name;
+	int label;
+} SelectiveItem;
+
+//typedef std::pair<std::string, int> ItemNameLabel;
 
 template<typename Dtype>
 class DataManager: public BaseDataManager<Dtype> {
@@ -85,6 +93,11 @@ protected:
 	bool output_labels_;
 	TransformationParameter transform_param_;
 	DataTransformer<Dtype> data_transformer_;
+	std::string selective_list_fn_;
+	std::vector<SelectiveItem> selective_list_;
+	int selective_list_cursor_;
+//	char key_char[DATA_MANAGER_MAX_KEY_LENGTH];
+
 
 	boost::shared_mutex prefetch_data_mutex_;
 

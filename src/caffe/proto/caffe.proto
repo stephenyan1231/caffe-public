@@ -437,6 +437,8 @@ message DataParameter {
   // DEPRECATED. See TransformationParameter. Specify if we want to randomly mirror
   // data.
   optional bool mirror = 6 [default = false];
+  
+  optional string selective_list = 9;
 }
 
 // Message that stores parameters used by DataSegmentationLayer

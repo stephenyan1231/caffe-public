@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
   // Create new DB
   scoped_ptr<db::DB> db(db::GetDB(FLAGS_backend));
   db->Open(argv[3], db::NEW);
-  scoped_ptr<db::Transaction> txn(db->NewTransaction());
+  scoped_ptr<db::Transaction> txn(db->NewTransaction(false));
 
   // Storing to db
   std::string root_folder(argv[1]);
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
       }
     }
     // sequential
-    int length = snprintf(key_cstr, kMaxKeyLength, "%08d_%s", line_id,
+    int length = snprintf(key_cstr, kMaxKeyLength, "%s",
         lines[line_id].first.c_str());
 
     // Put in db

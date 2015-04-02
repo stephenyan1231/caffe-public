@@ -71,8 +71,8 @@ template<typename Dtype>
 shared_ptr<Blob<Dtype> > Blob<Dtype>::ReshapedGPUOnly(const int num, const int channels, const int height,
   const int width){
 	CHECK_EQ(count_, num * channels * height * width);
-	LOG(INFO)<<"Blob<Dtype>::ReshapedGPUOnly count "<<count_<<" "
-			<<count_*sizeof(Dtype);
+//	LOG(INFO)<<"Blob<Dtype>::ReshapedGPUOnly count "<<count_<<" "
+//			<<count_*sizeof(Dtype);
 	shared_ptr<Blob<Dtype> > new_blob = shared_ptr<Blob<Dtype> >
 	(new Blob<Dtype>(num, channels, height, width));
 	new_blob->set_gpu_data(mutable_gpu_data(), Caffe::GetDeviceId());

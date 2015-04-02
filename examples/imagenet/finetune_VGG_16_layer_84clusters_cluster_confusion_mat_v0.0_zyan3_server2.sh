@@ -13,7 +13,7 @@ imax=`expr ${n_clusters} - 1`
 echo ${imax}
 
 # for i in `seq 0 ${imax}`
-for i in `seq 15 1 19`
+for i in `seq 15 1 15`
 do
 	/home/zyan3/proj/caffe_private_hdcnn/
 	id=`printf "%02d" $i`
@@ -22,12 +22,12 @@ do
 
 	echo ${solver}
 
-	GLOG_logtostderr=1 $TOOLS/finetune_net_match.bin \
-	    --solver=${solver} --match_mode=SUFFIX_MATCH \
-	    ${model_dir}/VGG_ILSVRC_16_layers.caffemodel
+	 # GLOG_logtostderr=1 $TOOLS/finetune_net_match.bin \
+	 #     --solver=${solver} --match_mode=SUFFIX_MATCH \
+	 #     ${model_dir}/VGG_ILSVRC_16_layers.caffemodel
 
-	# GLOG_logtostderr=1 $TOOLS/caffe train \
-	#      --solver=${solver} --snapshot=${snapshot}
+	GLOG_logtostderr=1 $TOOLS/caffe train \
+	    --solver=${solver} --snapshot=${snapshot}
 
 done
 

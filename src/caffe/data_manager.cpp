@@ -17,6 +17,7 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/upgrade_proto.hpp"
 #include "caffe/util/benchmark.hpp"
+#include "caffe/util/rng.hpp"
 
 namespace caffe {
 
@@ -61,7 +62,7 @@ DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 		Net<Dtype> *net) :
 		BaseDataManager<Dtype>(data_layer_param, net), transform_param_(
 				data_layer_param.transform_param()), data_transformer_(transform_param_,
-				data_layer_param.phase()) {
+				data_layer_param.phase()),  selective_list_fn_(data_layer_param.data_param().selective_list()){
 	this->SetBatchSize(this->layer_param_.data_param().batch_size());
 	// Hack
 	if (data_layer_param.top_size() > 1) {
@@ -70,9 +71,29 @@ DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 		this->output_labels_ = false;
 	}
 
+	if(selective_list_fn_ != std::string("")){
+		LOG(INFO)<<"use selective list file "<<selective_list_fn_;
+		std::ifstream selective_list_f(selective_list_fn_.c_str());
+		std::string line;
+		SelectiveItem item;
+		while(std::getline(selective_list_f, line)){
+		  std::stringstream ss(line);
+		  ss>>item.img_name>>item.label;
+		  selective_list_.push_back(item);
+		}
+		LOG(INFO)<<"selective list length "<<selective_list_.size();
+		selective_list_cursor_ = 0;
+		shuffle(selective_list_.begin(), selective_list_.end());
+	}
+
 	this->db_.reset(db::GetDB(data_layer_param.data_param().backend()));
 	this->db_->Open(data_layer_param.data_param().source(), db::READ);
+	LOG(INFO)<<"new database cursor";
 	this->cursor_.reset(this->db_->NewCursor());
+	LOG(INFO)<<"new database transaction";
+	this->transaction_.reset(this->db_->NewTransaction(true));
+	LOG(INFO)<<"[[[[[database key "<<this->cursor_->key()<<" "
+			<<this->cursor_->key().length();
 
 	// Check if we should randomly skip a few data points
 	if (data_layer_param.data_param().rand_skip()) {
@@ -153,7 +174,30 @@ void DataManager<Dtype>::InternalThreadEntry() {
 		timer.Start();
 		// get a blob
 		Datum datum;
-		datum.ParseFromString(this->cursor_->value());
+		int item_label = -1;
+		if(selective_list_.size() > 0){
+		  const int kMaxKeyLength = 256;
+			char key_cstr[kMaxKeyLength];
+//			std::string key_str = selective_list_[selective_list_cursor_].img_name;
+			std::string item_img_name = selective_list_[selective_list_cursor_].img_name;
+			item_label = selective_list_[selective_list_cursor_].label;
+	    int length = snprintf(key_cstr, kMaxKeyLength, "%s",
+	    		item_img_name.c_str());
+//	    LOG(INFO)<<"key_cstr "<<std::string(key_cstr)<<" "<<std::string(key_cstr).length()
+//	    		<<" item_label "<<item_label;
+			datum.ParseFromString(this->transaction_->GetValue(std::string(key_cstr)));
+//			LOG(INFO)<<"get value from database datum shape"<<datum.channels()<<" "
+//					<<datum.height()<<" "<<datum.width()<<" "<<datum.label();
+			datum.set_label(item_label);
+			selective_list_cursor_++;
+			if(selective_list_cursor_ == selective_list_.size()){
+				selective_list_cursor_ = 0;
+				shuffle(selective_list_.begin(), selective_list_.end());
+			}
+		}
+		else{
+			datum.ParseFromString(this->cursor_->value());
+		}
 
 		cv::Mat cv_img;
 		if (datum.encoded()) {
@@ -175,11 +219,13 @@ void DataManager<Dtype>::InternalThreadEntry() {
 		}
 		trans_time += timer.MicroSeconds();
 
-		// go to the next iter
-		this->cursor_->Next();
-		if (!this->cursor_->valid()) {
-			DLOG(INFO)<< "Restarting data prefetching from start.";
-			this->cursor_->SeekToFirst();
+		if(selective_list_.size() == 0){
+			// go to the next iter
+			this->cursor_->Next();
+			if (!this->cursor_->valid()) {
+				DLOG(INFO)<< "Restarting data prefetching from start.";
+				this->cursor_->SeekToFirst();
+			}
 		}
 	}
 	batch_timer.Stop();
