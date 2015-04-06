@@ -183,9 +183,11 @@ void Net<Dtype>::InitNetThreads(NetParameter& param) {
 				CHECK_EQ(first_net_thread_params.size(), net_thread_params.size());
 				for(int j = 0; j < first_net_thread_params.size(); ++j) {
 					CHECK_EQ(first_net_thread_params[j]->count(), net_thread_params[j]->count());
-					const Dtype *first_net_data = first_net_thread_params[j]->gpu_data();
-					Dtype* data = net_thread_params[j]->mutable_gpu_data();
-					caffe_copy(first_net_thread_params[j]->count(), first_net_data, data);
+					if(first_net_thread_params[j]->count() > 0){
+						const Dtype *first_net_data = first_net_thread_params[j]->gpu_data();
+						Dtype* data = net_thread_params[j]->mutable_gpu_data();
+						caffe_copy(first_net_thread_params[j]->count(), first_net_data, data);
+					}
 				}
 			}
 			break;
@@ -1301,10 +1303,10 @@ void NetThread<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
 			++target_layer_id;
 		}
 		if (target_layer_id == layer_names_.size()) {
-			DLOG(INFO)<< "Ignoring source layer " << source_layer_name;
+			LOG(INFO)<< "Ignoring source layer " << source_layer_name;
 			continue;
 		}
-		DLOG(INFO)<< "Copying source layer " << source_layer_name;
+		LOG(INFO)<< "Copying source layer " << source_layer_name;
 		vector<shared_ptr<Blob<Dtype> > >& target_blobs =
 				layers_[target_layer_id]->blobs();
 		CHECK_EQ(target_blobs.size(), source_layer.blobs_size())<< "Incompatible number of blobs for layer " << source_layer_name;
@@ -1320,11 +1322,16 @@ void NetThread<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
 
 		for (int j = 0; j < target_blobs.size(); ++j) {
 			if (!conv_init_from_inner_product) {
-				CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
-				CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
-				CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
-				CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
-				target_blobs[j]->FromProto(source_layer.blobs(j));
+				if(target_blobs[j]->count() > 0){
+					CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
+					CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
+					CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
+					CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
+					target_blobs[j]->FromProto(source_layer.blobs(j));
+				}else{
+					LOG(INFO)<<"Skipping copy parameter blob "<<source_layer_name<<" blob id "<<j;
+				}
+
 			} else {
 				CHECK_EQ(target_blobs[j]->count(),
 						source_layer.blobs(j).num() * source_layer.blobs(j).channels()

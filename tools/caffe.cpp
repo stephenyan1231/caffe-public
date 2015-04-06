@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "boost/algorithm/string.hpp"
+
 #include "caffe/caffe.hpp"
 #include "caffe/common.hpp"
 
@@ -16,15 +18,15 @@ using caffe::shared_ptr;
 using caffe::Timer;
 using caffe::vector;
 
-DEFINE_string(gpu, "", "Run in GPU mode on given device IDs.");
-DEFINE_string(solver, "", "The solver definition protocol buffer text file.");
-DEFINE_string(model, "", "The model definition protocol buffer text file..");
+DEFINE_string(gpu, "", "Run in GPU mode on given device IDs.") ;
+DEFINE_string(solver, "", "The solver definition protocol buffer text file.") ;
+DEFINE_string(model, "", "The model definition protocol buffer text file..") ;
 DEFINE_string(snapshot, "",
-		"Optional; the snapshot solver state to resume training.");
+		"Optional; the snapshot solver state to resume training.") ;
 DEFINE_string(weights, "",
 		"Optional; the pretrained weights to initialize finetuning. "
-		"Cannot be set simultaneously with snapshot.");
-DEFINE_int32(iterations, 50, "The number of iterations to run.");
+				"Cannot be set simultaneously with snapshot.") ;
+DEFINE_int32(iterations, 50, "The number of iterations to run.") ;
 
 // A simple registry for caffe commands.
 typedef int (*BrewFunction)();
@@ -90,23 +92,23 @@ int train() {
 	if(FLAGS_gpu.length() > 0) {
 		device_ids = caffe::parse_int_list(FLAGS_gpu);
 		LOG(INFO) << "Use GPUs with device IDs below";
-		for(int i = 0; i < device_ids.size(); ++i){
+		for(int i = 0; i < device_ids.size(); ++i) {
 			LOG(INFO) << "device id " << device_ids[i];
 		}
 		Caffe::set_mode(Caffe::GPU);
 	}
-	else if(solver_param.solver_mode() == caffe::SolverParameter_SolverMode_GPU){
+	else if(solver_param.solver_mode() == caffe::SolverParameter_SolverMode_GPU) {
 		device_ids.resize(solver_param.device_id_size());
 		for(int i = 0; i < solver_param.device_id_size(); ++i) {
 			device_ids[i] = solver_param.device_id(i);
 		}
 		LOG(INFO) << "Use GPUs with device IDs below";
-		for(int i = 0; i < device_ids.size(); ++i){
+		for(int i = 0; i < device_ids.size(); ++i) {
 			LOG(INFO) << "device id " << device_ids[i];
 		}
 		Caffe::set_mode(Caffe::GPU);
 	}
-	else{
+	else {
 		LOG(INFO) << "Use CPU.";
 		// for cpu mode, just create a single net thread
 		Caffe::set_mode(Caffe::CPU);
@@ -154,7 +156,14 @@ int test() {
 	Caffe::InitDevices(device_ids);
 	Net<float> caffe_net(FLAGS_model);
 	caffe_net.PostInit();
-	caffe_net.CopyTrainedLayersFrom(FLAGS_weights);
+
+	std::vector<std::string> all_weights;
+	boost::split(all_weights, FLAGS_weights, boost::is_any_of(","));
+	for(int i = 0; i<all_weights.size(); ++i) {
+		LOG(INFO)<<"use pretrained model "<<all_weights[i];
+	}
+
+	caffe_net.CopyTrainedLayersFrom(all_weights);
 	LOG(INFO) << "Running for " << FLAGS_iterations << " iterations.";
 
 	vector<Blob<float>* > bottom_vec;

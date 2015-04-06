@@ -266,11 +266,25 @@ class InnerProductLayer : public Layer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
+  void FreeParameterMatrix();
+
+  void AssembleParameterMatrix();
+
   int M_;
   int K_;
   int N_;
   bool bias_term_;
   Blob<Dtype> bias_multiplier_;
+
+  unsigned int quantization_kmean_num_cluster_;
+  unsigned int quantization_num_segment_;
+  std::string quantization_kmean_cluster_centers_file_;
+  std::string quantization_kmean_cluster_indices_file_;
+
+  Blob<Dtype> quantization_kmean_cluster_centers_;
+  Blob<Dtype> quantization_kmean_cluster_indices_;
+  bool parameter_matrix_assembled_;
+
 };
 
 /**

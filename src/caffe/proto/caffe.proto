@@ -594,6 +594,11 @@ message InnerProductParameter {
   optional bool bias_term = 2 [default = true]; // whether to have bias terms
   optional FillerParameter weight_filler = 3; // The filler for the weight
   optional FillerParameter bias_filler = 4; // The filler for the bias
+  
+  optional uint32 quantization_kmean_num_cluster = 5 [default = 0];
+  optional uint32 quantization_num_segment = 6 [default = 0];
+  optional string quantization_kmean_cluster_centers_file = 7;
+  optional string quantization_kmean_cluster_indices_file = 8;
 }
 
 // Message that stores parameters used by LRNLayer

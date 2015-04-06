@@ -104,8 +104,6 @@ class LevelDB : public DB {
     return new LevelDBCursor(db_->NewIterator(leveldb::ReadOptions()));
   }
   virtual LevelDBTransaction* NewTransaction(bool readonly = false) {
-  	// how to enable readonly for leveldb database
-  	NOT_IMPLEMENTED;
     return new LevelDBTransaction(db_);
   }
 

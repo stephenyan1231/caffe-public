@@ -2,7 +2,7 @@
 
 
 layer_name=stitch_fc7
-config=longside_1024
+config=longside_2048
 save_dir=examples/uniform_set/VGG_ILSVRC_16_layers_parser_fc7
 mkdir ${save_dir}
 db_name=${layer_name}_${config}_lmdb

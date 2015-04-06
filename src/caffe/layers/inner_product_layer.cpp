@@ -5,6 +5,7 @@
 #include "caffe/filler.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
+#include "caffe/util/io.hpp"
 #include "caffe/vision_layers.hpp"
 
 namespace caffe {
@@ -16,6 +17,29 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   bias_term_ = this->layer_param_.inner_product_param().bias_term();
   N_ = num_output;
   K_ = bottom[0]->count() / bottom[0]->num();
+
+  quantization_kmean_num_cluster_ = this->layer_param_.inner_product_param().quantization_kmean_num_cluster();
+  quantization_num_segment_ = this->layer_param_.inner_product_param().quantization_num_segment();
+  quantization_kmean_cluster_centers_file_ = this->layer_param_.inner_product_param().quantization_kmean_cluster_centers_file();
+  quantization_kmean_cluster_indices_file_ = this->layer_param_.inner_product_param().quantization_kmean_cluster_indices_file();
+  parameter_matrix_assembled_ = false;
+  if(quantization_kmean_num_cluster_ >0){
+  	CHECK_GE(quantization_num_segment_, 1);
+  	LOG(INFO)<<"Layer "<<this->layer_param_.name()<<" read quantization_kmean_cluster_centers_ from "
+  			<<quantization_kmean_cluster_centers_file_;
+  	BlobProto centers_blob_proto;
+  	ReadProtoFromBinaryFile(quantization_kmean_cluster_centers_file_, &centers_blob_proto);
+  	quantization_kmean_cluster_centers_.FromProto(centers_blob_proto);
+  	LOG(INFO)<<"quantization_kmean_cluster_centers_ height "<<quantization_kmean_cluster_centers_.height()
+  			<<" width "<<quantization_kmean_cluster_centers_.width();
+
+  	BlobProto indices_blob_proto;
+  	ReadProtoFromBinaryFile(quantization_kmean_cluster_indices_file_, &indices_blob_proto);
+  	quantization_kmean_cluster_indices_.FromProto(indices_blob_proto);
+  	LOG(INFO)<<"quantization_kmean_cluster_indices_ height "<<quantization_kmean_cluster_indices_.height()
+  			<<" width "<<quantization_kmean_cluster_indices_.width();
+  }
+
   // Check if we need to set up the weights
   if (this->blobs_.size() > 0) {
     LOG(INFO) << "Skipping parameter initialization";
@@ -25,12 +49,18 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     } else {
       this->blobs_.resize(1);
     }
-    // Intialize the weight
-    this->blobs_[0].reset(new Blob<Dtype>(1, 1, N_, K_));
-    // fill the weights
-    shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
-        this->layer_param_.inner_product_param().weight_filler()));
-    weight_filler->Fill(this->blobs_[0].get());
+
+    if(quantization_kmean_num_cluster_ == 0){
+      // Intialize the weight
+      this->blobs_[0].reset(new Blob<Dtype>(1, 1, N_, K_));
+      // fill the weights
+      shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
+          this->layer_param_.inner_product_param().weight_filler()));
+      weight_filler->Fill(this->blobs_[0].get());
+    }else{
+      this->blobs_[0].reset(new Blob<Dtype>(0, 0, 0, 0));
+    }
+
     // If necessary, intiialize and fill the bias term
     if (bias_term_) {
       this->blobs_[1].reset(new Blob<Dtype>(1, 1, 1, N_));
@@ -99,6 +129,51 @@ void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   }
 }
 
+
+template<typename Dtype>
+void InnerProductLayer<Dtype>::FreeParameterMatrix() {
+	if(quantization_kmean_num_cluster_ > 0 ){
+		LOG(INFO)<<"InnerProductLayer<Dtype>::FreeParameterMatrix";
+		this->blobs_[0]->ReshapeForceMemoryFree(0, 0, 0, 0);
+	}
+}
+
+template<typename Dtype>
+void InnerProductLayer<Dtype>::AssembleParameterMatrix() {
+	if (quantization_kmean_num_cluster_ > 0) {
+//	if (quantization_kmean_num_cluster_ > 0 && !parameter_matrix_assembled_) {
+		LOG(INFO)<<"InnerProductLayer<Dtype>::AssembleParameterMatrix";
+		Dtype* param_data = NULL;
+		const Dtype* centers_data = quantization_kmean_cluster_centers_.cpu_data();
+		const Dtype* indices_data = quantization_kmean_cluster_indices_.cpu_data();
+		this->blobs_[0]->Reshape(1, 1, N_, K_);
+		CHECK_EQ(K_ % quantization_num_segment_, 0);
+		const int segment_size = K_ / quantization_num_segment_;
+
+		switch (Caffe::mode()) {
+		case Caffe::CPU:
+			NOT_IMPLEMENTED;
+			break;
+
+		case Caffe::GPU:
+			param_data = this->blobs_[0]->mutable_gpu_data();
+			for (int i = 0; i < N_; ++i) {
+				for (int j = 0; j < quantization_num_segment_; ++j) {
+					int index = static_cast<int>((indices_data
+							+ quantization_kmean_cluster_indices_.offset(0,0,i))[j]);
+					caffe_copy(segment_size,
+							centers_data + quantization_kmean_cluster_centers_.offset(0,0,index)
+									+ j * segment_size,
+							param_data + this->blobs_[0]->offset(0,0,i) + j * segment_size);
+				}
+			}
+			break;
+		default:
+			LOG(FATAL)<< "Unknown caffe mode: " << Caffe::mode();
+		}
+//		parameter_matrix_assembled_ = true;
+	}
+}
 #ifdef CPU_ONLY
 STUB_GPU(InnerProductLayer);
 #endif

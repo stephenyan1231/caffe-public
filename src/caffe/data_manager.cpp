@@ -244,10 +244,11 @@ void DataManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 	int start = replica_batch_size * replica_id;
 	int end = start + this->net_->GetBatchSize(replica_id);
 
-	CHECK_EQ(top[0]->num(), end - start);
-	CHECK_EQ(top[0]->channels(), prefetch_data_.channels());
-	CHECK_EQ(top[0]->height(), prefetch_data_.height());
-	CHECK_EQ(top[0]->width(), prefetch_data_.width());
+//	CHECK_EQ(top[0]->num(), end - start);
+//	CHECK_EQ(top[0]->channels(), prefetch_data_.channels());
+//	CHECK_EQ(top[0]->height(), prefetch_data_.height());
+//	CHECK_EQ(top[0]->width(), prefetch_data_.width());
+	top[0]->Reshape(end-start,prefetch_data_.channels(),prefetch_data_.height(),prefetch_data_.width());
 
 	int unit_size = prefetch_data_.count() / prefetch_data_.num();
 
@@ -538,34 +539,9 @@ void DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 	int start = replica_batch_size * replica_id;
 	int end = start + this->net_->GetBatchSize(replica_id);
 
-//	Dtype *prefetch_data_size = prefetch_data_size_.mutable_cpu_data();
-//	int batch_max_height = 0, batch_max_width = 0;
-//	for (int i = start; i < end; ++i) {
-//		int height = (prefetch_data_size + prefetch_data_size_.offset(i))[0];
-//		int width = (prefetch_data_size + prefetch_data_size_.offset(i))[1];
-//		batch_max_height = batch_max_height > height ? batch_max_height : height;
-//		batch_max_width = batch_max_width > width ? batch_max_width : width;
-//	}
-//	LOG(INFO)<<"batch_max_height "<<batch_max_height<<" batch_max_width "<<batch_max_width;
-//	top[0]->Reshape(end - start, prefetch_data_.channels(), batch_max_height,
-//			batch_max_width);
 	top[0]->ReshapeLike(*prefetch_data_reorganized_[replica_id]);
-//	LOG(INFO)<<"DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread top 0 shape "
-//			<<top[0]->num()<<" "<<top[0]->channels()<<" "<<top[0]->height()<<" "
-//			<<top[0]->width();
-
-//	CHECK_EQ(top[0]->num(), end - start);
-//	CHECK_EQ(top[0]->channels(), prefetch_data_.channels());
-//	CHECK_EQ(top[0]->height(), prefetch_data_.height());
-//	CHECK_EQ(top[0]->width(), prefetch_data_.width());
-
-//	int unit_size = prefetch_data_.count() / prefetch_data_.num();
 
 	if (Caffe::mode() == Caffe::CPU) {
-//		caffe_copy(unit_size * (end - start),
-//				prefetch_data_.cpu_data() + prefetch_data_.offset(start),
-//				top[0]->mutable_cpu_data());
-
 		caffe_copy(prefetch_data_reorganized_[replica_id]->count(),
 				prefetch_data_reorganized_[replica_id]->cpu_data(),
 				top[0]->mutable_cpu_data());
@@ -575,9 +551,6 @@ void DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 				top[1]->mutable_cpu_data());
 
 	} else {
-//		caffe_copy(unit_size * (end - start),
-//				prefetch_data_.cpu_data() + prefetch_data_.offset(start),
-//				top[0]->mutable_gpu_data());
 
 		caffe_copy(prefetch_data_reorganized_[replica_id]->count(),
 				prefetch_data_reorganized_[replica_id]->cpu_data(),
