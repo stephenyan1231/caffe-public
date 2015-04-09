@@ -61,6 +61,8 @@ void SpatialAccuracyLayer<Dtype>::Forward_cpu(
 
 	Dtype accuracy = 0;
 	const Dtype* prob_data = prob_.cpu_data();
+	DLOG(INFO)<<"SpatialAccuracyLayer<Dtype>::Forward_cpu prob_data shape "<<
+			prob_.num()<<" "<<prob_.channels()<<" "<<prob_.height()<<" "<<prob_.width();
 //	const Dtype* bottom_data = bottom[0]->cpu_data();
 	const Dtype* bottom_label = bottom[1]->cpu_data();
 	int num = bottom[0]->num();

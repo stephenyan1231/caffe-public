@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 import cPickle
 import gzip
 import zipfile
+from sklearn.cluster import KMeans
+import multiprocessing as mtp
+import time
 
 root_dir = os.environ['CAFFE_PROJ_DIR']
 sys.path.append(os.path.join(root_dir, 'python/caffe/proto/'))
@@ -165,3 +168,94 @@ def find_layer_id(lay_names,lay_name):
         if lay_names[i]==lay_name:
             return i
     return -1
+
+def compute_compression_factor(m,n,n_kmean_cluster,n_seg):
+    compress_factor= float(32*m*n)/ float(32*n_kmean_cluster*n+m*n_seg*32)
+    print 'compress_factor %4.3f'%compress_factor    
+    
+def matrix_quantization(mat,n_kmean_cluster,n_seg):
+    st_time=time.time()
+    seg_size=mat.shape[1]/n_seg
+    assert (mat.shape[1]%n_seg)==0
+    mat_indices=np.zeros((mat.shape[0],n_seg),dtype=np.int32)
+    mat_cluster_centers=np.zeros((n_kmean_cluster,mat.shape[1]), dtype=np.float32)
+    kmeans=KMeans(init='k-means++',n_clusters=n_kmean_cluster,n_init=2,n_jobs=1,copy_x=False)
+    
+    display_num = 16
+    for i in range(n_seg):
+        start,end=i*seg_size,(i+1)*seg_size
+        mat_seg=mat[:,start:end]
+        mat_indices[:,i]=kmeans.fit_predict(mat_seg)
+        if (i%(n_seg/display_num))==0:
+            print mat_indices[:,i].shape, kmeans.cluster_centers_.shape
+        mat_cluster_centers[:,start:end]=np.float32(kmeans.cluster_centers_)
+    
+    ep_time=time.time()-st_time
+    print 'elapsed time %5.2f' % ep_time
+        
+    return mat_indices,mat_cluster_centers
+
+
+def fine_layer_id(net_param, layer_name):
+    for i in range(len(net_param.layer)):
+        if layer_name == net_param.layer[i].name:
+            return i
+    print 'fail to find layer %s' % layer_name
+    return -1
+
+
+def quantiaztion_layer_parameter(args):
+    st_time=time.time()
+    
+    net_param_fn, layer_name, layer_name_prefix, n_kmean_cluster, n_seg, save_dir=\
+    args[0],args[1],args[2],args[3],args[4],args[5]
+    print 'open net %s' % net_param_fn
+    f=open(net_param_fn,'rb')
+    net_param = caffe_pb2.NetParameter()
+    net_param.ParseFromString(f.read())
+    f.close()
+
+    layer_id=fine_layer_id(net_param, layer_name_prefix+layer_name)
+    
+    fc_layer=net_param.layer[layer_id]
+    print fc_layer.blobs[0].height,fc_layer.blobs[0].width      
+    fc=np.asarray(fc_layer.blobs[0].data)
+    fc=fc.reshape((fc_layer.blobs[0].height,fc_layer.blobs[0].width))
+    
+    compute_compression_factor(fc.shape[0],fc.shape[1],n_kmean_cluster[layer_name],n_seg[layer_name])
+
+    fc_indices,fc_cluster_centers=matrix_quantization(fc,n_kmean_cluster[layer_name],n_seg[layer_name])
+
+    blob_proto = caffe_pb2.BlobProto()
+    blob_proto.num=1
+    blob_proto.channels=1
+    blob_proto.height=fc_cluster_centers.shape[0]
+    blob_proto.width=fc_cluster_centers.shape[1]
+    for j in range(fc_cluster_centers.shape[0]):
+        for k in range(fc_cluster_centers.shape[1]):
+            blob_proto.data.append(float(fc_cluster_centers[j,k]))
+    fn=save_dir+layer_name_prefix+layer_name+'_%d_%d'%(n_kmean_cluster[layer_name],n_seg[layer_name])+\
+    '_kmean_cluster_centers.binaryproto'
+    print 'write to %s '%fn
+    f=open(fn,"wb")
+    f.write(blob_proto.SerializeToString())
+    f.close()
+
+    blob_proto = caffe_pb2.BlobProto()
+    blob_proto.num=1
+    blob_proto.channels=1
+    blob_proto.height=fc_indices.shape[0]
+    blob_proto.width=fc_indices.shape[1]
+    for j in range(fc_indices.shape[0]):
+        for k in range(fc_indices.shape[1]):
+            blob_proto.data.append(float(fc_indices[j,k]))
+    fn=save_dir+layer_name_prefix+layer_name+'_%d_%d'%(n_kmean_cluster[layer_name],n_seg[layer_name])+\
+    '_kmean_cluster_indices.binaryproto'
+    print 'write to %s' % fn
+    f=open(fn,"wb")
+    f.write(blob_proto.SerializeToString())
+    f.close()
+    
+    ep_time=time.time()-st_time
+    print 'elapsed time %5.2f' % ep_time
+    

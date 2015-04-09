@@ -342,6 +342,7 @@ message TransformationParameter {
   
   optional uint32 resize_short_side_min = 6 [default = 0];
   optional uint32 resize_short_side_max = 7 [default = 0];
+  optional uint32 resize_size = 9 [default = 0];
   optional bool force_mirror = 8 [default = false];
 }
 

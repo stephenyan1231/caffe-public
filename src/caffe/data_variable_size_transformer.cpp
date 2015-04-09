@@ -34,6 +34,8 @@ DataVariableSizeTransformer<Dtype>::DataVariableSizeTransformer(
 			mean_values_.push_back(param_.mean_value(c));
 		}
 	}
+	CHECK(!(param_.resize_short_side_max()>0 && param_.resize_short_side_min()>0 &&
+			param_.resize_size() > 0));
 }
 
 template<typename Dtype>
@@ -177,22 +179,29 @@ void DataVariableSizeTransformer<Dtype>::Transform(const cv::Mat& cv_img,
 
 	const int resize_short_side_min = param_.resize_short_side_min();
 	const int resize_short_side_max = param_.resize_short_side_max();
+	const int resize_size = param_.resize_size();
 	const cv::Mat *cv_img_ptr = &cv_img;
 	cv::Mat cv_resize_img;
-	if (resize_short_side_min > 0 && resize_short_side_max > 0) {
-		CHECK_GE(resize_short_side_max, resize_short_side_min);
-		const int resize_short_side = resize_short_side_min
-				+ Rand(resize_short_side_max - resize_short_side_min + 1);
+	if ((resize_short_side_min > 0 && resize_short_side_max > 0) || (resize_size > 0)) {
 		int resize_width = 0, resize_height = 0;
-		if (cv_img.rows > cv_img.cols) {
-			resize_width = resize_short_side;
-			resize_height = ceil(
-					(float(cv_img.rows) / float(cv_img.cols)) * resize_width);
+		if(resize_short_side_min > 0 && resize_short_side_max > 0){
+			CHECK_GE(resize_short_side_max, resize_short_side_min);
+			const int resize_short_side = resize_short_side_min
+					+ Rand(resize_short_side_max - resize_short_side_min + 1);
+			if (cv_img.rows > cv_img.cols) {
+				resize_width = resize_short_side;
+				resize_height = ceil(
+						(float(cv_img.rows) / float(cv_img.cols)) * resize_width);
+			} else {
+				resize_height = resize_short_side;
+				resize_width = ceil(
+						(float(cv_img.cols) / float(cv_img.rows)) * resize_height);
+			}
 		} else {
-			resize_height = resize_short_side;
-			resize_width = ceil(
-					(float(cv_img.cols) / float(cv_img.rows)) * resize_height);
+			resize_height = resize_size;
+			resize_width = resize_size;
 		}
+
 		cv::resize(cv_img, cv_resize_img, cv::Size(resize_width, resize_height));
 		cv_img_ptr = &cv_resize_img;
 		img_height = resize_height;

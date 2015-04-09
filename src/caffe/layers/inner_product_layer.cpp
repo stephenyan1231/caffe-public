@@ -133,47 +133,11 @@ void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 template<typename Dtype>
 void InnerProductLayer<Dtype>::FreeParameterMatrix() {
 	if(quantization_kmean_num_cluster_ > 0 ){
-		LOG(INFO)<<"InnerProductLayer<Dtype>::FreeParameterMatrix";
+//		LOG(INFO)<<"InnerProductLayer<Dtype>::FreeParameterMatrix";
 		this->blobs_[0]->ReshapeForceMemoryFree(0, 0, 0, 0);
 	}
 }
 
-template<typename Dtype>
-void InnerProductLayer<Dtype>::AssembleParameterMatrix() {
-	if (quantization_kmean_num_cluster_ > 0) {
-//	if (quantization_kmean_num_cluster_ > 0 && !parameter_matrix_assembled_) {
-		LOG(INFO)<<"InnerProductLayer<Dtype>::AssembleParameterMatrix";
-		Dtype* param_data = NULL;
-		const Dtype* centers_data = quantization_kmean_cluster_centers_.cpu_data();
-		const Dtype* indices_data = quantization_kmean_cluster_indices_.cpu_data();
-		this->blobs_[0]->Reshape(1, 1, N_, K_);
-		CHECK_EQ(K_ % quantization_num_segment_, 0);
-		const int segment_size = K_ / quantization_num_segment_;
-
-		switch (Caffe::mode()) {
-		case Caffe::CPU:
-			NOT_IMPLEMENTED;
-			break;
-
-		case Caffe::GPU:
-			param_data = this->blobs_[0]->mutable_gpu_data();
-			for (int i = 0; i < N_; ++i) {
-				for (int j = 0; j < quantization_num_segment_; ++j) {
-					int index = static_cast<int>((indices_data
-							+ quantization_kmean_cluster_indices_.offset(0,0,i))[j]);
-					caffe_copy(segment_size,
-							centers_data + quantization_kmean_cluster_centers_.offset(0,0,index)
-									+ j * segment_size,
-							param_data + this->blobs_[0]->offset(0,0,i) + j * segment_size);
-				}
-			}
-			break;
-		default:
-			LOG(FATAL)<< "Unknown caffe mode: " << Caffe::mode();
-		}
-//		parameter_matrix_assembled_ = true;
-	}
-}
 #ifdef CPU_ONLY
 STUB_GPU(InnerProductLayer);
 #endif

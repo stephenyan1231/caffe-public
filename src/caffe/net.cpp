@@ -1243,10 +1243,11 @@ void NetThread<Dtype>::ShareTrainedLayersWith(const NetThread<Dtype>* other) {
 		CHECK_EQ(target_blobs.size(), source_layer->blobs().size())<< "Incompatible number of blobs for layer " << source_layer_name;
 		for (int j = 0; j < target_blobs.size(); ++j) {
 			Blob<Dtype>* source_blob = source_layer->blobs()[j].get();
-			CHECK_EQ(target_blobs[j]->num(), source_blob->num());
-			CHECK_EQ(target_blobs[j]->channels(), source_blob->channels());
-			CHECK_EQ(target_blobs[j]->height(), source_blob->height());
-			CHECK_EQ(target_blobs[j]->width(), source_blob->width());
+			CHECK_EQ(target_blobs[j]->count(), source_blob->count());
+//			CHECK_EQ(target_blobs[j]->num(), source_blob->num());
+//			CHECK_EQ(target_blobs[j]->channels(), source_blob->channels());
+//			CHECK_EQ(target_blobs[j]->height(), source_blob->height());
+//			CHECK_EQ(target_blobs[j]->width(), source_blob->width());
 			target_blobs[j]->ShareData(*source_blob);
 		}
 	}
@@ -1323,10 +1324,13 @@ void NetThread<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
 		for (int j = 0; j < target_blobs.size(); ++j) {
 			if (!conv_init_from_inner_product) {
 				if(target_blobs[j]->count() > 0){
-					CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
-					CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
-					CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
-					CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
+					CHECK_EQ(target_blobs[j]->count(),
+							source_layer.blobs(j).num()*source_layer.blobs(j).channels()*
+							source_layer.blobs(j).height()*source_layer.blobs(j).width());
+//					CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
+//					CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
+//					CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
+//					CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
 					target_blobs[j]->FromProto(source_layer.blobs(j));
 				}else{
 					LOG(INFO)<<"Skipping copy parameter blob "<<source_layer_name<<" blob id "<<j;

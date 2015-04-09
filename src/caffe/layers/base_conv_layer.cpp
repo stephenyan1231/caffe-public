@@ -108,8 +108,8 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   num_ = bottom[0]->num();
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();
-  DLOG(INFO)<<"BaseConvolutionLayer "<<this->layer_param_.name()<<" num "<<num_
-  		<<" height " << height_ <<" width "<<width_;
+//  LOG(INFO)<<"BaseConvolutionLayer "<<this->layer_param_.name()<<" num "<<num_
+//  		<<" height " << height_ <<" width "<<width_;
   CHECK_EQ(bottom[0]->channels(), channels_) << "Input size incompatible with"
     " convolution kernel.";
   // TODO: generalize to handle inputs of different shapes.

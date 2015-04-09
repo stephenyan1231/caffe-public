@@ -205,7 +205,7 @@ int test() {
 			loss_msg_stream << " (* " << loss_weight
 			<< " = " << loss_weight * mean_score << " loss)";
 		}
-		LOG(INFO) << output_name << " = " << mean_score << loss_msg_stream.str();
+		LOG(ERROR) << output_name << " = " << mean_score << loss_msg_stream.str();
 	}
 
 	return 0;

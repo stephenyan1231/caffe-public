@@ -237,7 +237,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
 		Restore(resume_file);
 	}
 
-//	// Save a snapshot before starting solving
+	// Save a snapshot before starting solving
 //	iter_ --;
 //	if (param_.snapshot() && (iter_ + 1) % param_.snapshot() == 0) {
 //		Snapshot();
