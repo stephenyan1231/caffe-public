@@ -108,6 +108,7 @@ int main(int argc, char** argv) {
   int data_size;
   bool data_size_initialized = false;
 
+  int max_pix_num = 0;
   for (int line_id = 0; line_id < lines.size(); ++line_id) {
     bool status;
     if (encoded) {
@@ -124,6 +125,10 @@ int main(int argc, char** argv) {
     	}else{
         status = ReadImageToDatum(root_folder + lines[line_id].first,
             lines[line_id].second, resize_height, resize_width, is_color, &datum);
+    	}
+    	if(max_pix_num < (datum.height() * datum.width())){
+    		max_pix_num = (datum.height() * datum.width());
+    		LOG(INFO)<<"update max_pix_num to "<<max_pix_num;
     	}
     }
     if (status == false) continue;

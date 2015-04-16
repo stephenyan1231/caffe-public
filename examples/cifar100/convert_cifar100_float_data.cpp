@@ -1,9 +1,10 @@
 // Zhicheng Yan@eBay
 // mostly reuse code from Caffe
 
+#include "boost/scoped_ptr.hpp"
 #include <google/protobuf/text_format.h>
 #include <glog/logging.h>
-#include <leveldb/db.h>
+//#include <leveldb/db.h>
 
 #include <stdint.h>
 #include <fstream>  // NOLINT(readability/streams)
@@ -11,9 +12,16 @@
 #include <map>
 
 #include "caffe/proto/caffe.pb.h"
+#include "caffe/util/db.hpp"
+#include "caffe/util/io.hpp"
+#include "caffe/util/rng.hpp"
 
 using std::string;
+using namespace caffe;  // NOLINT(build/namespaces)
+using std::pair;
+using boost::scoped_ptr;
 
+string backend = string("lmdb");
 const int kCIFARSize = 32;
 const int kCIFARImageNBytes = 3072;
 const int kCIFARTrainSize = 50000;
@@ -85,11 +93,17 @@ void convert_dataset(const string& input_folder, const string& output_folder,
 	datum.set_width(kCIFARSize);
 
 	LOG(INFO) << "Writing Training data";
-	leveldb::DB* train_db;
-	leveldb::Status status;
-	status = leveldb::DB::Open(options, output_folder + "/cifar100-train-leveldb",
-			&train_db);
-	CHECK(status.ok()) << "Failed to open leveldb.";
+
+
+  scoped_ptr<db::DB> train_db(db::GetDB(backend));
+  train_db->Open((output_folder + string("/cifar100-train-") + backend).c_str(), db::NEW);
+  scoped_ptr<db::Transaction> train_txn(train_db->NewTransaction(false));
+
+//	leveldb::DB* train_db;
+//	leveldb::Status status;
+//	status = leveldb::DB::Open(options, output_folder + "/cifar100-train-leveldb",
+//			&train_db);
+//	CHECK(status.ok()) << "Failed to open leveldb.";
 
 	// Open files
 //	std::ifstream tr_data_file((input_folder + "/train.bin").c_str(), std::ios::in | std::ios::binary);
@@ -114,28 +128,36 @@ void convert_dataset(const string& input_folder, const string& output_folder,
 				for(int k=0;k<kCIFARImageNBytes;++k)
 					datum.add_float_data(float_buffer[k]);
 				datum.SerializeToString(&value);
-				snprintf(str_buffer, kCIFARImageNBytes, "%05d", itemid);
+				int length = snprintf(str_buffer, kCIFARImageNBytes, "%d", itemid);
 				tr_img_list<<itemid<<" "<<new_label<<std::endl;
-				train_db->Put(leveldb::WriteOptions(), string(str_buffer), value);
+				LOG(INFO)<<"key "<<str_buffer<<" length "<<length;
+				train_txn->Put(string(str_buffer, length), value);
+//				train_db->Put(leveldb::WriteOptions(), string(str_buffer), value);
 			}
 		}
 		tr_data_file.close();
 	}
+	train_txn->Commit();
+	train_txn.reset(train_db->NewTransaction());
+
 //	tr_data_file.close();
 	tr_img_list.close();
 
 	LOG(INFO) << "Writing Testing data";
-	leveldb::DB* test_db;
-	CHECK(
-			leveldb::DB::Open(options, output_folder + "/cifar100-test-leveldb",
-					&test_db).ok()) << "Failed to open leveldb.";
+  scoped_ptr<db::DB> test_db(db::GetDB(backend));
+  test_db->Open((output_folder + string("/cifar100-test-") + backend).c_str(), db::NEW);
+  scoped_ptr<db::Transaction> test_txn(test_db->NewTransaction(false));
+	//	leveldb::DB* test_db;
+//	CHECK(
+//			leveldb::DB::Open(options, output_folder + "/cifar100-test-leveldb",
+//					&test_db).ok()) << "Failed to open leveldb.";
 	// Open files
 	std::ifstream ts_data_file((input_folder + "/float_test_batch.bin").c_str(), std::ios::in | std::ios::binary);
 	std::ofstream ts_img_list((input_folder + "/" + test_list_file).c_str(), std::ios::out);
 
 	CHECK(ts_data_file) << "Unable to open test file.";
 	CHECK(ts_img_list) << "Unable to open "<<test_list_file<<" to write.";
-	for (int itemid = 0; itemid < kCIFARTestSize; ++itemid) {
+	for (itemid = 0; itemid < kCIFARTestSize; ++itemid) {
 		read_image(&ts_data_file, &fine_label, float_buffer);
 		if(!interesting_labels || (interesting_labels && label_inte_bit[fine_label])){
 			int new_label = fine_label;
@@ -146,16 +168,21 @@ void convert_dataset(const string& input_folder, const string& output_folder,
 			for(int k=0;k<kCIFARImageNBytes;++k)
 				datum.add_float_data(float_buffer[k]);
 			datum.SerializeToString(&value);
-			snprintf(str_buffer, kCIFARImageNBytes, "%05d", itemid);
+			int length = snprintf(str_buffer, kCIFARImageNBytes, "%d", itemid);
+			LOG(INFO)<<"key "<<str_buffer;
 			ts_img_list<<itemid<<" "<<new_label<<std::endl;
-			test_db->Put(leveldb::WriteOptions(), string(str_buffer), value);
+			test_txn->Put(string(str_buffer, length), value);
+//			test_db->Put(leveldb::WriteOptions(), string(str_buffer), value);
 		}
 	}
+	test_txn->Commit();
+	test_txn.reset(test_db->NewTransaction());
+
 	ts_data_file.close();
 	ts_img_list.close();
 
-	delete train_db;
-	delete test_db;
+//	delete train_db;
+//	delete test_db;
 }
 
 int main(int argc, char** argv) {

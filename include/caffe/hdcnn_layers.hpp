@@ -54,6 +54,45 @@ protected:
 	std::vector<vector<int> > coarse2fine_;
 };
 
+/* Fine2MultiCoarseProbLayer
+ * Take fine classification probabilities as input
+ * Aggregate them into coarse classification probabilities
+*/
+template<typename Dtype>
+class Fine2MultiCoarseProbLayer: public Layer<Dtype> {
+public:
+	explicit Fine2MultiCoarseProbLayer(const LayerParameter& param,
+			int replica_id, Net<Dtype> *net) :
+			Layer<Dtype>(param, replica_id, net) {
+	}
+//	virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+//			vector<Blob<Dtype>*>* top);
+	virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+				const vector<Blob<Dtype>*>& top);
+	virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+				const vector<Blob<Dtype>*>& top);
+  virtual inline const char* type() const { return "Fine2MultiCoarseProb"; }
+
+	virtual inline int ExactNumBottomBlobs() const {
+		return 1;
+	}
+	virtual inline int ExactNumTopBlobs() const {
+		return 1;
+	}
+
+protected:
+	virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+				const vector<Blob<Dtype>*>& top);
+	virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+				const vector<bool>& propagate_down,
+				const vector<Blob<Dtype>*>& bottom);
+
+	int num_fine_;
+	int num_coarse_;
+	std::vector< std::vector<int> > fine2multicoarse_;
+	std::vector<vector<int> > coarse2fine_;
+};
+
 
 /* MultinomialLogisticSparsityLossLayer
 */
@@ -102,6 +141,7 @@ protected:
 
 	int prob_num_;
 	int class_num_;
+	int spatial_h_, spatial_w_;
 	std::vector<int> compact_layer_size_;
 	std::vector<std::vector<int> > compact_layer_class_id_;
 };

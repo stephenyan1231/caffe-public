@@ -283,8 +283,7 @@ class InnerProductLayer : public Layer<Dtype> {
 
   Blob<Dtype> quantization_kmean_cluster_centers_;
   Blob<Dtype> quantization_kmean_cluster_indices_;
-  bool parameter_matrix_assembled_;
-
+  Blob<unsigned short> quantization_kmean_cluster_indices_uint16_;
 };
 
 /**

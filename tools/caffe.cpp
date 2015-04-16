@@ -164,7 +164,7 @@ int test() {
 	}
 
 	caffe_net.CopyTrainedLayersFrom(all_weights);
-	LOG(INFO) << "Running for " << FLAGS_iterations << " iterations.";
+	LOG(ERROR) << "Running for " << FLAGS_iterations << " iterations.";
 
 	vector<Blob<float>* > bottom_vec;
 	vector<int> test_score_output_id;
@@ -188,7 +188,7 @@ int test() {
 				}
 				const std::string& output_name = caffe_net.blob_names()[
 				caffe_net.output_blob_indices()[j]];
-				LOG(INFO) << "Batch " << i << ", " << output_name << " = " << score;
+				LOG(ERROR) << "Batch " << i << ", " << output_name << " = " << score;
 			}
 		}
 	}

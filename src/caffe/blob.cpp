@@ -201,6 +201,9 @@ template<> void Blob<unsigned int>::Update() {
 template<> void Blob<int>::Update() {
 	NOT_IMPLEMENTED;
 }
+template<> void Blob<unsigned short>::Update() {
+	NOT_IMPLEMENTED;
+}
 
 template<typename Dtype>
 void Blob<Dtype>::Update() {
@@ -238,6 +241,12 @@ template<> int Blob<int>::asum_data() const {
 	return 0;
 }
 
+template<> unsigned short Blob<unsigned short>::asum_data() const {
+	NOT_IMPLEMENTED;
+	return 0;
+}
+
+
 template<typename Dtype>
 Dtype Blob<Dtype>::asum_data() const {
 	if (!data_) {
@@ -271,6 +280,11 @@ template<> unsigned int Blob<unsigned int>::asum_diff() const {
 }
 
 template<> int Blob<int>::asum_diff() const {
+	NOT_IMPLEMENTED;
+	return 0;
+}
+
+template<> unsigned short Blob<unsigned short>::asum_diff() const {
 	NOT_IMPLEMENTED;
 	return 0;
 }
@@ -312,6 +326,11 @@ template<> int Blob<int>::sumsq_data() const {
 	return 0;
 }
 
+template<> unsigned short Blob<unsigned short>::sumsq_data() const {
+	NOT_IMPLEMENTED;
+	return 0;
+}
+
 template<typename Dtype>
 Dtype Blob<Dtype>::sumsq_data() const {
 	Dtype sumsq;
@@ -347,6 +366,11 @@ template<> unsigned int Blob<unsigned int>::sumsq_diff() const {
 }
 
 template<> int Blob<int>::sumsq_diff() const {
+	NOT_IMPLEMENTED;
+	return 0;
+}
+
+template<> unsigned short Blob<unsigned short>::sumsq_diff() const {
 	NOT_IMPLEMENTED;
 	return 0;
 }
@@ -524,6 +548,7 @@ void Blob<Dtype>::ToProto(BlobProto* proto, bool write_diff) const {
 INSTANTIATE_CLASS(Blob);
 template class Blob<int> ;
 template class Blob<unsigned int> ;
+template class Blob<unsigned short>;
 
 }  // namespace caffe
 

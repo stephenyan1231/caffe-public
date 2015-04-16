@@ -315,6 +315,7 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 	if(selective_list_fn_ != std::string("")){
 		LOG(INFO)<<"use selective list file "<<selective_list_fn_;
 		std::ifstream selective_list_f(selective_list_fn_.c_str());
+		CHECK(selective_list_f.is_open());
 		std::string line;
 		SelectiveItem item;
 		while(std::getline(selective_list_f, line)){

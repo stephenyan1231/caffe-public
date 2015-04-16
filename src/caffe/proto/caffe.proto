@@ -241,7 +241,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 136 (last added: conserve_gpu_memory_test)
+// LayerParameter next available layer-specific ID: 138 (last added: spatial_prob_aggregation_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -319,6 +319,9 @@ message LayerParameter {
   optional SpatialAccuracyParameter spatial_accuracy_param = 134;
   optional ShiftStitchParameter shift_stitch_param = 135;
   optional bool conserve_gpu_memory_test = 136 [default = false];
+  optional bool parameter_compress = 137 [default = false];
+  optional SpatialProbAggregationParameter spatial_prob_aggregation_param = 138;
+  optional Fine2MultiCoarseProbLayerParameter fine2multicoarse_prob_layer_param = 139;
   
 }
 
@@ -409,6 +412,11 @@ message ConvolutionParameter {
   }
   optional Engine engine = 15 [default = DEFAULT];
   optional bool init_from_inner_product = 16 [default = false];
+  
+  optional uint32 quantization_kmean_num_cluster = 17 [default = 0];
+  optional uint32 quantization_num_segment = 18 [default = 0];
+  optional string quantization_kmean_cluster_centers_file = 19;
+  optional string quantization_kmean_cluster_indices_file = 20;  
 }
 
 // Message that stores parameters used by DataLayer
@@ -473,6 +481,17 @@ message SpatialAccuracyParameter {
   optional uint32 spatial_subsample_height_factor = 2 [default = 1];
   optional uint32 spatial_subsample_width_factor = 3 [default = 1];
 }
+
+// Message that stores parameters used by SpatialProbAggregationLayer
+message SpatialProbAggregationParameter {
+  // When computing accuracy, count as correct by comparing the true label to
+  // the top k scoring classes.  By default, only compare to the top scoring
+  // class (i.e. argmax).
+  optional uint32 top_k = 1 [default = 1];
+  optional uint32 spatial_subsample_height_factor = 2 [default = 1];
+  optional uint32 spatial_subsample_width_factor = 3 [default = 1];
+}
+
 
 message ShiftStitchParameter {
   optional uint32 iter = 1; // number of iterations of stitching operation 
@@ -783,7 +802,16 @@ message Fine2CoarseProbLayerParameter {
 	required uint32 num_coarse = 1;
 	repeated uint32 fine2coarse = 2;
 }
-	
+
+message Fine2MultiCoarseParameter {
+	repeated uint32 coarse_id = 1;
+}
+
+message Fine2MultiCoarseProbLayerParameter {
+	required uint32 num_coarse = 1;
+	repeated Fine2MultiCoarseParameter fine2multicoarse_param = 2;
+}
+
 // DEPRECATED: use LayerParameter.
 message V1LayerParameter {
   repeated string bottom = 2;

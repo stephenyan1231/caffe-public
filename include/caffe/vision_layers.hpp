@@ -66,6 +66,9 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   // Compute height_out_ and width_out_ from other parameters.
   virtual void compute_output_shape() = 0;
 
+  void FreeParameterMatrix();
+  void AssembleParameterMatrix();
+
   int kernel_h_, kernel_w_;
   int stride_h_, stride_w_;
   int num_;
@@ -111,6 +114,15 @@ class BaseConvolutionLayer : public Layer<Dtype> {
 
   Blob<Dtype> col_buffer_;
   Blob<Dtype> bias_multiplier_;
+
+  unsigned int quantization_kmean_num_cluster_;
+  unsigned int quantization_num_segment_;
+  std::string quantization_kmean_cluster_centers_file_;
+  std::string quantization_kmean_cluster_indices_file_;
+
+  Blob<Dtype> quantization_kmean_cluster_centers_;
+  Blob<Dtype> quantization_kmean_cluster_indices_;
+  Blob<unsigned short> quantization_kmean_cluster_indices_uint16_;
 };
 
 /**

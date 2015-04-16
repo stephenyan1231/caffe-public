@@ -5,6 +5,7 @@
 #include "caffe/filler.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/util/math_functions.hpp"
+#include "caffe/util/matrix_quantization.hpp"
 #include "caffe/vision_layers.hpp"
 
 namespace caffe {
@@ -12,7 +13,7 @@ namespace caffe {
 template<typename Dtype>
 void InnerProductLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
-	if (Caffe::phase() == Caffe::TEST && this->conserve_gpu_memory_test_) {
+	if (Caffe::phase() == Caffe::TEST) {
 		this->AssembleParameterMatrix();
 	}
 	const Dtype* bottom_data = bottom[0]->gpu_data();
@@ -26,7 +27,7 @@ void InnerProductLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 				top_data);
 	}
 
-	if (Caffe::phase() == Caffe::TEST && this->conserve_gpu_memory_test_) {
+	if (Caffe::phase() == Caffe::TEST) {
 		this->FreeParameterMatrix();
 	}
 }
@@ -57,30 +58,29 @@ void InnerProductLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 	}
 }
 
-template<typename Dtype>
-__global__ void AssembleMatrix(const int nthreads, const Dtype* centers_data,
-		const Dtype* indices_data, int num_center, int num_seg, int mat_height,
-		int mat_width, Dtype* mat_data) {
-	CUDA_KERNEL_LOOP(index, nthreads)
-	{
-		int seg_size = mat_width / num_seg;
-		int mat_y = index / num_seg;
-		int mat_x = index % num_seg;
-		int index = static_cast<int>(indices_data[mat_y * num_seg + mat_x]);
-		centers_data += (index * mat_width + mat_x * seg_size);
-		mat_data += (mat_y * mat_width + mat_x * seg_size);
-		for (int i = 0; i < seg_size; ++i) {
-			mat_data[i] = centers_data[i];
-		}
-	}
-}
+//template<typename Dtype>
+//__global__ void AssembleMatrix(const int nthreads, const Dtype* centers_data,
+//		const Dtype* indices_data, int num_center, int num_seg, int mat_height,
+//		int mat_width, Dtype* mat_data) {
+//	CUDA_KERNEL_LOOP(index, nthreads)
+//	{
+//		int seg_size = mat_width / num_seg;
+//		int mat_y = index / num_seg;
+//		int mat_x = index % num_seg;
+//		int index = static_cast<int>(indices_data[mat_y * num_seg + mat_x]);
+//		centers_data += (index * mat_width + mat_x * seg_size);
+//		mat_data += (mat_y * mat_width + mat_x * seg_size);
+//		for (int i = 0; i < seg_size; ++i) {
+//			mat_data[i] = centers_data[i];
+//		}
+//	}
+//}
 
 template<typename Dtype>
 void InnerProductLayer<Dtype>::AssembleParameterMatrix() {
-	if (quantization_kmean_num_cluster_ > 0) {
-//	if (quantization_kmean_num_cluster_ > 0 && !parameter_matrix_assembled_) {
-//		LOG(INFO)<<"InnerProductLayer<Dtype>::AssembleParameterMatrix";
-		Dtype* param_data = NULL;
+	if (this->parameter_compress_ && quantization_kmean_num_cluster_ > 0) {
+		LOG(INFO)<<"InnerProductLayer<Dtype>::AssembleParameterMatrix";
+//		Dtype* param_data = NULL;
 //		const Dtype* centers_data = quantization_kmean_cluster_centers_.cpu_data();
 		const Dtype* indices_data = quantization_kmean_cluster_indices_.cpu_data();
 		this->blobs_[0]->Reshape(1, 1, N_, K_);
@@ -95,25 +95,13 @@ void InnerProductLayer<Dtype>::AssembleParameterMatrix() {
 			case Caffe::GPU:
 			AssembleMatrix<Dtype><<<CAFFE_GET_BLOCKS(N_*quantization_num_segment_),CAFFE_CUDA_NUM_THREADS>>>
 					(N_*quantization_num_segment_,quantization_kmean_cluster_centers_.gpu_data(),
-							quantization_kmean_cluster_indices_.gpu_data(), quantization_kmean_cluster_centers_.height(),
+							quantization_kmean_cluster_indices_uint16_.gpu_data(), quantization_kmean_cluster_centers_.height(),
 							quantization_num_segment_, N_, K_, this->blobs_[0]->mutable_gpu_data());
 
-//			param_data = this->blobs_[0]->mutable_gpu_data();
-//			for (int i = 0; i < N_; ++i) {
-//				for (int j = 0; j < quantization_num_segment_; ++j) {
-//					int index = static_cast<int>((indices_data
-//									+ quantization_kmean_cluster_indices_.offset(0,0,i))[j]);
-//					caffe_copy(segment_size,
-//							centers_data + quantization_kmean_cluster_centers_.offset(0,0,index)
-//							+ j * segment_size,
-//							param_data + this->blobs_[0]->offset(0,0,i) + j * segment_size);
-//				}
-//			}
 			break;
 			default:
 			LOG(FATAL)<< "Unknown caffe mode: " << Caffe::mode();
 		}
-//		parameter_matrix_assembled_ = true;
 	}
 }
 

@@ -30,7 +30,7 @@ Solver<Dtype>::Solver(const string& param_file) :
 
 template<typename Dtype>
 void Solver<Dtype>::Init(const SolverParameter& param) {
-	LOG(INFO)<< "Initializing solver from parameters: " << std::endl
+	DLOG(INFO)<< "Initializing solver from parameters: " << std::endl
 	<< param.DebugString();
 	param_ = param;
 	CHECK_GE(param_.average_loss(), 1) << "average_loss should be non-negative.";

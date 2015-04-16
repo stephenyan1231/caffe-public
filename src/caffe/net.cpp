@@ -57,7 +57,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
 	// the current NetState.
 	NetParameter filtered_param;
 	FilterNet(in_param, &filtered_param);
-	LOG(INFO)<< "Initializing net from parameters: " << std::endl
+	DLOG(INFO)<< "Initializing net from parameters: " << std::endl
 	<< filtered_param.DebugString();
 	// Create a copy of filtered_param with splits added where necessary.
 	NetParameter param;
@@ -1337,11 +1337,13 @@ void NetThread<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
 				}
 
 			} else {
-				CHECK_EQ(target_blobs[j]->count(),
-						source_layer.blobs(j).num() * source_layer.blobs(j).channels()
-								* source_layer.blobs(j).height()
-								* source_layer.blobs(j).width());
-				target_blobs[j]->FromProto(source_layer.blobs(j));
+				if(target_blobs[j]->count() > 0){
+					CHECK_EQ(target_blobs[j]->count(),
+							source_layer.blobs(j).num() * source_layer.blobs(j).channels()
+									* source_layer.blobs(j).height()
+									* source_layer.blobs(j).width());
+					target_blobs[j]->FromProto(source_layer.blobs(j));
+				}
 			}
 		}
 	}
@@ -1383,14 +1385,18 @@ void NetThread<Dtype>::CopyTrainedLayersFromSuffixMatch(
 				continue;
 				CHECK_EQ(target_blobs.size(), param.layer(source_layer_id).blobs_size());
 				for (int j = 0; j < target_blobs.size(); ++j) {
-					CHECK_EQ(target_blobs[j]->num(),
-							param.layer(source_layer_id).blobs(j).num());
-					CHECK_EQ(target_blobs[j]->channels(),
-							param.layer(source_layer_id).blobs(j).channels());
-					CHECK_EQ(target_blobs[j]->height(),
-							param.layer(source_layer_id).blobs(j).height());
-					CHECK_EQ(target_blobs[j]->width(),
+					CHECK_EQ(target_blobs[j]->count(), param.layer(source_layer_id).blobs(j).num() *
+							param.layer(source_layer_id).blobs(j).channels() *
+							param.layer(source_layer_id).blobs(j).height() *
 							param.layer(source_layer_id).blobs(j).width());
+//					CHECK_EQ(target_blobs[j]->num(),
+//							param.layer(source_layer_id).blobs(j).num());
+//					CHECK_EQ(target_blobs[j]->channels(),
+//							param.layer(source_layer_id).blobs(j).channels());
+//					CHECK_EQ(target_blobs[j]->height(),
+//							param.layer(source_layer_id).blobs(j).height());
+//					CHECK_EQ(target_blobs[j]->width(),
+//							param.layer(source_layer_id).blobs(j).width());
 					target_blobs[j]->FromProto(param.layer(source_layer_id).blobs(j));
 				}
 			}

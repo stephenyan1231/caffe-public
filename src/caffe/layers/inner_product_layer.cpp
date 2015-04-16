@@ -22,8 +22,7 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   quantization_num_segment_ = this->layer_param_.inner_product_param().quantization_num_segment();
   quantization_kmean_cluster_centers_file_ = this->layer_param_.inner_product_param().quantization_kmean_cluster_centers_file();
   quantization_kmean_cluster_indices_file_ = this->layer_param_.inner_product_param().quantization_kmean_cluster_indices_file();
-  parameter_matrix_assembled_ = false;
-  if(quantization_kmean_num_cluster_ >0){
+  if(this->parameter_compress_ && quantization_kmean_num_cluster_ >0){
   	CHECK_GE(quantization_num_segment_, 1);
   	LOG(INFO)<<"Layer "<<this->layer_param_.name()<<" read quantization_kmean_cluster_centers_ from "
   			<<quantization_kmean_cluster_centers_file_;
@@ -38,6 +37,21 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   	quantization_kmean_cluster_indices_.FromProto(indices_blob_proto);
   	LOG(INFO)<<"quantization_kmean_cluster_indices_ height "<<quantization_kmean_cluster_indices_.height()
   			<<" width "<<quantization_kmean_cluster_indices_.width();
+
+		quantization_kmean_cluster_indices_uint16_.Reshape(1, 1,
+				quantization_kmean_cluster_indices_.height(),
+				quantization_kmean_cluster_indices_.width());
+		unsigned short *indices_uint16_data =
+				quantization_kmean_cluster_indices_uint16_.mutable_cpu_data();
+		const Dtype* indices_data = quantization_kmean_cluster_indices_.cpu_data();
+		int ptr = 0;
+		for (int i = 0; i < quantization_kmean_cluster_indices_.height(); ++i) {
+			for (int j = 0; j < quantization_kmean_cluster_indices_.width(); ++j) {
+				indices_uint16_data[ptr] = static_cast<unsigned short>(indices_data[ptr]);
+				ptr++;
+			}
+		}
+		quantization_kmean_cluster_indices_.ReshapeForceMemoryFree(0, 0, 0, 0);
   }
 
   // Check if we need to set up the weights
@@ -50,7 +64,7 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       this->blobs_.resize(1);
     }
 
-    if(quantization_kmean_num_cluster_ == 0){
+    if(!this->parameter_compress_ || quantization_kmean_num_cluster_ == 0){
       // Intialize the weight
       this->blobs_[0].reset(new Blob<Dtype>(1, 1, N_, K_));
       // fill the weights
@@ -132,8 +146,7 @@ void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
 template<typename Dtype>
 void InnerProductLayer<Dtype>::FreeParameterMatrix() {
-	if(quantization_kmean_num_cluster_ > 0 ){
-//		LOG(INFO)<<"InnerProductLayer<Dtype>::FreeParameterMatrix";
+	if(this->parameter_compress_ && quantization_kmean_num_cluster_ > 0 ){
 		this->blobs_[0]->ReshapeForceMemoryFree(0, 0, 0, 0);
 	}
 }

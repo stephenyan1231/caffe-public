@@ -46,6 +46,7 @@ public:
 			}
 		}
 		conserve_gpu_memory_test_ = param.conserve_gpu_memory_test();
+		parameter_compress_ = param.parameter_compress();
 	}
 	virtual ~Layer() {
 	}
@@ -341,6 +342,7 @@ protected:
 	int replica_id_;
 	Net<Dtype> *net_;
   bool conserve_gpu_memory_test_;
+  bool parameter_compress_;
 
 //	std::map<int, Layer<Dtype>*> replicas_;
 
