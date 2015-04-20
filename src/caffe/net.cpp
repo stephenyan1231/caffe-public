@@ -347,6 +347,8 @@ void Net<Dtype>::CollectLoss() {
 	} else {
 		const std::vector<int> &device_ids = Caffe::GetActiveDevices();
 		for (int i = 0; i < net_threads_.size(); ++i) {
+//			LOG(INFO)<<"Net<Dtype>::CollectLoss thread "<<i
+//					<<"  "<<net_threads_[i]->get_loss();
 			losses_[i] = GetBatchSizeRatio(device_ids[i])
 					* net_threads_[i]->get_loss();
 		}

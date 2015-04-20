@@ -91,6 +91,9 @@ protected:
 	int num_coarse_;
 	std::vector< std::vector<int> > fine2multicoarse_;
 	std::vector<vector<int> > coarse2fine_;
+	std::vector<vector<int> > coarse2fine_not_;
+	Blob<Dtype> unnormalized_coarse_prob_;
+	Blob<Dtype> coarse_prob_sum_;
 };
 
 

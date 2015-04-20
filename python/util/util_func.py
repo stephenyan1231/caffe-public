@@ -4,9 +4,11 @@ import os
 import snappy
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
+import re
 import cPickle
-import gzip
-import zipfile
+import os
+import numpy.random as rd
+from math import sqrt
 from sklearn.cluster import KMeans
 import multiprocessing as mtp
 import time
@@ -15,6 +17,8 @@ root_dir = os.environ['CAFFE_PROJ_DIR']
 sys.path.append(os.path.join(root_dir, 'python/caffe/proto/'))
 import caffe_pb2
 
+class UnpickleError(Exception):
+    pass
 
 def test_label(prob_dir, index, gt_label):
     datum = caffe_pb2.Datum()
@@ -91,13 +95,27 @@ def softmax(ftr):
     print 'compute softmax probabilities'
     num, dim = ftr.shape[0], ftr.shape[1]
     print 'num %d dim %d' % (num, dim)
-    prob = np.zeros((num, dim))
+    prob = np.zeros((num, dim), dtype=np.single)
     for i in range(num):
         max_val = np.max(ftr[i, :])
         row = ftr[i, :] - max_val
         exp_val = np.exp(row)
         prob[i, :] = exp_val / np.sum(exp_val)
     return prob    
+    
+def spatial_softmax(ftr):
+    dim,h,w=ftr.shape[0],ftr.shape[1],ftr.shape[2]
+    spatial_prob=np.zeros((dim,h*w),dtype=np.single)
+    ftr=ftr.reshape((dim,h*w))
+    max_vals=np.max(ftr,axis=0)
+    ftr=ftr-max_vals[np.newaxis,:]
+    for i in range(h*w):
+        col = ftr[:,i] - max_vals[i]
+        exp_val = np.exp(col)
+        spatial_prob[:,i]=exp_val / np.sum(exp_val)
+    spatial_prob=spatial_prob.reshape((dim,h,w))
+    return spatial_prob
+        
     
 ''' compute a  histogram of the percentage of images 
 that are classified as a label in the same cluster of its groundtruth label
@@ -154,16 +172,9 @@ def pickle(filename, data, compress=False):
 def unpickle(filename):
     if not os.path.exists(filename):
         raise UnpickleError("Path '%s' does not exist." % filename)
-    if ms is not None and ms.file(filename).startswith('gzip'):
-        fo = gzip.open(filename, 'rb')
-        dict = cPickle.load(fo)
-    elif ms is not None and ms.file(filename).startswith('Zip'):
-        fo = zipfile.ZipFile(filename, 'r', zipfile.ZIP_DEFLATED)
-        dict = cPickle.loads(fo.read('data'))
-    else:
-        fo = open(filename, 'rb')
-        dict = cPickle.load(fo)
-    
+
+    fo = open(filename, 'rb')
+    dict = cPickle.load(fo)
     fo.close()
     return dict
 

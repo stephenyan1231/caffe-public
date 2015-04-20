@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 
 	if(FLAGS_match_mode == std::string("EXACT_MATCH")){
 		LOG(INFO)<<"exact matching mode";
-		solver->net()->CopyTrainedLayersFromSuffixMatch(params);
+		solver->net()->CopyTrainedLayersFrom(params);
 	}else if(FLAGS_match_mode == std::string("SUFFIX_MATCH")){
 		LOG(INFO)<<"suffix matching mode";
 		solver->net()->CopyTrainedLayersFromSuffixMatch(params);

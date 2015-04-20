@@ -37,7 +37,7 @@ void CompactProbabilisticAverageProbLayer<Dtype>::Reshape(
 		const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
 	spatial_h_ = bottom[0]->height();
 	spatial_w_ = bottom[0]->width();
-	LOG(INFO)
+	DLOG(INFO)
 			<< "CompactProbabilisticAverageProbLayer<Dtype>::Reshape spatial size "
 			<< spatial_h_ << " " << spatial_w_;
 
@@ -97,17 +97,17 @@ void CompactProbabilisticAverageProbLayer<Dtype>::Backward_cpu(
 		memset(branch_prob_diff, 0, sizeof(Dtype) * (bottom)[prob_num_]->count());
 		for (int i = 0; i < num; ++i) {
 			for (int j = 0; j < prob_num_; ++j) {
-				const Dtype* bottom_data = (bottom)[j]->cpu_data();
-				Dtype* bottom_diff = (bottom)[j]->mutable_cpu_diff()
-						+ (bottom)[j]->offset(i);
+				const Dtype* bottom_data = bottom[j]->cpu_data();
+				Dtype* bottom_diff = bottom[j]->mutable_cpu_diff()
+						+ bottom[j]->offset(i);
 				const Dtype* top_diff_i = top_diff + top[0]->offset(i);
 				Dtype prob_weight =
-						(branch_prob_data + (bottom)[prob_num_]->offset(i))[j];
+						(branch_prob_data + bottom[prob_num_]->offset(i))[j];
 				for (int k = 0; k < compact_layer_size_[j]; ++k) {
 					int class_id = compact_layer_class_id_[j][k];
 					bottom_diff[k] = top_diff_i[class_id] * prob_weight;
-					(branch_prob_diff + (bottom)[prob_num_]->offset(i))[j] +=
-							top_diff_i[class_id] * (bottom_data + (bottom)[j]->offset(i))[k];
+					(branch_prob_diff + bottom[prob_num_]->offset(i))[j] +=
+							top_diff_i[class_id] * (bottom_data + bottom[j]->offset(i))[k];
 				}
 			}
 		}

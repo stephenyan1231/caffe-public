@@ -11,7 +11,7 @@ VAL_DATA_ROOT=/home/zyan3/local/data/imagenet/ilsvrc12/ILSVRC2012_img_val/
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
-RESIZE=false
+RESIZE=true
 if $RESIZE; then
   RESIZE_HEIGHT=256
   RESIZE_WIDTH=256
@@ -52,6 +52,6 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --shuffle \
     $VAL_DATA_ROOT \
     $DATA/val.txt \
-    $EXAMPLE/ilsvrc12_val_lmdb
+    $EXAMPLE/ilsvrc12_val_size_256_lmdb
 
 echo "Done."

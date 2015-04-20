@@ -190,6 +190,7 @@ void Solver<Dtype>::Step(int iters) {
 			smoothed_loss = (smoothed_loss * (size - 1) + loss) / size;
 		} else {
 			int idx = (iter_ - start_iter) % average_loss;
+			DLOG(INFO)<<"average_loss "<<average_loss<<" loss "<<loss<<" losses idx "<<losses[idx];
 			smoothed_loss += (loss - losses[idx]) / average_loss;
 			losses[idx] = loss;
 		}
