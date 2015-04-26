@@ -38,16 +38,23 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   	LOG(INFO)<<"quantization_kmean_cluster_indices_ height "<<quantization_kmean_cluster_indices_.height()
   			<<" width "<<quantization_kmean_cluster_indices_.width();
 
-		quantization_kmean_cluster_indices_uint16_.Reshape(1, 1,
+//		quantization_kmean_cluster_indices_uint16_.Reshape(1, 1,
+//				quantization_kmean_cluster_indices_.height(),
+//				quantization_kmean_cluster_indices_.width());
+		quantization_kmean_cluster_indices_uint8_.Reshape(1, 1,
 				quantization_kmean_cluster_indices_.height(),
 				quantization_kmean_cluster_indices_.width());
-		unsigned short *indices_uint16_data =
-				quantization_kmean_cluster_indices_uint16_.mutable_cpu_data();
+//		unsigned short *indices_uint16_data =
+//				quantization_kmean_cluster_indices_uint16_.mutable_cpu_data();
+		unsigned char *indices_uint8_data =
+				quantization_kmean_cluster_indices_uint8_.mutable_cpu_data();
 		const Dtype* indices_data = quantization_kmean_cluster_indices_.cpu_data();
 		int ptr = 0;
 		for (int i = 0; i < quantization_kmean_cluster_indices_.height(); ++i) {
 			for (int j = 0; j < quantization_kmean_cluster_indices_.width(); ++j) {
-				indices_uint16_data[ptr] = static_cast<unsigned short>(indices_data[ptr]);
+//				indices_uint16_data[ptr] = static_cast<unsigned short>(indices_data[ptr]);
+				CHECK_LE(indices_data[ptr], 255);
+				indices_uint8_data[ptr] = static_cast<unsigned char>(indices_data[ptr]);
 				ptr++;
 			}
 		}

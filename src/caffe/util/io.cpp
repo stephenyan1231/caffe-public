@@ -129,6 +129,7 @@ cv::Mat ReadImageToCVMatShortLongSide(const string& filename, const int short_si
 			width = ceil(
 					(float(cv_img_origin.cols) / float(cv_img_origin.rows)) * height);
 		}
+		LOG(INFO)<<"Resize to size "<<height<<" "<<width;
 		cv::resize(cv_img_origin, cv_img, cv::Size(width, height));
 	} else {
 		cv_img = cv_img_origin;

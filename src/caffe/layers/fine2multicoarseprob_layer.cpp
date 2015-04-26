@@ -41,14 +41,14 @@ void Fine2MultiCoarseProbLayer<Dtype>::LayerSetUp(
 			full_fine.push_back(j);
 		}
 		coarse2fine_not_[i].resize(num_fine_);
-		std::sort(coarse2fine_[i].begin(),coarse2fine_[i].end());
-		std::sort(full_fine.begin(),full_fine.end());
+		std::sort(coarse2fine_[i].begin(), coarse2fine_[i].end());
+		std::sort(full_fine.begin(), full_fine.end());
 
 		std::vector<int>::iterator it = std::set_difference(full_fine.begin(),
 				full_fine.end(), coarse2fine_[i].begin(), coarse2fine_[i].end(),
 				coarse2fine_not_[i].begin());
 		coarse2fine_not_[i].resize(it - coarse2fine_not_[i].begin());
-		LOG(ERROR) << "coarse2fine_not_ " << i << " size "
+		DLOG(INFO) << "coarse2fine_not_ " << i << " size "
 				<< coarse2fine_not_[i].size();
 	}
 
@@ -151,7 +151,8 @@ void Fine2MultiCoarseProbLayer<Dtype>::Backward_cpu(
 											- unnormalized_coarse_prob_data[unnormalized_coarse_prob_.offset(
 													i, j, y, x)]
 													* fine2multicoarse_[coarse2fine_[j][k]].size())
-											/ (coarse_prob_sum * coarse_prob_sum))*top_diff[top[0]->offset(i,j,y,x)];
+											/ (coarse_prob_sum * coarse_prob_sum))
+											* top_diff[top[0]->offset(i, j, y, x)];
 						}
 
 						for (int k = 0; k < coarse2fine_not_[j].size(); ++k) {
@@ -159,7 +160,8 @@ void Fine2MultiCoarseProbLayer<Dtype>::Backward_cpu(
 									((-unnormalized_coarse_prob_data[unnormalized_coarse_prob_.offset(
 											i, j, y, x)]
 											* fine2multicoarse_[coarse2fine_not_[j][k]].size())
-											/ (coarse_prob_sum * coarse_prob_sum))*top_diff[top[0]->offset(i,j,y,x)];
+											/ (coarse_prob_sum * coarse_prob_sum))
+											* top_diff[top[0]->offset(i, j, y, x)];
 						}
 
 					}

@@ -37,7 +37,8 @@ void BaseConvolutionLayer<Dtype>::AssembleParameterMatrix() {
 					CAFFE_GET_BLOCKS(mat_height * quantization_num_segment_),
 					CAFFE_CUDA_NUM_THREADS>>>(mat_height * quantization_num_segment_,
 					quantization_kmean_cluster_centers_.gpu_data(),
-					quantization_kmean_cluster_indices_uint16_.gpu_data(),
+//					quantization_kmean_cluster_indices_uint16_.gpu_data(),
+					quantization_kmean_cluster_indices_uint8_.gpu_data(),
 					quantization_kmean_cluster_centers_.height(),
 					quantization_num_segment_, mat_height, mat_width,
 					this->blobs_[0]->mutable_gpu_data());

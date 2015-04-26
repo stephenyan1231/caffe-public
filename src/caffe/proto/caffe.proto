@@ -448,6 +448,7 @@ message DataParameter {
   optional bool mirror = 6 [default = false];
   
   optional string selective_list = 9;
+  optional bool selective_list_shuffle = 10 [default = true];  
 }
 
 // Message that stores parameters used by DataSegmentationLayer
@@ -470,6 +471,7 @@ message DataVariableSizeParameter {
   optional uint32 max_pixel_num = 5 [default = 0];
   
   optional string selective_list = 9;
+  optional bool selective_list_shuffle = 10 [default = true];
 }
 
 // Message that stores parameters used by SpatialAccuracyLayer

@@ -84,7 +84,9 @@ DataManager<Dtype>::DataManager(const LayerParameter& data_layer_param,
 		}
 		LOG(INFO)<<"selective list length "<<selective_list_.size();
 		selective_list_cursor_ = 0;
-		shuffle(selective_list_.begin(), selective_list_.end());
+		if(this->layer_param_.data_param().selective_list_shuffle()){
+			shuffle(selective_list_.begin(), selective_list_.end());
+		}
 	}
 
 	this->db_.reset(db::GetDB(data_layer_param.data_param().backend()));
@@ -184,7 +186,9 @@ void DataManager<Dtype>::InternalThreadEntry() {
 			selective_list_cursor_++;
 			if(selective_list_cursor_ == selective_list_.size()){
 				selective_list_cursor_ = 0;
-				shuffle(selective_list_.begin(), selective_list_.end());
+				if(this->layer_param_.data_param().selective_list_shuffle()){
+					shuffle(selective_list_.begin(), selective_list_.end());
+				}
 			}
 		}
 		else{
@@ -325,7 +329,9 @@ DataVariableSizeManager<Dtype>::DataVariableSizeManager(
 		}
 		LOG(INFO)<<"selective list length "<<selective_list_.size();
 		selective_list_cursor_ = 0;
-		shuffle(selective_list_.begin(), selective_list_.end());
+		if(data_variable_size_param.selective_list_shuffle()){
+			shuffle(selective_list_.begin(), selective_list_.end());
+		}
 	}
 
 	datum_max_pixel_num_ = data_variable_size_param.max_pixel_num();
@@ -426,9 +432,12 @@ void DataVariableSizeManager<Dtype>::InternalThreadEntry() {
 			selective_list_cursor_++;
 			if(selective_list_cursor_ == selective_list_.size()){
 				selective_list_cursor_ = 0;
-				shuffle(selective_list_.begin(), selective_list_.end());
+				if(this->layer_param_.data_variable_size_param().selective_list_shuffle()){
+					shuffle(selective_list_.begin(), selective_list_.end());
+				}
 			}
 		}else{
+			LOG(INFO)<<"get item from database with key "<<this->cursor_->key();
 			datum.ParseFromString(this->cursor_->value());
 		}
 

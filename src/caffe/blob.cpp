@@ -204,7 +204,9 @@ template<> void Blob<int>::Update() {
 template<> void Blob<unsigned short>::Update() {
 	NOT_IMPLEMENTED;
 }
-
+template<> void Blob<unsigned char>::Update() {
+	NOT_IMPLEMENTED;
+}
 template<typename Dtype>
 void Blob<Dtype>::Update() {
 	// We will perform update based on where the data is located.
@@ -246,7 +248,10 @@ template<> unsigned short Blob<unsigned short>::asum_data() const {
 	return 0;
 }
 
-
+template<> unsigned char Blob<unsigned char>::asum_data() const {
+	NOT_IMPLEMENTED;
+	return 0;
+}
 template<typename Dtype>
 Dtype Blob<Dtype>::asum_data() const {
 	if (!data_) {
@@ -289,6 +294,10 @@ template<> unsigned short Blob<unsigned short>::asum_diff() const {
 	return 0;
 }
 
+template<> unsigned char Blob<unsigned char>::asum_diff() const {
+	NOT_IMPLEMENTED;
+	return 0;
+}
 template<typename Dtype>
 Dtype Blob<Dtype>::asum_diff() const {
 	if (!diff_) {
@@ -327,6 +336,11 @@ template<> int Blob<int>::sumsq_data() const {
 }
 
 template<> unsigned short Blob<unsigned short>::sumsq_data() const {
+	NOT_IMPLEMENTED;
+	return 0;
+}
+
+template<> unsigned char Blob<unsigned char>::sumsq_data() const {
 	NOT_IMPLEMENTED;
 	return 0;
 }
@@ -371,6 +385,11 @@ template<> int Blob<int>::sumsq_diff() const {
 }
 
 template<> unsigned short Blob<unsigned short>::sumsq_diff() const {
+	NOT_IMPLEMENTED;
+	return 0;
+}
+
+template<> unsigned char Blob<unsigned char>::sumsq_diff() const {
 	NOT_IMPLEMENTED;
 	return 0;
 }
@@ -549,6 +568,7 @@ INSTANTIATE_CLASS(Blob);
 template class Blob<int> ;
 template class Blob<unsigned int> ;
 template class Blob<unsigned short>;
+template class Blob<unsigned char>;
 
 }  // namespace caffe
 

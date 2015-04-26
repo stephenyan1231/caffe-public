@@ -93,11 +93,14 @@ void InnerProductLayer<Dtype>::AssembleParameterMatrix() {
 			break;
 
 			case Caffe::GPU:
-			AssembleMatrix<Dtype><<<CAFFE_GET_BLOCKS(N_*quantization_num_segment_),CAFFE_CUDA_NUM_THREADS>>>
-					(N_*quantization_num_segment_,quantization_kmean_cluster_centers_.gpu_data(),
-							quantization_kmean_cluster_indices_uint16_.gpu_data(), quantization_kmean_cluster_centers_.height(),
-							quantization_num_segment_, N_, K_, this->blobs_[0]->mutable_gpu_data());
-
+//			AssembleMatrix<Dtype><<<CAFFE_GET_BLOCKS(N_*quantization_num_segment_),CAFFE_CUDA_NUM_THREADS>>>
+//					(N_*quantization_num_segment_,quantization_kmean_cluster_centers_.gpu_data(),
+//							quantization_kmean_cluster_indices_uint16_.gpu_data(), quantization_kmean_cluster_centers_.height(),
+//							quantization_num_segment_, N_, K_, this->blobs_[0]->mutable_gpu_data());
+				AssembleMatrix<Dtype><<<CAFFE_GET_BLOCKS(N_*quantization_num_segment_),CAFFE_CUDA_NUM_THREADS>>>
+						(N_*quantization_num_segment_,quantization_kmean_cluster_centers_.gpu_data(),
+								quantization_kmean_cluster_indices_uint8_.gpu_data(), quantization_kmean_cluster_centers_.height(),
+								quantization_num_segment_, N_, K_, this->blobs_[0]->mutable_gpu_data());
 			break;
 			default:
 			LOG(FATAL)<< "Unknown caffe mode: " << Caffe::mode();

@@ -40,9 +40,11 @@ layer {
   }
   data_variable_size_param {
     source: "/home/zyan3/proj/dl-image-enhance/data/uniform_set/uniform_set_long_1024_lmdb"
-    batch_size: 1
+    batch_size: 2
     backend: LMDB
-    max_pixel_num: 4194304
+    max_pixel_num: 26000000
+    selective_list: "examples/uniform_set/uniform_set_for_convert_imageset.txt"
+    selective_list_shuffle: false
   }
 }
 
