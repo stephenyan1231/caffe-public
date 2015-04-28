@@ -1,6 +1,7 @@
 #include <stdio.h>  // for snprintf
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include "boost/algorithm/string.hpp"
 #include "google/protobuf/text_format.h"
@@ -37,9 +38,10 @@ int feature_extraction_pipeline(int argc, char** argv) {
 		LOG(ERROR)<<
 		"This program takes in a trained network and an input data layer, and then"
 		" extract features of the input data produced by the net.\n"
+		" The feature data is directly saved into raw binary files.\n"
 		"Usage: extract_features  pretrained_net_param"
 		"  feature_extraction_proto_file  extract_feature_blob_name1[,name2,...]"
-		"  save_feature_dataset_name1[,name2,...]  num_mini_batches  db_type "
+		"  save_feature_dir1[,dir2,...]  num_mini_batches  db_type "
 		"  [commit_frequency] [CPU/GPU] [DEVICE_ID=0]\n"
 		"Note: you can extract multiple features in one pass by specifying"
 		" multiple feature blob names and dataset names seperated by ','."
@@ -121,11 +123,11 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	std::vector<std::string> blob_names;
 	boost::split(blob_names, extract_feature_blob_names, boost::is_any_of(","));
 
-	std::string save_feature_dataset_names(argv[++arg_pos]);
-	std::vector<std::string> dataset_names;
-	boost::split(dataset_names, save_feature_dataset_names,
+	std::string save_feature_dirs(argv[++arg_pos]);
+	std::vector<std::string> dir_names;
+	boost::split(dir_names, save_feature_dirs,
 			boost::is_any_of(","));
-	CHECK_EQ(blob_names.size(), dataset_names.size())<<
+	CHECK_EQ(blob_names.size(), dir_names.size())<<
 	" the number of blob names and dataset names must be equal";
 	size_t num_features = blob_names.size();
 
@@ -139,28 +141,28 @@ int feature_extraction_pipeline(int argc, char** argv) {
 
 	int num_mini_batches = atoi(argv[++arg_pos]);
 
-	std::vector<shared_ptr<db::DB> > feature_dbs;
-	std::vector<shared_ptr<db::Transaction> > txns;
-	char *db_type = argv[++arg_pos];
-	for (size_t i = 0; i < num_features; ++i) {
-		LOG(INFO)<< "Opening dataset " << dataset_names[i];
-		shared_ptr<db::DB> db(db::GetDB(std::string(db_type)));
-		db->Open(dataset_names.at(i), db::NEW);
-		feature_dbs.push_back(db);
-		shared_ptr<db::Transaction> txn(db->NewTransaction(false));
-		txns.push_back(txn);
-	}
+//	std::vector<shared_ptr<db::DB> > feature_dbs;
+//	std::vector<shared_ptr<db::Transaction> > txns;
+//	char *db_type = argv[++arg_pos];
+//	for (size_t i = 0; i < num_features; ++i) {
+//		LOG(INFO)<< "Opening dataset " << dataset_names[i];
+//		shared_ptr<db::DB> db(db::GetDB(std::string(db_type)));
+//		db->Open(dataset_names.at(i), db::NEW);
+//		feature_dbs.push_back(db);
+//		shared_ptr<db::Transaction> txn(db->NewTransaction(false));
+//		txns.push_back(txn);
+//	}
 
 	LOG(ERROR)<< "Extracting Features";
 
 	int replica_num = Caffe::GetReplicasNum();
-	Datum datum;
+//	Datum datum;
 	const int kMaxKeyStrLength = 1024;
 	char key_str[kMaxKeyStrLength];
 	std::vector<Blob<float>*> input_vec;
 	std::vector<int> image_indices(num_features, 0);
 	for (int batch_index = 0; batch_index < num_mini_batches; ++batch_index) {
-		LOG(INFO)<<"batch index "<<batch_index;
+		LOG(INFO)<<"----------batch index----------- "<<batch_index;
 		feature_extraction_net->Forward(input_vec);
 		for (int i = 0; i < num_features; ++i) {
 			for(int r = 0; r < replica_num; ++r) {
@@ -178,43 +180,67 @@ int feature_extraction_pipeline(int argc, char** argv) {
 				int width = feature_blob->width();
 				const Dtype* feature_blob_data;
 				for (int n = 0; n < batch_size; ++n) {
-					datum.set_height(height);
-					datum.set_width(width);
-					datum.set_channels(channels);
-					datum.clear_data();
-					datum.clear_float_data();
 					feature_blob_data = feature_blob->cpu_data() +
-					feature_blob->offset(n);
-					for (int d = 0; d < dim_features; ++d) {
-						if(d == 0 && n == (batch_size / 2)) {
-							LOG(INFO)<<"feature_blob_data[0]:"<<feature_blob_data[0];
-						}
-						datum.add_float_data(feature_blob_data[d]);
-					}
+							feature_blob->offset(n);
+
 					int length = snprintf(key_str, kMaxKeyStrLength, "%d",
 							image_indices[i]);
-					string out;
-					CHECK(datum.SerializeToString(&out));
-					txns.at(i)->Put(std::string(key_str, length), out);
+
+				  std::ofstream metafile;
+				  string metafilename=dir_names[i] + string(key_str)+string(".txt");
+				  metafile.open (metafilename.c_str());
+				  metafile << channels<<std::endl;
+				  metafile << height<<std::endl;
+				  metafile << width<<std::endl;
+				  metafile.close();
+
+				  FILE *datafilep;
+				  string datafilename=dir_names[i]+string(key_str)+string(".dat");
+				  datafilep = fopen(datafilename.c_str(), "wb");
+				  if (datafilep == NULL) {
+				    LOG(FATAL)<<"Can't open output data file "<<datafilename;
+				  }
+				  LOG(INFO)<<"feature_blob_data[0]:"<<feature_blob_data[0];
+				  fwrite(feature_blob_data, sizeof(Dtype), dim_features, datafilep);
+				  fclose(datafilep);
+
+//					datum.set_height(height);
+//					datum.set_width(width);
+//					datum.set_channels(channels);
+//					datum.clear_data();
+//					datum.clear_float_data();
+//					feature_blob_data = feature_blob->cpu_data() +
+//					feature_blob->offset(n);
+//					for (int d = 0; d < dim_features; ++d) {
+//						if(d == 0 && n == (batch_size / 2)) {
+//							LOG(INFO)<<"feature_blob_data[0]:"<<feature_blob_data[0];
+//						}
+//						datum.add_float_data(feature_blob_data[d]);
+//					}
+//					string out;
+//					CHECK(datum.SerializeToString(&out));
+//					txns.at(i)->Put(std::string(key_str, length), out);
+
 					++image_indices[i];
 					if (image_indices[i] % commit_frequency == 0) {
-						txns.at(i)->Commit();
-						txns.at(i).reset(feature_dbs.at(i)->NewTransaction());
+//						txns.at(i)->Commit();
+//						txns.at(i).reset(feature_dbs.at(i)->NewTransaction());
 						LOG(ERROR)<< "Extracted features of " << image_indices[i] <<
 						" query images for feature blob " << blob_names[i];
 					}
 				}  // for (int n = 0; n < batch_size; ++n)
 			} // for(int r = 0; r < replica_num; ++r) {
 		}  // for (int i = 0; i < num_features; ++i)
+		feature_extraction_net->clear_blobs_gpu();
 	}  // for (int batch_index = 0; batch_index < num_mini_batches; ++batch_index)
 	// write the last batch
 	for (int i = 0; i < num_features; ++i) {
-		if (image_indices[i] % commit_frequency != 0) {
-			txns.at(i)->Commit();
-		}
+//		if (image_indices[i] % commit_frequency != 0) {
+//			txns.at(i)->Commit();
+//		}
 		LOG(ERROR)<< "Extracted features of " << image_indices[i] <<
 		" query images for feature blob " << blob_names[i];
-		feature_dbs.at(i)->Close();
+//		feature_dbs.at(i)->Close();
 	}
 
 	LOG(ERROR)<< "Successfully extracted the features!";

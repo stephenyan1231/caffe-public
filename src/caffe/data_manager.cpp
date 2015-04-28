@@ -480,6 +480,7 @@ void DataVariableSizeManager<Dtype>::InternalThreadEntry() {
 	int replica_batch_size = divide_up(batch_size, num_replicas);
 	Dtype* replicas_batch_data_max_size =
 			replicas_batch_data_max_size_.mutable_cpu_data();
+
 	for (int i = 0; i < num_replicas; ++i) {
 		int start = replica_batch_size * i;
 		int end = start + this->net_->GetBatchSize(i);
@@ -544,6 +545,11 @@ void DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 //		JoinPrefetchThread();
 	}
 	this->forward_count_mutex_.unlock();
+
+//	size_t free_mem, total_mem;
+//	cudaMemGetInfo(&free_mem, &total_mem);
+//	LOG(INFO)<<"CopyFetchDataToConvThread free memoey "<<free_mem<<" total_mem "<<total_mem;
+
 	int num_replicas = Caffe::GetReplicasNum();
 	int batch_size = prefetch_data_.num();
 	int replica_batch_size = divide_up(batch_size, num_replicas);
@@ -587,6 +593,9 @@ void DataVariableSizeManager<Dtype>::CopyFetchDataToConvThread(int replica_id,
 					top[2]->mutable_gpu_data());
 		}
 	}
+
+//	cudaMemGetInfo(&free_mem, &total_mem);
+//	LOG(INFO)<<"CopyFetchDataToConvThread free memoey "<<free_mem<<" total_mem "<<total_mem;
 
 	this->forward_count_mutex_.lock();
 	if (this->forward_count_ == num_replicas) {

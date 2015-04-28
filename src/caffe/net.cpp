@@ -183,7 +183,7 @@ void Net<Dtype>::InitNetThreads(NetParameter& param) {
 				CHECK_EQ(first_net_thread_params.size(), net_thread_params.size());
 				for(int j = 0; j < first_net_thread_params.size(); ++j) {
 					CHECK_EQ(first_net_thread_params[j]->count(), net_thread_params[j]->count());
-					if(first_net_thread_params[j]->count() > 0){
+					if(first_net_thread_params[j]->count() > 0) {
 						const Dtype *first_net_data = first_net_thread_params[j]->gpu_data();
 						Dtype* data = net_thread_params[j]->mutable_gpu_data();
 						caffe_copy(first_net_thread_params[j]->count(), first_net_data, data);
@@ -338,6 +338,13 @@ const shared_ptr<Blob<Dtype> > Net<Dtype>::blob_by_name(const string& blob_name,
 		LOG(WARNING)<< "Unknown blob name " << blob_name;
 	}
 	return blob_ptr;
+}
+
+template<typename Dtype>
+void Net<Dtype>::clear_blobs_gpu() {
+	for (int i = 0; i < net_threads_.size(); ++i) {
+		net_threads_[i]->clear_blobs_gpu();
+	}
 }
 
 template<typename Dtype>
@@ -647,7 +654,8 @@ void Net<Dtype>::ForwardBackwardHelper(const vector<Blob<Dtype>*>& bottom,
 		for (int j = 0; j < net_threads_[0]->output_blobs()[i]->count(); ++j) {
 			for (int k = 0; k < net_threads_.size(); ++k) {
 				const Dtype *src_data = net_threads_[k]->output_blobs()[i]->cpu_data();
-				tgt_data[j] += batch_size_ratios_[net_threads_[k]->get_device_id()] * src_data[j];
+				tgt_data[j] += batch_size_ratios_[net_threads_[k]->get_device_id()]
+						* src_data[j];
 			}
 		}
 	}
@@ -1066,6 +1074,11 @@ Dtype NetThread<Dtype>::ForwardFromTo(int start, int end) {
 			InputDebugInfo(i);
 		}
 	}
+
+//	size_t free_mem, total_mem;
+//	cudaMemGetInfo(&free_mem, &total_mem);
+//	LOG(INFO)<<"ForwardFromTo free memoey "<<free_mem<<" total_mem "<<total_mem;
+
 	for (int i = start; i <= end; ++i) {
 //		LOG(INFO)<< "Forwarding " << layer_names_[i];
 		layers_[i]->Reshape(bottom_vecs_[i], top_vecs_[i]);
@@ -1325,25 +1338,26 @@ void NetThread<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
 
 		for (int j = 0; j < target_blobs.size(); ++j) {
 			if (!conv_init_from_inner_product) {
-				if(target_blobs[j]->count() > 0){
+				if (target_blobs[j]->count() > 0) {
 					CHECK_EQ(target_blobs[j]->count(),
-							source_layer.blobs(j).num()*source_layer.blobs(j).channels()*
-							source_layer.blobs(j).height()*source_layer.blobs(j).width());
+							source_layer.blobs(j).num() * source_layer.blobs(j).channels()
+									* source_layer.blobs(j).height()
+									* source_layer.blobs(j).width());
 //					CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
 //					CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
 //					CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
 //					CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
 					target_blobs[j]->FromProto(source_layer.blobs(j));
-				}else{
+				} else {
 					LOG(INFO)<<"Skipping copy parameter blob "<<source_layer_name<<" blob id "<<j;
 				}
 
 			} else {
-				if(target_blobs[j]->count() > 0){
+				if(target_blobs[j]->count() > 0) {
 					CHECK_EQ(target_blobs[j]->count(),
 							source_layer.blobs(j).num() * source_layer.blobs(j).channels()
-									* source_layer.blobs(j).height()
-									* source_layer.blobs(j).width());
+							* source_layer.blobs(j).height()
+							* source_layer.blobs(j).width());
 					target_blobs[j]->FromProto(source_layer.blobs(j));
 				}
 			}
@@ -1508,6 +1522,13 @@ const shared_ptr<Blob<Dtype> > NetThread<Dtype>::blob_by_name(
 		LOG(WARNING)<< "Unknown blob name " << blob_name;
 	}
 	return blob_ptr;
+}
+
+template<typename Dtype>
+void NetThread<Dtype>::clear_blobs_gpu() {
+	for (int i = 0; i < blobs_.size(); ++i) {
+		blobs_[i]->ReshapeForceMemoryFree(0, 0, 0, 0);
+	}
 }
 
 template<typename Dtype>

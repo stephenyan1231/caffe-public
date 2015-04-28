@@ -215,7 +215,6 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 		col_buffer_.Reshape(1, kernel_dim_, height_, width_);
 	} else {
 		col_buffer_.Reshape(1, kernel_dim_, height_out_, width_out_);
-//  	LOG(INFO)<<"col_buffer_ reshape count "<<col_buffer_.count()<<" "<<col_buffer_.count()*sizeof(Dtype);
 	}
 	// Set up the all ones "bias multiplier" for adding biases by BLAS
 	if (bias_term_) {
@@ -367,7 +366,11 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_bias(Dtype* bias,
 
 template<typename Dtype>
 void BaseConvolutionLayer<Dtype>::force_free_col_buffer_bias_multiplier_gpu_memory() {
+//	LOG(INFO)<<"conv layer name "<<this->layer_param_.name()<<
+//			" force_free_col_buffer_bias_multiplier_gpu_memory col_buffer_";
 	this->col_buffer_.ReshapeForceMemoryFree(0, 0, 0, 0);
+//	LOG(INFO)<<"conv layer name "<<this->layer_param_.name()<<
+//			" force_free_col_buffer_bias_multiplier_gpu_memory bias_multiplier_";
 	this->bias_multiplier_.ReshapeForceMemoryFree(0, 0, 0, 0);
 }
 

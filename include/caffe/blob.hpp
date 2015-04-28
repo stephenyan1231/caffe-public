@@ -52,7 +52,7 @@ class Blob {
   inline int channels() const { return channels_; }
   inline int height() const { return height_; }
   inline int width() const { return width_; }
-  inline int count() const { return count_; }
+  inline size_t count() const { return count_; }
   inline int offset(const int n, const int c = 0, const int h = 0,
       const int w = 0) const {
     CHECK_GE(n, 0);
@@ -154,8 +154,8 @@ class Blob {
   int channels_;
   int height_;
   int width_;
-  int count_;
-  int capacity_;
+  size_t count_;
+  size_t capacity_;
 
 //  shared_ptr<BlobSolver<Dtype> > blob_solver_;
 //  NetThread<Dtype> *net_thread_;

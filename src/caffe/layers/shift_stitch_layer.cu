@@ -62,7 +62,18 @@ void ShiftStitchLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 //			top[0]->height()<<" "<<top[0]->width()<<" "<<
 //			top[0]->count()*sizeof(Dtype);
 	if (Caffe::phase() == Caffe::TEST && this->conserve_gpu_memory_test_) {
+//		LOG(INFO)<<"shift stitch layer name "<<this->layer_param_.name();
+//		size_t free_mem, total_mem;
+//		cudaMemGetInfo(&free_mem, &total_mem);
+//		LOG(INFO)<<"before: free memoey "<<free_mem<<" total_mem "<<total_mem;
+
+		//		LOG(INFO)<<"shiftstitch layer name "<<this->layer_param_.name()<<
+//				" free bottom "<<bottom[0]->count();
 		bottom[0]->ReshapeForceMemoryFree(0, 0, 0, 0);
+
+//		cudaMemGetInfo(&free_mem, &total_mem);
+//		LOG(INFO)<<"after: free memoey "<<free_mem<<" total_mem "<<total_mem;
+
 	}
 }
 

@@ -208,6 +208,8 @@ void PoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   CUDA_POST_KERNEL_CHECK;
 
 	if (Caffe::phase() == Caffe::TEST && this->conserve_gpu_memory_test_) {
+//		LOG(INFO)<<"pooling layer name "<<this->layer_param_.name()
+//				<<" release bottom blob count "<<bottom[0]->count();
 		bottom[0]->ReshapeForceMemoryFree(0, 0, 0, 0);
 //		LOG(INFO)<<"PoolingLayer<Dtype>::Forward_gpu free memory";
 	}

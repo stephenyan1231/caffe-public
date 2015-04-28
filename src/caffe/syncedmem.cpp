@@ -13,8 +13,18 @@ SyncedMemory::~SyncedMemory() {
   }
 
 #ifndef CPU_ONLY
+//  LOG(INFO)<<"gpu_ptr_ "<<gpu_ptr_<<" own_gpu_data_ "<<own_gpu_data_;
   if (gpu_ptr_ && own_gpu_data_) {
-    CUDA_CHECK(cudaFree(gpu_ptr_));
+//  	size_t free_mem, total_mem;
+//  	cudaMemGetInfo(&free_mem, &total_mem);
+//  	LOG(INFO)<<"SyncedMemory destruction size "<<size_;
+//  	LOG(INFO)<<"before: free memoey "<<free_mem<<" total_mem "<<total_mem;
+
+  	CUDA_CHECK(cudaFree(gpu_ptr_));
+
+//		cudaMemGetInfo(&free_mem, &total_mem);
+//		LOG(INFO)<<"after: free memoey "<<free_mem<<" total_mem "<<total_mem;
+
 //    cudaMemGetInfo(&free, &total);
 //  	LOG(INFO)<<"SyncedMemory::~SyncedMemory "<<size_/(1e6)<<" free "<<free/(1e6)
 //  			<<" total "<<total/(1e6);

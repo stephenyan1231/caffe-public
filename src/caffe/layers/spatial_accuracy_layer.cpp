@@ -53,9 +53,6 @@ void SpatialAccuracyLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 template<typename Dtype>
 void SpatialAccuracyLayer<Dtype>::Forward_cpu(
 		const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
-	if(Caffe::phase() == Caffe::TEST){
-		this->Reshape(bottom, top);
-	}
   // The forward pass computes the softmax prob values.
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
@@ -118,6 +115,21 @@ void SpatialAccuracyLayer<Dtype>::Forward_cpu(
 //	top[0]->mutable_cpu_data()[0] = accuracy / (num);
 	top[0]->mutable_cpu_data()[0] = accuracy / (num);
 	// Accuracy layer should not be used as a loss function.
+
+	if (Caffe::phase() == Caffe::TEST && this->conserve_gpu_memory_test_) {
+//		size_t free_mem, total_mem;
+//		cudaMemGetInfo(&free_mem, &total_mem);
+//		LOG(INFO)<<"before: free memoey "<<free_mem<<" total_mem "<<total_mem;
+
+		prob_.ReshapeForceMemoryFree(0, 0, 0, 0);
+//		LOG(INFO)<<"spatial accuracy layer name "<<this->layer_param_.name()
+//				<<" release bottom blob count "<<bottom[0]->count();
+		bottom[0]->ReshapeForceMemoryFree(0, 0, 0, 0);
+//		LOG(INFO)<<"PoolingLayer<Dtype>::Forward_gpu free memory";
+//		cudaMemGetInfo(&free_mem, &total_mem);
+//		LOG(INFO)<<"after: free memoey "<<free_mem<<" total_mem "<<total_mem;
+	}
+
 }
 
 INSTANTIATE_CLASS(SpatialAccuracyLayer);

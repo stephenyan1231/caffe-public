@@ -39,10 +39,10 @@ layer {
     mirror: false
   }
   data_variable_size_param {
-    source: "/home/zyan3/proj/dl-image-enhance/data/uniform_set/uniform_set_long_1024_lmdb"
+    source: "/home/zyan3/proj/dl-image-enhance/data/uniform_set/uniform_set_long_1536_lmdb"
     batch_size: 2
     backend: LMDB
-    max_pixel_num: 26000000
+    max_pixel_num: 4194304
     selective_list: "examples/uniform_set/uniform_set_for_convert_imageset.txt"
     selective_list_shuffle: false
   }
@@ -365,15 +365,7 @@ layer {
   name: "Relu6"
   type: "ReLU"
 }
-layer {
-  bottom: "fc6"
-  top: "fc6"
-  name: "drop6"
-  type: "Dropout"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
+
 layer {
   bottom: "fc6"
   top: "fc7"
@@ -401,51 +393,24 @@ layer {
     stride: 2
   }
 }
-
 layer {
   bottom: "stitch_fc7"
-  top: "stitch_fc7_ReLu"
+  top: "stitch_fc7_Relu"
   name: "Relu7"
   type: "ReLU"
 }
 
 layer {
-  bottom: "stitch_fc7_ReLu"
-  top: "stitch_fc7_ReLu"
-  name: "drop7"
-  type: "Dropout"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
-
-layer {
-  bottom: "stitch_fc7_ReLu"
-  top: "fc8"
-  name: "fc8"
-  type: "Convolution"
-  conserve_gpu_memory_test: false
-  convolution_param {
-    num_output: 1000
-    pad: 0
-    kernel_size: 1
-    init_from_inner_product: true
-  }
-  include {
-    phase: TEST
-  }  
-}
-
-layer {
   name: "spatial_accuracy_top1"
   type: "SpatialAccuracy"
-  bottom: "fc8"
+  bottom: "stitch_fc7_Relu"
   bottom: "label"
   bottom: "data_size"
   top: "accuracy_top1"
   include {
     phase: TEST
   }
+  conserve_gpu_memory_test: true
   spatial_accuracy_param {
     top_k: 1
     spatial_subsample_height_factor: 8
