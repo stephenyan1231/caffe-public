@@ -29,8 +29,10 @@ void CuDNNSoftmaxLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   int K = bottom[0]->channels();
   int H = bottom[0]->height();
   int W = bottom[0]->width();
-  cudnn::setTensor4dDesc<Dtype>(&bottom_desc_, N, K, H, W);
-  cudnn::setTensor4dDesc<Dtype>(&top_desc_, N, K, H, W);
+  if((N * K * H * W) > 0 ){
+		cudnn::setTensor4dDesc<Dtype>(&bottom_desc_, N, K, H, W);
+		cudnn::setTensor4dDesc<Dtype>(&top_desc_, N, K, H, W);
+  }
 }
 
 template <typename Dtype>

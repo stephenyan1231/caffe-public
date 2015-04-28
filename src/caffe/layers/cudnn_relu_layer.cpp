@@ -25,8 +25,10 @@ void CuDNNReLULayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   const int K = bottom[0]->channels();
   const int H = bottom[0]->height();
   const int W = bottom[0]->width();
-  cudnn::setTensor4dDesc<Dtype>(&bottom_desc_, N, K, H, W);
-  cudnn::setTensor4dDesc<Dtype>(&top_desc_, N, K, H, W);
+  if(H * W > 0){
+		cudnn::setTensor4dDesc<Dtype>(&bottom_desc_, N, K, H, W);
+		cudnn::setTensor4dDesc<Dtype>(&top_desc_, N, K, H, W);
+  }
 }
 
 template <typename Dtype>

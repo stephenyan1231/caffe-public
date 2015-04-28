@@ -28,10 +28,12 @@ template <typename Dtype>
 void CuDNNPoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
   PoolingLayer<Dtype>::Reshape(bottom, top);
-  cudnn::setTensor4dDesc<Dtype>(&bottom_desc_, bottom[0]->num(),
-      this->channels_, this->height_, this->width_);
-  cudnn::setTensor4dDesc<Dtype>(&top_desc_, bottom[0]->num(),
-      this->channels_, this->pooled_height_, this->pooled_width_);
+  if((this->height_ * this->width_) > 0){
+		cudnn::setTensor4dDesc<Dtype>(&bottom_desc_, bottom[0]->num(),
+				this->channels_, this->height_, this->width_);
+		cudnn::setTensor4dDesc<Dtype>(&top_desc_, bottom[0]->num(),
+				this->channels_, this->pooled_height_, this->pooled_width_);
+  }
 }
 
 template <typename Dtype>

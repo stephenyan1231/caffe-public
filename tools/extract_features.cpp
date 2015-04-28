@@ -206,6 +206,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 				}  // for (int n = 0; n < batch_size; ++n)
 			} // for(int r = 0; r < replica_num; ++r) {
 		}  // for (int i = 0; i < num_features; ++i)
+		feature_extraction_net->clear_blobs_gpu();
 	}  // for (int batch_index = 0; batch_index < num_mini_batches; ++batch_index)
 	// write the last batch
 	for (int i = 0; i < num_features; ++i) {

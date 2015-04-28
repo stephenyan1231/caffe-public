@@ -77,7 +77,7 @@ Layer<Dtype>* GetShiftPoolingLayer(const LayerParameter& param, int replica_id, 
     return new ShiftPoolingLayer<Dtype>(param,replica_id,net);
 #ifdef USE_CUDNN
   } else if (engine == PoolingParameter_Engine_CUDNN) {
-  	NOT_IMPLEMENTED;
+  	return new ShiftPoolingLayer<Dtype>(param,replica_id,net);
 #endif
   } else {
     LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";

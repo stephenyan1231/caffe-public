@@ -39,8 +39,8 @@ layer {
     mirror: false
   }
   data_variable_size_param {
-    source: "/home/zyan3/proj/dl-image-enhance/data/uniform_set/uniform_set_long_1536_lmdb"
-    batch_size: 2
+    source: "/home/zyan3/proj/dl-image-enhance/data/uniform_set/uniform_set_long_2048_lmdb"
+    batch_size: 1
     backend: LMDB
     max_pixel_num: 4194304
     selective_list: "examples/uniform_set/uniform_set_for_convert_imageset.txt"
