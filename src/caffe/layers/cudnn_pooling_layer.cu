@@ -16,6 +16,9 @@ void CuDNNPoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   Dtype* top_data = top[0]->mutable_gpu_data();
   CUDNN_CHECK(cudnnPoolingForward(handle_, pooling_desc_,
       bottom_desc_, bottom_data, top_desc_, top_data));
+	if (Caffe::phase() == Caffe::TEST && this->conserve_gpu_memory_test_) {
+		bottom[0]->ReshapeForceMemoryFree(0, 0, 0, 0);
+	}
 }
 
 template <typename Dtype>

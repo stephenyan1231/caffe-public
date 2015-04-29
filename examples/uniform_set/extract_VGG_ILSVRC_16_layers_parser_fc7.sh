@@ -17,6 +17,7 @@ mkdir ${save_dir}/${output_dir}
 #  stitch_fc7 ${save_dir}/${db_name} 10  lmdb 1 GPU 0,1
 
 # GLOG_minloglevel=2
-GLOG_logtostderr=1 ./build/tools/extract_features_binary_output models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/VGG_ILSVRC_16_layers.caffemodel \
+GLOG_logtostderr=1 \
+./build/tools/extract_features_binary_output models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/VGG_ILSVRC_16_layers.caffemodel \
  models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/parser_fc7_train_val_downsample.prototxt  \
- stitch_fc7 ${save_dir}/${output_dir}/ 115  lmdb 2 GPU 0
+ stitch_fc7 ${save_dir}/${output_dir}/ 115  lmdb 1 GPU 0
