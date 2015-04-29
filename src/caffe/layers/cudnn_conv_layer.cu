@@ -53,6 +53,7 @@ void CuDNNConvolutionLayer<Dtype>::Forward_gpu(
 		for (int i = 0; i < bottom.size(); ++i) {
 			bottom[i]->ReshapeForceMemoryFree(0, 0, 0, 0);
 		}
+		this->force_free_col_buffer_bias_multiplier_gpu_memory();
 	}
 	if (Caffe::phase() == Caffe::TEST) {
 		this->FreeParameterMatrix();

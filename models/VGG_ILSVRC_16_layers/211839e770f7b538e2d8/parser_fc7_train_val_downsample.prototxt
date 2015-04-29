@@ -393,24 +393,18 @@ layer {
     stride: 2
   }
 }
-layer {
-  bottom: "stitch_fc7"
-  top: "stitch_fc7_Relu"
-  name: "Relu7"
-  type: "ReLU"
-}
 
 layer {
   name: "spatial_accuracy_top1"
   type: "SpatialAccuracy"
-  bottom: "stitch_fc7_Relu"
+  bottom: "stitch_fc7"
   bottom: "label"
   bottom: "data_size"
   top: "accuracy_top1"
   include {
     phase: TEST
   }
-  conserve_gpu_memory_test: true
+  conserve_gpu_memory_test: false
   spatial_accuracy_param {
     top_k: 1
     spatial_subsample_height_factor: 8
