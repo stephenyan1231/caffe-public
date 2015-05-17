@@ -23,8 +23,6 @@ void MultinomialLogisticSparsityLossLayer<Dtype>::LayerSetUp(
 	CHECK_EQ(bottom[0]->num(), bottom[1]->num())
 	  << "The data and label should have the same number.";
 
-	CHECK_EQ(bottom.size(), 3)
-			<< "MultinomialLogisticSparsityLossLayer takes three input blobs";
 	CHECK_EQ(bottom[1]->channels(), 1);
 	CHECK_EQ(bottom[1]->height(), 1);
 	CHECK_EQ(bottom[1]->width(), 1);

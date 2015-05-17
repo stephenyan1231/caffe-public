@@ -193,6 +193,7 @@ class LMDB : public DB {
 
 DB* GetDB(DataParameter::DB backend);
 DB* GetDB(DataVariableSizeParameter::DB backend);
+DB* GetDB(ImageEnhancementDataParameter::DB backend);
 DB* GetDB(const string& backend);
 
 }  // namespace db

@@ -12,6 +12,7 @@
 #include "caffe/common.hpp"
 #include "caffe/data_transformer.hpp"
 #include "caffe/data_variable_size_transformer.hpp"
+#include "caffe/image_enhancement_data_transformer.hpp"
 #include "caffe/filler.hpp"
 #include "caffe/internal_thread.hpp"
 #include "caffe/layer.hpp"
@@ -68,15 +69,12 @@ typedef struct {
 	int label;
 } SelectiveItem;
 
-//typedef std::pair<std::string, int> ItemNameLabel;
-
 template<typename Dtype>
 class DataManager: public BaseDataManager<Dtype> {
 public:
 	explicit DataManager(const LayerParameter& data_layer_param, Net<Dtype> *net);
 	~DataManager();
 
-//	virtual void JoinPrefetchThread();
 	virtual void InternalThreadEntry();
 	virtual void CopyFetchDataToConvThread(int replica_id,
 			const vector<Blob<Dtype>*>& top);
@@ -87,8 +85,6 @@ protected:
 	Blob<Dtype> prefetch_data_;
 	Blob<Dtype> prefetch_label_;
 	Blob<Dtype> transformed_data_;
-
-//	int datum_channels_, datum_height_, datum_width_;
 
 	bool output_labels_;
 	TransformationParameter transform_param_;
@@ -104,13 +100,9 @@ public:
 	explicit DataVariableSizeManager(const LayerParameter& data_layer_param, Net<Dtype> *net);
 	~DataVariableSizeManager();
 
-//	virtual void JoinPrefetchThread();
 	virtual void InternalThreadEntry();
 	virtual void CopyFetchDataToConvThread(int replica_id,
 			const vector<Blob<Dtype>*>& top);
-
-//	inline int GetDatumMaxHeight(){return datum_max_height_;}
-//	inline int GetDatumMaxWidth(){return datum_max_width_;}
 
 protected:
 	virtual void CreatePrefetchThread_();
@@ -136,6 +128,53 @@ protected:
 	std::string selective_list_fn_;
 	std::vector<SelectiveItem> selective_list_;
 	int selective_list_cursor_;
+};
+
+template<typename Dtype>
+class ImageEnhancementDataManager: public BaseDataManager<Dtype> {
+public:
+	explicit ImageEnhancementDataManager(const LayerParameter& data_layer_param, Net<Dtype> *net);
+	~ImageEnhancementDataManager();
+
+	virtual void InternalThreadEntry();
+	virtual void CopyFetchDataToConvThread(int replica_id,
+			const vector<Blob<Dtype>*>& top);
+	int get_global_ftr_dim(){return global_ftr_dim_;}
+	int get_semantic_context_ftr_dim(){return semantic_context_ftr_dim_;}
+	int get_pixel_ftr_dim(){return pixel_ftr_dim_;}
+	int get_pixel_samples_num_per_segment(){return pixel_samples_num_per_segment_;}
+	int get_color_basis_dim(){return color_basis_dim_;}
+	int get_color_dim(){return color_dim_;}
+
+protected:
+	virtual void CreatePrefetchThread_();
+
+	Blob<Dtype> prefetch_globat_ftr_;
+	Blob<Dtype> prefetch_semantic_context_ftr_;
+	Blob<Dtype> prefetch_pixel_ftr_;
+	Blob<Dtype> prefetch_original_LAB_color_basis_;
+	Blob<Dtype> prefetch_enhanced_LAB_color_;
+	Blob<Dtype> transformed_global_ftr_;
+	Blob<Dtype> transformed_semantic_context_ftr_;
+	Blob<Dtype> transformed_pixel_ftr_;
+
+
+	ImageEnhancementTransformationParameter transform_param_;
+	ImageEnhancementDataTransformer<Dtype> data_transformer_;
+
+	int global_ftr_dim_;
+	int semantic_context_ftr_dim_;
+	int pixel_ftr_dim_;
+	int pixel_samples_num_per_segment_;
+	static const int color_basis_dim_ = 10;
+	static const int color_dim_ = 3;
+
+	shared_ptr<db::DB> global_ftr_db_;
+	shared_ptr<db::Cursor> global_ftr_cursor_;
+	shared_ptr<db::Transaction> global_ftr_transaction_;
+
+
+
 };
 
 

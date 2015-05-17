@@ -124,6 +124,13 @@ void Net<Dtype>::InitDataManager(NetParameter& param) {
 			data_manager_ = new DataVariableSizeManager<Dtype>(*layer_param, this);
 			data_manager_->CreatePrefetchThread();
 			break;
+		} else if (layer_param->type() == std::string("ImageEnhancementData")){
+			if (!layer_param->has_phase()) {
+				layer_param->set_phase(phase_);
+			}
+			data_manager_ = new ImageEnhancementDataManager<Dtype>(*layer_param, this);
+			data_manager_->CreatePrefetchThread();
+			break;
 		}
 	}
 }
@@ -1075,12 +1082,7 @@ Dtype NetThread<Dtype>::ForwardFromTo(int start, int end) {
 		}
 	}
 
-//	size_t free_mem, total_mem;
-//	cudaMemGetInfo(&free_mem, &total_mem);
-//	LOG(INFO)<<"ForwardFromTo free memoey "<<free_mem<<" total_mem "<<total_mem;
-
 	for (int i = start; i <= end; ++i) {
-//		LOG(INFO)<< "Forwarding " << layer_names_[i];
 		layers_[i]->Reshape(bottom_vecs_[i], top_vecs_[i]);
 		Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
 		loss += layer_loss;

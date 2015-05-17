@@ -25,13 +25,6 @@ DataLayer<Dtype>::~DataLayer<Dtype>() {
 template<typename Dtype>
 void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
-//	int num_replicas = Caffe::GetReplicasNum();
-//	int replica_batch_size = divide_up(
-//			this->layer_param_.data_param().batch_size(), num_replicas);
-//	int rest_size = this->layer_param_.data_param().batch_size() - this->replica_id_ * replica_batch_size;
-//	int this_replica_batch_size = std::min(replica_batch_size, rest_size);
-//	this->net_->SetBatchSize(this->replica_id_, this_replica_batch_size);
-
 	int this_replica_batch_size = this->net_->GetBatchSize(this->replica_id_);
 
 	int datum_channels = this->net_->GetDataManager()->GetDatumChannels();

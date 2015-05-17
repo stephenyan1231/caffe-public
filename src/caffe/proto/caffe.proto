@@ -30,6 +30,15 @@ message Datum {
   optional bool encoded = 7 [default = false];
 }
 
+message ImageEnhancementDatum {
+	optional string image_name = 1;
+// currently, pixel feature is LAB color
+	repeated float pixel_ftr = 2;
+	repeated float semantic_context_ftr = 3;
+	repeated float original_LAB_color = 4;
+	repeated float enhanced_LAB_color = 5;
+}
+
 message FillerParameter {
   // The filler type.
   optional string type = 1 [default = 'constant'];
@@ -241,7 +250,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 138 (last added: spatial_prob_aggregation_param)
+// LayerParameter next available layer-specific ID: 141 (last added: image_enhancement_data_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -274,6 +283,8 @@ message LayerParameter {
 
   // Parameters for data pre-processing.
   optional TransformationParameter transform_param = 100;
+  optional ImageEnhancementTransformationParameter image_enhancement_transform_param = 140;
+  
 
   // Parameters shared by loss layers.
   optional LossParameter loss_param = 101;
@@ -322,6 +333,7 @@ message LayerParameter {
   optional bool parameter_compress = 137 [default = false];
   optional SpatialProbAggregationParameter spatial_prob_aggregation_param = 138;
   optional Fine2MultiCoarseProbLayerParameter fine2multicoarse_prob_layer_param = 139;
+  optional ImageEnhancementDataParameter image_enhancement_data_param = 141;
   
 }
 
@@ -347,6 +359,21 @@ message TransformationParameter {
   optional uint32 resize_short_side_max = 7 [default = 0];
   optional uint32 resize_size = 9 [default = 0];
   optional bool force_mirror = 8 [default = false];
+}
+
+// Message that stores parameters used to apply transformation
+// to the image enhancement data layer's data
+message ImageEnhancementTransformationParameter {
+  // For data pre-processing, we can do simple scaling and subtracting the
+  // data mean, if provided. Note that the mean subtraction is always carried
+  // out before scaling.
+  optional float global_ftr_scale = 1 [default = 1];
+  optional float semantic_context_ftr_scale = 2 [default = 1];
+  optional float pixel_ftr_scale = 3 [default = 1];
+ 
+  optional string global_ftr_mean_file = 4;
+  optional string semantic_context_ftr_mean_file = 5;
+  optional string pixel_ftr_mean_file = 6;
 }
 
 // Message that stores parameters shared by loss layers
@@ -472,6 +499,25 @@ message DataVariableSizeParameter {
   
   optional string selective_list = 9;
   optional bool selective_list_shuffle = 10 [default = true];
+}
+
+// Message that stores parameters used by ImageEnhancementDataLayer
+message ImageEnhancementDataParameter {
+  enum DB {
+    LEVELDB = 0;
+    LMDB = 1;
+  }
+  // Specify the data source.
+  optional string source = 1;
+  // Specify global feature database source
+  optional string global_feature_source = 2;
+  // Specify the batch size.
+  optional uint32 batch_size = 3;
+  // The rand_skip variable is for the data layer to skip a few data points
+  // to avoid all asynchronous sgd clients to start at the same point. The skip
+  // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
+  // be larger than the number of keys in the database.
+  optional DB backend = 4 [default = LEVELDB];
 }
 
 // Message that stores parameters used by SpatialAccuracyLayer

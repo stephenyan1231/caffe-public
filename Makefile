@@ -42,6 +42,10 @@ GTEST_SRC := src/gtest/gtest-all.cpp
 TOOL_SRCS := $(shell find tools -name "*.cpp")
 # EXAMPLE_SRCS are the source files for the example binaries
 EXAMPLE_SRCS := $(shell find examples -name "*.cpp")
+# VIDEO_ENHANCE_SRCS are the source files for the video enhancement
+VIDEO_ENHANCE_SRCS := $(shell find video-enhance/src -name "*.cpp")
+# VIDEO_ENHANCE_TOOL_SRCS are the source files for the video enhancement tools
+VIDEO_ENHANCE_TOOL_SRCS := $(shell find video-enhance/tools -name "*.cpp")
 # BUILD_INCLUDE_DIR contains any generated header files we want to include.
 BUILD_INCLUDE_DIR := $(BUILD_DIR)/src
 # PROTO_SRCS are the protocol buffer definitions
@@ -60,6 +64,7 @@ NONGEN_CXX_SRCS := $(shell find \
 	matlab/$(PROJECT) \
 	examples \
 	tools \
+	video-enhance \
 	-name "*.cpp" -or -name "*.hpp" -or -name "*.cu" -or -name "*.cuh")
 LINT_SCRIPT := scripts/cpp_lint.py
 LINT_OUTPUT_DIR := $(BUILD_DIR)/.lint
@@ -108,12 +113,15 @@ TEST_CU_OBJS := $(addprefix $(BUILD_DIR)/cuda/, ${TEST_CU_SRCS:.cu=.o})
 TEST_OBJS := $(TEST_CXX_OBJS) $(TEST_CU_OBJS)
 GTEST_OBJ := $(addprefix $(BUILD_DIR)/, ${GTEST_SRC:.cpp=.o})
 EXAMPLE_OBJS := $(addprefix $(BUILD_DIR)/, ${EXAMPLE_SRCS:.cpp=.o})
+VIDEO_ENHANCE_OBJS := $(addprefix $(BUILD_DIR)/, ${VIDEO_ENHANCE_SRCS:.cpp=.o})
+VIDEO_ENHANCE_TOOL_OBJS := $(addprefix $(BUILD_DIR)/, ${VIDEO_ENHANCE_TOOL_SRCS:.cpp=.o})
 # Output files for automatic dependency generation
 DEPS := ${CXX_OBJS:.o=.d} ${CU_OBJS:.o=.d} ${TEST_CXX_OBJS:.o=.d} \
 	${TEST_CU_OBJS:.o=.d}
-# tool, example, and test bins
+# tool, example, test bins and video enhancement bins
 TOOL_BINS := ${TOOL_OBJS:.o=.bin}
 EXAMPLE_BINS := ${EXAMPLE_OBJS:.o=.bin}
+VIDEO_ENHANCE_TOOL_BINS := ${VIDEO_ENHANCE_TOOL_OBJS:.o=.bin}
 # symlinks to tool bins without the ".bin" extension
 TOOL_BIN_LINKS := ${TOOL_BINS:.bin=}
 # Put the test binaries in build/test for convenience.
@@ -136,6 +144,7 @@ CXX_WARNS := $(addprefix $(BUILD_DIR)/, ${CXX_SRCS:.cpp=.o.$(WARNS_EXT)})
 CU_WARNS := $(addprefix $(BUILD_DIR)/cuda/, ${CU_SRCS:.cu=.o.$(WARNS_EXT)})
 TOOL_WARNS := $(addprefix $(BUILD_DIR)/, ${TOOL_SRCS:.cpp=.o.$(WARNS_EXT)})
 EXAMPLE_WARNS := $(addprefix $(BUILD_DIR)/, ${EXAMPLE_SRCS:.cpp=.o.$(WARNS_EXT)})
+VIDEO_ENHANCE_TOOL_WARNS := $(addprefix $(BUILD_DIR)/, ${VIDEO_ENHANCE_TOOL_SRCS:.cpp=.o.$(WARNS_EXT)})
 TEST_WARNS := $(addprefix $(BUILD_DIR)/, ${TEST_SRCS:.cpp=.o.$(WARNS_EXT)})
 TEST_CU_WARNS := $(addprefix $(BUILD_DIR)/cuda/, ${TEST_CU_SRCS:.cu=.o.$(WARNS_EXT)})
 ALL_CXX_WARNS := $(CXX_WARNS) $(TOOL_WARNS) $(EXAMPLE_WARNS) $(TEST_WARNS)
@@ -366,11 +375,11 @@ endif
 ##############################
 # Define build targets
 ##############################
-.PHONY: all test clean docs linecount lint lintclean tools examples $(DIST_ALIASES) \
+.PHONY: all test clean docs linecount lint lintclean tools examples video_enhance_tools $(DIST_ALIASES) \
 	py mat py$(PROJECT) mat$(PROJECT) proto runtest \
 	superclean supercleanlist supercleanfiles warn everything
 
-all: $(STATIC_NAME) $(DYNAMIC_NAME) tools examples
+all: $(STATIC_NAME) $(DYNAMIC_NAME) tools examples video_enhance_tools
 
 everything: $(EVERYTHING_TARGETS)
 
@@ -414,6 +423,8 @@ test: $(TEST_ALL_BIN) $(TEST_ALL_DYNLINK_BIN) $(TEST_BINS)
 tools: $(TOOL_BINS) $(TOOL_BIN_LINKS)
 
 examples: $(EXAMPLE_BINS)
+
+video_enhance_tools: ${VIDEO_ENHANCE_TOOL_BINS}
 
 py$(PROJECT): py
 
@@ -539,6 +550,10 @@ $(TOOL_BINS) $(EXAMPLE_BINS): %.bin : %.o $(STATIC_NAME)
 	@ echo LD $<
 	$(Q)$(CXX) $< $(STATIC_LINK_COMMAND) -o $@ $(LINKFLAGS) $(LDFLAGS)
 
+${VIDEO_ENHANCE_TOOL_BINS}: %.bin : %.o $(STATIC_NAME) $(VIDEO_ENHANCE_OBJS)
+	@ echo LD $<
+	$(Q)$(CXX) $< $(VIDEO_ENHANCE_OBJS) $(STATIC_LINK_COMMAND) -o $@ $(LINKFLAGS) $(LDFLAGS)
+
 proto: $(PROTO_GEN_CC) $(PROTO_GEN_HEADER)
 
 $(PROTO_BUILD_DIR)/%.pb.cc $(PROTO_BUILD_DIR)/%.pb.h : \
@@ -592,9 +607,10 @@ $(DISTRIBUTE_DIR): all py | $(DISTRIBUTE_SUBDIRS)
 	cp -r include $(DISTRIBUTE_DIR)/
 	mkdir -p $(DISTRIBUTE_DIR)/include/caffe/proto
 	cp $(PROTO_GEN_HEADER_SRCS) $(DISTRIBUTE_DIR)/include/caffe/proto
-	# add tool and example binaries
+	# add tool, example and video enhancement binaries
 	cp $(TOOL_BINS) $(DISTRIBUTE_DIR)/bin
 	cp $(EXAMPLE_BINS) $(DISTRIBUTE_DIR)/bin
+	cp $(VIDEO_ENHANCE_TOOL_BINS) $(DISTRIBUTE_DIR)/bin
 	# add libraries
 	cp $(STATIC_NAME) $(DISTRIBUTE_DIR)/lib
 	cp $(DYNAMIC_NAME) $(DISTRIBUTE_DIR)/lib

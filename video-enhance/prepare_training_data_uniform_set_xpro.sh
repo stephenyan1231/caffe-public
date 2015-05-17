@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VIDEO_ENHANCE_BINS=build/video-enhance/tools
-OUT_TRAINING_SEGMENT_LDMB=video-enhance/examples/uniform_set/image-enhance-train-lmdb
+OUT_TRAINING_SEGMENT_LDMB=video-enhance/examples/uniform_set_xpro/image-enhance-xpro-train-lmdb
 
 rm -rf $OUT_TRAINING_SEGMENT_LDMB
 
