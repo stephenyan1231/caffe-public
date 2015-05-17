@@ -1,0 +1,15 @@
+net: "models/dl-image-enhance-2-layer-192/train_val.prototxt"
+test_iter: 50
+test_interval: 10000
+base_lr: 2e-8
+lr_policy: "step"
+gamma: 0.5
+stepsize: 1000000
+display: 100
+max_iter: 2000000
+momentum: 0.9
+weight_decay: 5e-4
+snapshot: 50000
+snapshot_prefix: "models/dl-image-enhance-2-layer-192/dl-image-enhance-2-layer-192-train"
+solver_mode: GPU
+device_id: 0

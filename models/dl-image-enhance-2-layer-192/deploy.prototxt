@@ -1,0 +1,560 @@
+name: "dl-image-enhance-2-layer-192"
+
+input: "global_ftr"
+input_dim: 200
+input_dim: 237
+input_dim: 1
+input_dim: 1
+
+input: "semantic_context_ftr"
+input_dim: 200
+input_dim: 8192
+input_dim: 1
+input_dim: 1
+
+input: "pixel_ftr"
+input_dim: 200
+input_dim: 3
+input_dim: 1
+input_dim: 1
+
+layer {
+  bottom: "global_ftr"
+  top: "fc_L1_global_ftr"
+  name: "fc_L1_global_ftr"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.002
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.001
+    }  
+  }
+}
+
+layer {
+  bottom: "semantic_context_ftr"
+  top: "fc_L1_semantic_context_ftr"
+  name: "fc_L1_semantic_context_ftr"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.005
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.001
+    }  
+  }
+}
+
+layer {
+  bottom: "pixel_ftr"
+  top: "fc_L1_pixel_ftr"
+  name: "fc_L1_pixel_ftr"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.015
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.001
+    }  
+  }
+}
+
+layer {
+  bottom: "fc_L1_global_ftr"
+  bottom: "fc_L1_semantic_context_ftr"
+  bottom: "fc_L1_pixel_ftr"
+  top: "fc_L1"
+  name: "fc_L1"
+  type: "Eltwise"
+  eltwise_param {
+    operation: SUM 
+  }
+}
+
+layer {
+  name: "relu_fc_L1"
+  type: "ReLU"
+  bottom: "fc_L1"
+  top: "fc_L1"
+}
+
+layer {
+  bottom: "fc_L1"
+  top: "fc_L1"
+  name: "drop_fc_L1"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "global_ftr"
+  top: "fc_a1_global_ftr"
+  name: "fc_a1_global_ftr"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.002
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.001
+    }  
+  }
+}
+
+layer {
+  bottom: "semantic_context_ftr"
+  top: "fc_a1_semantic_context_ftr"
+  name: "fc_a1_semantic_context_ftr"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.005
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.001
+    }  
+  }
+}
+
+layer {
+  bottom: "pixel_ftr"
+  top: "fc_a1_pixel_ftr"
+  name: "fc_a1_pixel_ftr"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.015
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.001
+    }  
+  }
+}
+
+layer {
+  bottom: "fc_a1_global_ftr"
+  bottom: "fc_a1_semantic_context_ftr"
+  bottom: "fc_a1_pixel_ftr"
+  top: "fc_a1"
+  name: "fc_a1"
+  type: "Eltwise"
+  eltwise_param {
+    operation: SUM 
+  }
+}
+
+layer {
+  name: "relu_fc_a1"
+  type: "ReLU"
+  bottom: "fc_a1"
+  top: "fc_a1"
+}
+
+layer {
+  bottom: "fc_a1"
+  top: "fc_a1"
+  name: "drop_fc_a1"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "global_ftr"
+  top: "fc_b1_global_ftr"
+  name: "fc_b1_global_ftr"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.002
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.001
+    }  
+  }
+}
+
+layer {
+  bottom: "semantic_context_ftr"
+  top: "fc_b1_semantic_context_ftr"
+  name: "fc_b1_semantic_context_ftr"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.005
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.001
+    }  
+  }
+}
+
+layer {
+  bottom: "pixel_ftr"
+  top: "fc_b1_pixel_ftr"
+  name: "fc_b1_pixel_ftr"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.015
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.001
+    }  
+  }
+}
+
+layer {
+  bottom: "fc_b1_global_ftr"
+  bottom: "fc_b1_semantic_context_ftr"
+  bottom: "fc_b1_pixel_ftr"
+  top: "fc_b1"
+  name: "fc_b1"
+  type: "Eltwise"
+  eltwise_param {
+    operation: SUM 
+  }
+}
+
+layer {
+  name: "relu_fc_b1"
+  type: "ReLU"
+  bottom: "fc_b1"
+  top: "fc_b1"
+}
+
+layer {
+  bottom: "fc_b1"
+  top: "fc_b1"
+  name: "drop_fc_b1"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "fc_L1"
+  top: "fc_L2"
+  name: "fc_L2"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.01
+    }  
+  }
+}
+
+layer {
+  name: "relu_fc_L2"
+  type: "ReLU"
+  bottom: "fc_L2"
+  top: "fc_L2"
+}
+
+layer {
+  bottom: "fc_L2"
+  top: "fc_L2"
+  name: "drop_fc_L2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "fc_a1"
+  top: "fc_a2"
+  name: "fc_a2"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.01
+    }  
+  }
+}
+
+layer {
+  name: "relu_fc_a2"
+  type: "ReLU"
+  bottom: "fc_a2"
+  top: "fc_a2"
+}
+
+layer {
+  bottom: "fc_a2"
+  top: "fc_a2"
+  name: "drop_fc_a2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "fc_b1"
+  top: "fc_b2"
+  name: "fc_b2"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 192
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.01
+    }  
+  }
+}
+
+layer {
+  name: "relu_fc_b2"
+  type: "ReLU"
+  bottom: "fc_b2"
+  top: "fc_b2"
+}
+
+layer {
+  bottom: "fc_b2"
+  top: "fc_b2"
+  name: "drop_fc_b2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "fc_L2"
+  top: "reglayer_L"
+  name: "reglayer_L"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 10
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.0
+    }  
+  }
+}
+
+layer {
+  bottom: "fc_a2"
+  top: "reglayer_a"
+  name: "reglayer_a"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 10
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.0
+    }  
+  }
+}
+
+layer {
+  bottom: "fc_b2"
+  top: "reglayer_b"
+  name: "reglayer_b"
+  type: "InnerProduct"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 100
+  }  
+  inner_product_param {
+    num_output: 10
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.0
+    }  
+  }
+}
+
+layer {
+  bottom: "reglayer_L"
+  bottom: "reglayer_a"
+  bottom: "reglayer_b"
+  top: "reglayer_Lab"
+  name: "reglayer_Lab"
+  type: "Concat"
+  concat_param {
+    concat_dim: 1 
+  }
+}
+
