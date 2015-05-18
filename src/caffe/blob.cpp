@@ -44,29 +44,9 @@ void Blob<Dtype>::ReshapeForceMemoryFree(const int num, const int channels, cons
 	width_ = width;
 	count_ = num_ * channels_ * height_ * width_;
 	if (count_ != capacity_) {
-//		this->gpu_data();
-		DLOG(INFO)<<"Blob<Dtype>::ReshapeForceMemoryFree "<<capacity_<<"---->"<<count_
-				<<" "<<count_*sizeof(Dtype);
-//		size_t free_mem, total_mem;
-//		cudaMemGetInfo(&free_mem, &total_mem);
-//		LOG(INFO)<<"free memoey "<<free_mem<<" total_mem "<<total_mem;
-
 		capacity_ = count_;
 		data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
 		diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
-
-//		if(capacity_ > 0){
-//			data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
-//			diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
-//		} else {
-//			LOG(INFO)<<"release managed SyncedMemory";
-//			data_.reset();
-//			diff_.reset();
-//		}
-
-//		cudaMemGetInfo(&free_mem, &total_mem);
-//		LOG(INFO)<<"free memoey "<<free_mem<<" total_mem "<<total_mem;
-
 	}
 }
 
@@ -76,8 +56,6 @@ template<typename Dtype>
 shared_ptr<Blob<Dtype> > Blob<Dtype>::ReshapedGPUOnly(const int num, const int channels, const int height,
   const int width){
 	CHECK_EQ(count_, num * channels * height * width);
-//	LOG(INFO)<<"Blob<Dtype>::ReshapedGPUOnly count "<<count_<<" "
-//			<<count_*sizeof(Dtype);
 	shared_ptr<Blob<Dtype> > new_blob = shared_ptr<Blob<Dtype> >
 	(new Blob<Dtype>(num, channels, height, width));
 	new_blob->set_gpu_data(mutable_gpu_data(), Caffe::GetDeviceId());

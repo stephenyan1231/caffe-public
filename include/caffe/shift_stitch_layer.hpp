@@ -1,3 +1,5 @@
+// Copyright 2015 Zhicheng Yan
+
 #ifndef CAFFE_SHIFT_STITCH_LAYER_HPP_
 #define CAFFE_SHIFT_STITCH_LAYER_HPP_
 

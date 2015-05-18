@@ -17,13 +17,6 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 
 	const Dtype* weight = this->blobs_[0]->gpu_data();
 	for (int i = 0; i < bottom.size(); ++i) {
-//		LOG(INFO)<<"conv layer name "<<this->layer_param_.name()
-//				<<" bottom shape "<<bottom[i]->channels()<<" "
-//				<<bottom[i]->height()<<" "<<bottom[i]->width();
-//		LOG(INFO)<<"conv layer name "<<this->layer_param_.name()
-//				<<" top shape "<<top[i]->channels()<<" "
-//				<<top[i]->height()<<" "<<top[i]->width();
-
 		const Dtype* bottom_data = bottom[i]->gpu_data();
 		Dtype* top_data = top[i]->mutable_gpu_data();
 		for (int n = 0; n < this->num_; ++n) {
@@ -35,33 +28,11 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 			}
 		}
 	}
-//	LOG(INFO)<<"ConvolutionLayer<Dtype>::Forward_gpu "<<this->layer_param_.name()
-//			<<" top shape "<<
-//			top[0]->num()<<" "<<top[0]->channels()<<" "<<
-//			top[0]->height()<<" "<<top[0]->width()<<" "<<
-//			top[0]->count()*sizeof(Dtype);
 	if (Caffe::phase() == Caffe::TEST && this->conserve_gpu_memory_test_) {
-//		LOG(INFO)<<"conv layer name "<<this->layer_param_.name();
-//		size_t free_mem, total_mem;
-//		cudaMemGetInfo(&free_mem, &total_mem);
-//		LOG(INFO)<<"before: free memoey "<<free_mem<<" total_mem "<<total_mem;
-
-
 		for (int i = 0; i < bottom.size(); ++i) {
-//			LOG(INFO)<<"conv layer name "<<this->layer_param_.name()
-//					<<" release bottom blob count "<<bottom[i]->count();
 			bottom[i]->ReshapeForceMemoryFree(0, 0, 0, 0);
 		}
-//		DLOG(INFO)<<"conv layer name "<<this->layer_param_.name()<<
-//				" force_free_col_buffer_bias_multiplier_gpu_memory";
 		this->force_free_col_buffer_bias_multiplier_gpu_memory();
-//		DLOG(INFO)<<"conv layer name "<<this->layer_param_.name()<<
-//				" force_free_col_buffer_bias_multiplier_gpu_memory end";
-//		LOG(INFO)<<this->layer_param_.name()<<" ConvolutionLayer<Dtype>::Forward_gpu free memory";
-
-//		cudaMemGetInfo(&free_mem, &total_mem);
-//		LOG(INFO)<<"after: free memoey "<<free_mem<<" total_mem "<<total_mem;
-
 	}
 
 	if (Caffe::phase() == Caffe::TEST) {

@@ -1,3 +1,5 @@
+// Copyright 2015 Zhicheng Yan
+
 #ifndef CAFFE_SPATIAL_ACCURACY_LAYER_HPP_
 #define CAFFE_SPATIAL_ACCURACY_LAYER_HPP_
 
@@ -46,7 +48,6 @@ class SpatialAccuracyLayer : public Layer<Dtype> {
    * */
   virtual inline int MinBottomBlobs() const { return 2;}
   virtual inline int MaxBottomBlobs() const { return 3;}
-//  virtual inline int ExactNumBottomBlobs() const { return 2; }
   virtual inline int ExactNumTopBlobs() const { return 1; }
 
  protected:

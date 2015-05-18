@@ -1,3 +1,5 @@
+// Copyright 2015 Zhicheng Yan
+
 #include <algorithm>
 #include <functional>
 #include <utility>

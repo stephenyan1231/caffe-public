@@ -157,11 +157,6 @@ class Blob {
   size_t count_;
   size_t capacity_;
 
-//  shared_ptr<BlobSolver<Dtype> > blob_solver_;
-//  NetThread<Dtype> *net_thread_;
-//  int param_id_;
-
-
   DISABLE_COPY_AND_ASSIGN(Blob);
 };  // class Blob
 

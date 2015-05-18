@@ -23,7 +23,6 @@ void CompactProbabilisticAverageProbLayer<Dtype>::LayerSetUp(
 				this->layer_param_.compact_probabilistic_average_prob_layer_param().compact_classify_layer_param(
 						i).class_id_size();
 		compact_layer_class_id_[i].resize(compact_layer_size_[i]);
-//		CHECK_EQ(bottom[i]->count()/bottom[i]->num(),compact_layer_size_[i]);
 		for (int j = 0; j < compact_layer_size_[i]; ++j) {
 			compact_layer_class_id_[i][j] =
 					this->layer_param_.compact_probabilistic_average_prob_layer_param().compact_classify_layer_param(
@@ -70,15 +69,12 @@ void CompactProbabilisticAverageProbLayer<Dtype>::Forward_cpu(
 				const int class_id = compact_layer_class_id_[j][k];
 				for (int y = 0; y < spatial_h_; ++y) {
 					for (int x = 0; x < spatial_w_; ++x) {
-//						Dtype prob_weight = (branch_prob_data + bottom[prob_num_]->offset(i))[j];
 						Dtype prob_weight = branch_prob_data[bottom[prob_num_]->offset(i, j,
 								y, x)];
 						(top_data + top[0]->offset(i, class_id, y, x))[0] += prob_weight
 								* (prob_data + bottom[j]->offset(i, k, y, x))[0];
 					}
 				}
-//				(top_data + (top)[0]->offset(i))[class_id] += prob_weight
-//						* (prob_data + bottom[j]->offset(i))[k];
 			}
 		}
 	}

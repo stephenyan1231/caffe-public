@@ -17,7 +17,6 @@ void Fine2MultiCoarseProbLayer<Dtype>::LayerSetUp(
 		const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
 	num_coarse_ =
 			this->layer_param_.fine2multicoarse_prob_layer_param().num_coarse();
-//	num_fine_ = bottom[0]->count() / bottom[0]->num();
 	num_fine_ =
 			this->layer_param_.fine2multicoarse_prob_layer_param().fine2multicoarse_param_size();
 	fine2multicoarse_.resize(num_fine_);
@@ -32,7 +31,6 @@ void Fine2MultiCoarseProbLayer<Dtype>::LayerSetUp(
 			fine2multicoarse_[i].push_back(fine2multicoarse_param.coarse_id(j));
 			coarse2fine_[fine2multicoarse_param.coarse_id(j)].push_back(i);
 		}
-//		coarse2fine_[fine2coarse_[i]].push_back(i);
 	}
 
 	for (int i = 0; i < num_coarse_; ++i) {
@@ -59,7 +57,6 @@ void Fine2MultiCoarseProbLayer<Dtype>::Reshape(
 		const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
 	if (bottom[0]->count() > 0) {
 		CHECK_EQ(bottom[0]->channels(), num_fine_);
-//		CHECK_EQ(bottom[0]->count() / bottom[0]->num(), num_fine_);
 	}
 	top[0]->Reshape(bottom[0]->num(), num_coarse_, bottom[0]->height(),
 			bottom[0]->width());
@@ -166,10 +163,6 @@ void Fine2MultiCoarseProbLayer<Dtype>::Backward_cpu(
 
 					}
 				}
-//				for (int k = 0; k < coarse2fine_[j].size(); ++k) {
-//					bottom_diff[bottom[0]->offset(i) + coarse2fine_[j][k]] =
-//							top_diff[top[0]->offset(i) + j];
-//				}
 			}
 		}
 	}

@@ -65,13 +65,10 @@ void MultinomialLogisticSparsityLossLayer<Dtype>::Forward_cpu(
 		int label = static_cast<int>(bottom_label[i]);
 		Dtype prob = max(bottom_data[i * dim + label], Dtype(kLOG_THRESHOLD));
 		loss += -log(prob);
-//		Dtype coarse_prob_sum = 0;
 		for (int j = 0; j < num_branch_; ++j) {
-//			coarse_prob_sum +=(bottom_branch_prob + bottom[2]->offset(i))[j];
 			branch_sparsity_diff_data[j] +=
 					(bottom_branch_prob + bottom[2]->offset(i))[j];
 		}
-//		LOG(INFO)<<"MultinomialLogisticSparsityLossLayer<Dtype>::Forward_cpu coarse prob sum "<<coarse_prob_sum;
 	}
 	std::ostringstream branch_sparsity_diff_msg;
 	for (int j = 0; j < num_branch_; ++j) {

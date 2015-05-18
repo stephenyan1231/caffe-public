@@ -18,21 +18,21 @@ namespace caffe {
 /* Fine2CoarseProbLayer
  * Take fine classification probabilities as input
  * Aggregate them into coarse classification probabilities
-*/
+ */
 template<typename Dtype>
 class Fine2CoarseProbLayer: public Layer<Dtype> {
 public:
-	explicit Fine2CoarseProbLayer(const LayerParameter& param,
-			int replica_id, Net<Dtype> *net) :
+	explicit Fine2CoarseProbLayer(const LayerParameter& param, int replica_id,
+			Net<Dtype> *net) :
 			Layer<Dtype>(param, replica_id, net) {
 	}
-//	virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
-//			vector<Blob<Dtype>*>* top);
 	virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-				const vector<Blob<Dtype>*>& top);
+			const vector<Blob<Dtype>*>& top);
 	virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
-				const vector<Blob<Dtype>*>& top);
-  virtual inline const char* type() const { return "Fine2CoarseProb"; }
+			const vector<Blob<Dtype>*>& top);
+	virtual inline const char* type() const {
+		return "Fine2CoarseProb";
+	}
 
 	virtual inline int ExactNumBottomBlobs() const {
 		return 1;
@@ -43,10 +43,10 @@ public:
 
 protected:
 	virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-				const vector<Blob<Dtype>*>& top);
+			const vector<Blob<Dtype>*>& top);
 	virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-				const vector<bool>& propagate_down,
-				const vector<Blob<Dtype>*>& bottom);
+			const vector<bool>& propagate_down,
+			const vector<Blob<Dtype>*>& bottom);
 
 	int num_fine_;
 	int num_coarse_;
@@ -57,7 +57,7 @@ protected:
 /* Fine2MultiCoarseProbLayer
  * Take fine classification probabilities as input
  * Aggregate them into coarse classification probabilities
-*/
+ */
 template<typename Dtype>
 class Fine2MultiCoarseProbLayer: public Layer<Dtype> {
 public:
@@ -65,13 +65,13 @@ public:
 			int replica_id, Net<Dtype> *net) :
 			Layer<Dtype>(param, replica_id, net) {
 	}
-//	virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
-//			vector<Blob<Dtype>*>* top);
 	virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-				const vector<Blob<Dtype>*>& top);
+			const vector<Blob<Dtype>*>& top);
 	virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
-				const vector<Blob<Dtype>*>& top);
-  virtual inline const char* type() const { return "Fine2MultiCoarseProb"; }
+			const vector<Blob<Dtype>*>& top);
+	virtual inline const char* type() const {
+		return "Fine2MultiCoarseProb";
+	}
 
 	virtual inline int ExactNumBottomBlobs() const {
 		return 1;
@@ -82,65 +82,75 @@ public:
 
 protected:
 	virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-				const vector<Blob<Dtype>*>& top);
+			const vector<Blob<Dtype>*>& top);
 	virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-				const vector<bool>& propagate_down,
-				const vector<Blob<Dtype>*>& bottom);
+			const vector<bool>& propagate_down,
+			const vector<Blob<Dtype>*>& bottom);
 
 	int num_fine_;
 	int num_coarse_;
-	std::vector< std::vector<int> > fine2multicoarse_;
+	std::vector<std::vector<int> > fine2multicoarse_;
 	std::vector<vector<int> > coarse2fine_;
 	std::vector<vector<int> > coarse2fine_not_;
 	Blob<Dtype> unnormalized_coarse_prob_;
 	Blob<Dtype> coarse_prob_sum_;
 };
 
-
 /* MultinomialLogisticSparsityLossLayer
-*/
-template <typename Dtype>
-class MultinomialLogisticSparsityLossLayer : public Layer<Dtype> {
- public:
-  explicit MultinomialLogisticSparsityLossLayer(const LayerParameter& param,
-  		int replica_id, Net<Dtype> *net)
-      : Layer<Dtype>(param, replica_id, net) {}
+ */
+template<typename Dtype>
+class MultinomialLogisticSparsityLossLayer: public Layer<Dtype> {
+public:
+	explicit MultinomialLogisticSparsityLossLayer(const LayerParameter& param,
+			int replica_id, Net<Dtype> *net) :
+			Layer<Dtype>(param, replica_id, net) {
+	}
 	virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-				const vector<Blob<Dtype>*>& top);
-  virtual void Reshape(
-      const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top);
+			const vector<Blob<Dtype>*>& top);
+	virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+			const vector<Blob<Dtype>*>& top);
 
-  virtual inline const char* type() const { return "MultinomialLogisticSparsityLoss"; }
+	virtual inline const char* type() const {
+		return "MultinomialLogisticSparsityLoss";
+	}
 
-  virtual inline int ExactNumBottomBlobs() const { return 3; }
-  virtual inline int ExactNumTopBlobs() const { return 1; }
- protected:
-  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top);
-  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+	virtual inline int ExactNumBottomBlobs() const {
+		return 3;
+	}
+	virtual inline int ExactNumTopBlobs() const {
+		return 1;
+	}
+protected:
+	virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+			const vector<Blob<Dtype>*>& top);
+	virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+			const vector<bool>& propagate_down,
+			const vector<Blob<Dtype>*>& bottom);
 
-  int num_branch_;
-  shared_ptr<Blob<Dtype> > branch_sparsity_diff_;
+	int num_branch_;
+	shared_ptr<Blob<Dtype> > branch_sparsity_diff_;
 };
 
 template<typename Dtype>
 class CompactProbabilisticAverageProbLayer: public Layer<Dtype> {
 public:
 	explicit CompactProbabilisticAverageProbLayer(const LayerParameter& param,
-			int replica_id, Net<Dtype> *net):
-	Layer<Dtype>(param, replica_id, net){}
-	virtual ~CompactProbabilisticAverageProbLayer(){}
+			int replica_id, Net<Dtype> *net) :
+			Layer<Dtype>(param, replica_id, net) {
+	}
+	virtual ~CompactProbabilisticAverageProbLayer() {
+	}
 	virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-				const vector<Blob<Dtype>*>& top);
-  virtual void Reshape(
-      const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top);
+			const vector<Blob<Dtype>*>& top);
+	virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+			const vector<Blob<Dtype>*>& top);
 
 protected:
 	virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top);
+			const vector<Blob<Dtype>*>& top);
 	virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+			const vector<bool>& propagate_down,
+			const vector<Blob<Dtype>*>& bottom);
 
 	int prob_num_;
 	int class_num_;
@@ -148,7 +158,6 @@ protected:
 	std::vector<int> compact_layer_size_;
 	std::vector<std::vector<int> > compact_layer_class_id_;
 };
-
 
 }  // namespace caffe
 

@@ -1,3 +1,5 @@
+//Copyright 2015 Zhicheng Yan
+
 #ifndef CAFFE_DATA_MANAGER_HPP_
 #define CAFFE_DATA_MANAGER_HPP_
 
@@ -76,7 +78,6 @@ public:
 	explicit DataManager(const LayerParameter& data_layer_param, Net<Dtype> *net);
 	~DataManager();
 
-//	virtual void JoinPrefetchThread();
 	virtual void InternalThreadEntry();
 	virtual void CopyFetchDataToConvThread(int replica_id,
 			const vector<Blob<Dtype>*>& top);
@@ -88,7 +89,6 @@ protected:
 	Blob<Dtype> prefetch_label_;
 	Blob<Dtype> transformed_data_;
 
-//	int datum_channels_, datum_height_, datum_width_;
 
 	bool output_labels_;
 	TransformationParameter transform_param_;
@@ -104,14 +104,9 @@ public:
 	explicit DataVariableSizeManager(const LayerParameter& data_layer_param, Net<Dtype> *net);
 	~DataVariableSizeManager();
 
-//	virtual void JoinPrefetchThread();
 	virtual void InternalThreadEntry();
 	virtual void CopyFetchDataToConvThread(int replica_id,
 			const vector<Blob<Dtype>*>& top);
-
-//	inline int GetDatumMaxHeight(){return datum_max_height_;}
-//	inline int GetDatumMaxWidth(){return datum_max_width_;}
-
 protected:
 	virtual void CreatePrefetchThread_();
 

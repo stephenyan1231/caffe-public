@@ -1,3 +1,4 @@
+//Copyright 2015 Zhicheng Yan
 #include <opencv2/core/core.hpp>
 
 #include <string>
@@ -84,9 +85,6 @@ void DataVariableSizeTransformer<Dtype>::Transform(const Datum& datum,
 
 	CHECK_GE(max_pixel_num, datum_height * datum_width);
 
-//	CHECK_GE(max_height, datum_height);
-//	CHECK_GE(max_width, datum_width);
-
 	const Dtype scale = param_.scale();
 	bool do_mirror = true;
 	if (phase_ == TRAIN) {
@@ -94,7 +92,6 @@ void DataVariableSizeTransformer<Dtype>::Transform(const Datum& datum,
 	} else {
 		do_mirror = param_.force_mirror();
 	}
-//	const bool do_mirror = param_.mirror() && Rand(2);
 	const bool has_uint8 = (*data).size() > 0;
 	const bool has_mean_values = mean_values_.size() > 0;
 	CHECK_EQ(has_mean_values, true);

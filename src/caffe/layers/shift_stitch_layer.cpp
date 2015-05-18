@@ -1,3 +1,5 @@
+// Copyright 2015 Zhicheng Yan
+
 #include "caffe/shift_stitch_layer.hpp"
 
 namespace caffe {

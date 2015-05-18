@@ -1,3 +1,5 @@
+// Copyright 2015 Zhicheng Yan
+
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -60,7 +62,6 @@ void SpatialAccuracyLayer<Dtype>::Forward_cpu(
 	const Dtype* prob_data = prob_.cpu_data();
 	DLOG(INFO)<<"SpatialAccuracyLayer<Dtype>::Forward_cpu prob_data shape "<<
 			prob_.num()<<" "<<prob_.channels()<<" "<<prob_.height()<<" "<<prob_.width();
-//	const Dtype* bottom_data = bottom[0]->cpu_data();
 	const Dtype* bottom_label = bottom[1]->cpu_data();
 	int num = bottom[0]->num();
 	int dim = bottom[0]->channels();
@@ -92,7 +93,6 @@ void SpatialAccuracyLayer<Dtype>::Forward_cpu(
 				// Top-k accuracy
 				for (int j = 0; j < dim; ++j) {
 					bottom_data_vector[j].first += prob_data[(j * h + y) * w + x];
-//					bottom_data_vector.push_back(std::make_pair(prob_data[(j * h + y) * w + x], j));
 				}
 			}
 		}
@@ -108,26 +108,14 @@ void SpatialAccuracyLayer<Dtype>::Forward_cpu(
 			}
 		}
 
-//		bottom_data += bottom[0]->offset(1);
 		prob_data += prob_.offset(1);
 	}
-	// LOG(INFO) << "Accuracy: " << accuracy;
-//	top[0]->mutable_cpu_data()[0] = accuracy / (num);
 	top[0]->mutable_cpu_data()[0] = accuracy / (num);
 	// Accuracy layer should not be used as a loss function.
 
 	if (Caffe::phase() == Caffe::TEST && this->conserve_gpu_memory_test_) {
-//		size_t free_mem, total_mem;
-//		cudaMemGetInfo(&free_mem, &total_mem);
-//		LOG(INFO)<<"before: free memoey "<<free_mem<<" total_mem "<<total_mem;
-
 		prob_.ReshapeForceMemoryFree(0, 0, 0, 0);
-//		LOG(INFO)<<"spatial accuracy layer name "<<this->layer_param_.name()
-//				<<" release bottom blob count "<<bottom[0]->count();
 		bottom[0]->ReshapeForceMemoryFree(0, 0, 0, 0);
-//		LOG(INFO)<<"PoolingLayer<Dtype>::Forward_gpu free memory";
-//		cudaMemGetInfo(&free_mem, &total_mem);
-//		LOG(INFO)<<"after: free memoey "<<free_mem<<" total_mem "<<total_mem;
 	}
 
 }

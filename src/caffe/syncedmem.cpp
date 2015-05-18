@@ -13,21 +13,8 @@ SyncedMemory::~SyncedMemory() {
   }
 
 #ifndef CPU_ONLY
-//  LOG(INFO)<<"gpu_ptr_ "<<gpu_ptr_<<" own_gpu_data_ "<<own_gpu_data_;
   if (gpu_ptr_ && own_gpu_data_) {
-//  	size_t free_mem, total_mem;
-//  	cudaMemGetInfo(&free_mem, &total_mem);
-//  	LOG(INFO)<<"SyncedMemory destruction size "<<size_;
-//  	LOG(INFO)<<"before: free memoey "<<free_mem<<" total_mem "<<total_mem;
-
   	CUDA_CHECK(cudaFree(gpu_ptr_));
-
-//		cudaMemGetInfo(&free_mem, &total_mem);
-//		LOG(INFO)<<"after: free memoey "<<free_mem<<" total_mem "<<total_mem;
-
-//    cudaMemGetInfo(&free, &total);
-//  	LOG(INFO)<<"SyncedMemory::~SyncedMemory "<<size_/(1e6)<<" free "<<free/(1e6)
-//  			<<" total "<<total/(1e6);
   }
 #endif  // CPU_ONLY
 }
@@ -36,7 +23,6 @@ inline void SyncedMemory::to_cpu() {
 	int old_device = 0;
   switch (head_) {
   case UNINITIALIZED:
-//  	LOG(INFO)<<"SyncedMemory::to_cpu new cpu memory size "<<size_;
     CaffeMallocHost(&cpu_ptr_, size_);
     caffe_memset(size_, 0, cpu_ptr_);
     head_ = HEAD_AT_CPU;
@@ -45,7 +31,6 @@ inline void SyncedMemory::to_cpu() {
   case HEAD_AT_GPU:
 #ifndef CPU_ONLY
     if (cpu_ptr_ == NULL) {
-//    	LOG(INFO)<<"SyncedMemory::to_cpu new cpu memory size "<<size_;
       CaffeMallocHost(&cpu_ptr_, size_);
       own_cpu_data_ = true;
     }
@@ -73,9 +58,6 @@ inline void SyncedMemory::to_gpu() {
   	old_device = Caffe::GetDeviceId();
   	Caffe::SetDevice(device_id_);
     CUDA_CHECK(cudaMalloc(&gpu_ptr_, size_));
-//    cudaMemGetInfo(&free, &total);
-//  	LOG(INFO)<<"SyncedMemory::to_gpu new gpu memory "<<size_/(1e6)<<" free "<<free/(1e6)
-//  			<<" total "<<total/(1e6);
     caffe_gpu_memset(size_, 0, gpu_ptr_);
     Caffe::SetDevice(old_device);
     head_ = HEAD_AT_GPU;
@@ -86,9 +68,6 @@ inline void SyncedMemory::to_gpu() {
   	Caffe::SetDevice(device_id_);
     if (gpu_ptr_ == NULL) {
       CUDA_CHECK(cudaMalloc(&gpu_ptr_, size_));
-//      cudaMemGetInfo(&free, &total);
-//    	LOG(INFO)<<"SyncedMemory::to_gpu new gpu memory "<<size_/(1e6)<<" free "<<free/(1e6)
-//    			<<" total "<<total/(1e6);
       own_gpu_data_ = true;
     }
     caffe_gpu_memcpy(size_, cpu_ptr_, gpu_ptr_);

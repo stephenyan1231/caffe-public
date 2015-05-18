@@ -14,7 +14,6 @@ template<typename Dtype>
 BlobSolver<Dtype>::BlobSolver(const SolverParameter& param, int param_id,
 		NetThread<Dtype>* net_thread) :
 		net_thread_(net_thread), param_id_(param_id) {
-	LOG(INFO)<<"NetThreadSolver<Dtype>::NetThreadSolver";
 	Init(param);
 }
 
@@ -29,8 +28,6 @@ BlobSolver<Dtype>::BlobSolver(const string& param_file, int param_id,
 
 template<typename Dtype>
 void BlobSolver<Dtype>::Init(const SolverParameter& param) {
-	DLOG(INFO)<< "Initializing solver from parameters: " << std::endl
-	<< param.DebugString();
 	param_ = param;
 	CHECK_GE(param_.average_loss(), 1) << "average_loss should be non-negative.";
 	if (param_.random_seed() >= 0) {

@@ -1,3 +1,5 @@
+//Copyright 2015 Zhicheng Yan
+
 #include <opencv2/core/core.hpp>
 
 #include <algorithm>

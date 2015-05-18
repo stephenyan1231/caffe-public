@@ -90,7 +90,6 @@ class DataTransformer {
   // Tranformation parameters
   TransformationParameter param_;
 
-
   shared_ptr<Caffe::RNG> rng_;
   Phase phase_;
   Blob<Dtype> data_mean_;

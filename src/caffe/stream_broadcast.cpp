@@ -1,3 +1,4 @@
+//Copyright 2015 Zhicheng Yan
 #include "caffe/stream_broadcast.hpp"
 #include "caffe/blob.hpp"
 

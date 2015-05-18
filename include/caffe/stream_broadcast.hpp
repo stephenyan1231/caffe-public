@@ -1,3 +1,4 @@
+//Copyright 2015 Zhicheng Yan
 #ifndef CAFFE_STREAM_BROADCAST_HPP_
 #define CAFFE_STREAM_BROADCAST_HPP_
 
