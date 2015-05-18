@@ -169,7 +169,6 @@ void convert_dataset(const string& input_folder, const string& output_folder,
 				datum.add_float_data(float_buffer[k]);
 			datum.SerializeToString(&value);
 			int length = snprintf(str_buffer, kCIFARImageNBytes, "%d", itemid);
-			LOG(INFO)<<"key "<<str_buffer;
 			ts_img_list<<itemid<<" "<<new_label<<std::endl;
 			test_txn->Put(string(str_buffer, length), value);
 //			test_db->Put(leveldb::WriteOptions(), string(str_buffer), value);
