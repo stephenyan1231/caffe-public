@@ -1,0 +1,16 @@
+net: "models/nin_imagenet/train_val.prototxt"
+test_iter: 500
+test_interval: 1000
+base_lr: 1e-2
+lr_policy: "step"
+gamma: 0.1
+stepsize: 200000
+display: 50
+max_iter: 450000
+momentum: 0.9
+weight_decay: 0.0005
+snapshot: 10000
+snapshot_prefix: "models/nin_imagenet/nin_imagenet_train"
+solver_mode: GPU
+device_id: 0
+device_id: 1
