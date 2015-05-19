@@ -473,7 +473,7 @@ layer {
     quantization_kmean_cluster_indices_file: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/fc6_64_1792_kmean_cluster_indices.binaryproto"
   }
   conserve_gpu_memory_test: false
-  parameter_compress: true
+  parameter_compress: false
 }
 layer {
   bottom: "fc6"
@@ -519,7 +519,7 @@ layer {
     quantization_kmean_cluster_indices_file: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/fc7_256_1024_kmean_cluster_indices.binaryproto"    
   }
   conserve_gpu_memory_test: false
-  parameter_compress: true
+  parameter_compress: false
 }
 layer {
   bottom: "fc7"

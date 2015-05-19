@@ -85,7 +85,7 @@ void MultinomialLogisticSparsityLossLayer<Dtype>::Forward_cpu(
 	loss_2nd *=
 			this->layer_param_.multinomial_logistic_sparsity_loss_param().sparsity_lamda();
 	DLOG(INFO)<<"branch_sparsity_diff_data "<<branch_sparsity_diff_msg.str();
-	LOG(INFO)<< "\tloss 1st:" << (loss / num) << " loss 2nd: " << (loss_2nd);
+	DLOG(INFO)<< "\tloss 1st:" << (loss / num) << " loss 2nd: " << (loss_2nd);
 	top[0]->mutable_cpu_data()[0] = (loss / num) + (loss_2nd);
 }
 
