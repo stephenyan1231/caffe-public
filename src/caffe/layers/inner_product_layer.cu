@@ -58,45 +58,19 @@ void InnerProductLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 	}
 }
 
-//template<typename Dtype>
-//__global__ void AssembleMatrix(const int nthreads, const Dtype* centers_data,
-//		const Dtype* indices_data, int num_center, int num_seg, int mat_height,
-//		int mat_width, Dtype* mat_data) {
-//	CUDA_KERNEL_LOOP(index, nthreads)
-//	{
-//		int seg_size = mat_width / num_seg;
-//		int mat_y = index / num_seg;
-//		int mat_x = index % num_seg;
-//		int index = static_cast<int>(indices_data[mat_y * num_seg + mat_x]);
-//		centers_data += (index * mat_width + mat_x * seg_size);
-//		mat_data += (mat_y * mat_width + mat_x * seg_size);
-//		for (int i = 0; i < seg_size; ++i) {
-//			mat_data[i] = centers_data[i];
-//		}
-//	}
-//}
-
 template<typename Dtype>
 void InnerProductLayer<Dtype>::AssembleParameterMatrix() {
 	if (this->parameter_compress_ && quantization_kmean_num_cluster_ > 0) {
-		LOG(INFO)<<"InnerProductLayer<Dtype>::AssembleParameterMatrix";
-//		Dtype* param_data = NULL;
-//		const Dtype* centers_data = quantization_kmean_cluster_centers_.cpu_data();
+		DLOG(INFO)<<"InnerProductLayer<Dtype>::AssembleParameterMatrix";
 		const Dtype* indices_data = quantization_kmean_cluster_indices_.cpu_data();
 		this->blobs_[0]->Reshape(1, 1, N_, K_);
 		CHECK_EQ(K_ % quantization_num_segment_, 0);
-//		const int segment_size = K_ / quantization_num_segment_;
-
 		switch (Caffe::mode()) {
 			case Caffe::CPU:
 			NOT_IMPLEMENTED;
 			break;
 
 			case Caffe::GPU:
-//			AssembleMatrix<Dtype><<<CAFFE_GET_BLOCKS(N_*quantization_num_segment_),CAFFE_CUDA_NUM_THREADS>>>
-//					(N_*quantization_num_segment_,quantization_kmean_cluster_centers_.gpu_data(),
-//							quantization_kmean_cluster_indices_uint16_.gpu_data(), quantization_kmean_cluster_centers_.height(),
-//							quantization_num_segment_, N_, K_, this->blobs_[0]->mutable_gpu_data());
 				AssembleMatrix<Dtype><<<CAFFE_GET_BLOCKS(N_*quantization_num_segment_),CAFFE_CUDA_NUM_THREADS>>>
 						(N_*quantization_num_segment_,quantization_kmean_cluster_centers_.gpu_data(),
 								quantization_kmean_cluster_indices_uint8_.gpu_data(), quantization_kmean_cluster_centers_.height(),

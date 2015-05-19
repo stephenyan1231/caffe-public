@@ -1,0 +1,613 @@
+name: "VGG_ILSVRC_16_layer"
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+  transform_param {
+    crop_size: 224
+    mean_value: 104
+    mean_value: 117
+    mean_value: 123
+    mirror: true
+    resize_short_side_min: 256
+    resize_short_side_max: 512
+  }
+  data_param {
+    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_encoded_lmdb"
+    batch_size: 128
+    backend: LMDB
+    selective_list: "/home/zyan3/proj/caffe_private_hdcnn/data/ilsvrc12/train.txt"
+  }
+}
+layer {
+  name: "data"
+  type: "DataVariableSize"
+  top: "data"
+  top: "data_size"  
+  top: "label"
+  include {
+    phase: TEST
+  }
+  transform_param {
+    crop_size: 224
+    mean_value: 104
+    mean_value: 117
+    mean_value: 123
+    mirror: false
+    resize_short_side_min: 512
+    resize_short_side_max: 512
+  }
+  data_variable_size_param {
+    source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_encoded_lmdb"
+    batch_size: 1
+    backend: LMDB  
+    selective_list: ""
+    max_pixel_num: 26000000
+  }
+}
+
+layer {
+  bottom: "data"
+  top: "conv1_1"
+  name: "conv1_1"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 64
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+
+layer {
+  bottom: "conv1_1"
+  top: "conv1_1"
+  name: "Relu1_1"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv1_1"
+  top: "conv1_2"
+  name: "conv1_2"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 64
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv1_2"
+  top: "conv1_2"
+  name: "Relu1_2"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv1_2"
+  top: "pool1"
+  name: "pool1"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+layer {
+  bottom: "pool1"
+  top: "conv2_1"
+  name: "conv2_1"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 128
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv2_1"
+  top: "conv2_1"
+  name: "Relu2_1"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv2_1"
+  top: "conv2_2"
+  name: "conv2_2"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 128
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv2_2"
+  top: "conv2_2"
+  name: "Relu2_2"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv2_2"
+  top: "pool2"
+  name: "pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+layer {
+  bottom: "pool2"
+  top: "conv3_1"
+  name: "conv3_1"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 256
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv3_1"
+  top: "conv3_1"
+  name: "Relu3_1"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv3_1"
+  top: "conv3_2"
+  name: "conv3_2"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 256
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv3_2"
+  top: "conv3_2"
+  name: "Relu3_2"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv3_2"
+  top: "conv3_3"
+  name: "conv3_3"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 256
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv3_3"
+  top: "conv3_3"
+  name: "Relu3_3"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv3_3"
+  top: "pool3"
+  name: "pool3"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+layer {
+  bottom: "pool3"
+  top: "conv4_1"
+  name: "conv4_1"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 512
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv4_1"
+  top: "conv4_1"
+  name: "Relu4_1"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv4_1"
+  top: "conv4_2"
+  name: "conv4_2"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 512
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv4_2"
+  top: "conv4_2"
+  name: "Relu4_2"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv4_2"
+  top: "conv4_3"
+  name: "conv4_3"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 512
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv4_3"
+  top: "conv4_3"
+  name: "Relu4_3"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv4_3"
+  top: "pool4"
+  name: "pool4"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+layer {
+  bottom: "pool4"
+  top: "conv5_1"
+  name: "conv5_1"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 512
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv5_1"
+  top: "conv5_1"
+  name: "Relu5_1"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv5_1"
+  top: "conv5_2"
+  name: "conv5_2"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 512
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv5_2"
+  top: "conv5_2"
+  name: "Relu5_2"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv5_2"
+  top: "conv5_3"
+  name: "conv5_3"
+  type: "Convolution"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }  
+  convolution_param {
+    num_output: 512
+    pad: 1
+    kernel_size: 3
+  }
+  conserve_gpu_memory_test: true  
+}
+layer {
+  bottom: "conv5_3"
+  top: "conv5_3"
+  name: "Relu5_3"
+  type: "ReLU"
+}
+layer {
+  bottom: "conv5_3"
+  top: "pool5"
+  name: "pool5"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+layer {
+  bottom: "pool5"
+  top: "fc6"
+  name: "fc6"
+  type: "Convolution"
+  convolution_param {
+    num_output: 4096
+    pad: 3
+    kernel_size: 7
+    init_from_inner_product: true
+    quantization_kmean_num_cluster: 64
+    quantization_num_segment: 1792
+    quantization_kmean_cluster_centers_file: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/fc6_64_1792_kmean_cluster_centers.binaryproto"
+    quantization_kmean_cluster_indices_file: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/fc6_64_1792_kmean_cluster_indices.binaryproto"
+  }
+  conserve_gpu_memory_test: false
+  parameter_compress: false
+  include {
+    phase: TEST
+  }  
+}
+layer {
+  bottom: "fc6"
+  top: "fc6"
+  name: "Relu6"
+  type: "ReLU"
+}
+layer {
+  bottom: "fc6"
+  top: "fc6"
+  name: "drop6"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+
+
+
+
+
+
+
+
+
+layer {
+  bottom: "fc6"
+  top: "fc7"
+  name: "fc7"
+  type: "Convolution"
+  convolution_param {
+    num_output: 4096
+    pad: 0
+    kernel_size: 1
+    init_from_inner_product: true
+    quantization_kmean_num_cluster: 256
+    quantization_num_segment: 1024
+    quantization_kmean_cluster_centers_file: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/fc7_256_1024_kmean_cluster_centers.binaryproto"
+    quantization_kmean_cluster_indices_file: "models/VGG_ILSVRC_16_layers/211839e770f7b538e2d8/fc7_256_1024_kmean_cluster_indices.binaryproto"    
+  }
+  conserve_gpu_memory_test: false
+  parameter_compress: false
+  include {
+    phase: TEST
+  }  
+}
+layer {
+  bottom: "fc7"
+  top: "fc7"
+  name: "Relu7"
+  type: "ReLU"
+}
+layer {
+  bottom: "fc7"
+  top: "fc7"
+  name: "drop7"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+
+
+
+
+layer {
+  bottom: "fc7"
+  top: "fc8"
+  name: "fc8"
+  type: "Convolution"
+  convolution_param {
+    num_output: 1000
+    pad: 0
+    kernel_size: 1
+    init_from_inner_product: true    
+  }
+  include {
+    phase: TEST
+  }  
+}
+
+
+
+
+
+
+
+
+layer {
+  name: "spatial_accuracy_top1"
+  type: "SpatialAccuracy"
+  bottom: "fc8"
+  bottom: "label"
+  bottom: "data_size"
+  top: "accuracy_top1"
+  include {
+    phase: TEST
+  }
+  spatial_accuracy_param {
+    top_k: 1
+    spatial_subsample_height_factor: 32
+    spatial_subsample_width_factor: 32    
+  }  
+}
+
+layer {
+  name: "spatial_accuracy_top5"
+  type: "SpatialAccuracy"
+  bottom: "fc8"
+  bottom: "label"
+  bottom: "data_size"  
+  top: "accuracy_top5"
+  include {
+    phase: TEST
+  }
+  spatial_accuracy_param {
+    top_k: 5
+    spatial_subsample_height_factor: 32
+    spatial_subsample_width_factor: 32    
+  }  
+}
+
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "fc8"
+  bottom: "label"
+  top: "loss"
+  include {
+    phase: TRAIN
+  }  
+}

@@ -439,7 +439,7 @@ void DataVariableSizeManager<Dtype>::InternalThreadEntry() {
 				}
 			}
 		}else{
-			LOG(INFO)<<"get item from database with key "<<this->cursor_->key();
+			DLOG(INFO)<<"get item from database with key "<<this->cursor_->key();
 			datum.ParseFromString(this->cursor_->value());
 		}
 
