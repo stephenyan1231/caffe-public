@@ -1,0 +1,114 @@
+name: "lstm_2d_model"
+layer {
+    name: "data"
+    type: "SemanticLabelingData"
+    top: "data"
+    top: "label"
+    include {
+        phase: TRAIN
+    }    
+    semantic_labeling_transform_param {
+        mean_value: 128
+        mirror: true # mirroring is disabled for the time being
+    }
+    semantic_labeling_data_param {
+        source: "./examples/mnist_semantic_segmentation/train_lmdb"
+        batch_size: 100
+        backend: LMDB
+    }
+}
+
+layer {
+    name: "data"
+    type: "SemanticLabelingData"
+    top: "data"
+    top: "label"
+    include {
+        phase: TEST
+    }    
+    semantic_labeling_transform_param {
+        mean_value: 128
+        mirror: true
+    }    
+    semantic_labeling_data_param {
+        source: "./examples/mnist_semantic_segmentation/test_lmdb"
+        batch_size: 10
+        backend: LMDB
+    }
+}
+
+layer {
+  name: "lstm-2d-1"
+  type: "LSTM2D"
+  bottom: "data"
+  top: "lstm-2d-1"
+  recurrent_2d_param {
+    num_output: 25
+    patch_width: 1
+    patch_height: 1
+    weight_filler {
+      type: "gaussian"
+      mean: 0.
+      std: 0.01
+    }
+    bias_filler{
+      type: "constant"
+      value: 0.
+    }
+  }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "lstm-2d-1"
+  top: "conv1"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 11
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.01
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "cross_entropy_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv1"
+  bottom: "label"
+  top: "cross_entropy_loss"
+  loss_weight: 1
+  softmax_param {
+    axis: 1 # assume conv3_full_res shape is (1, c, h, w)
+  }
+}
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "conv1"
+  bottom: "label"
+  bottom: "data"
+  top: "accuracy"
+  include { phase: TEST }
+  accuracy_param {
+    axis: 1
+    ignore_label: 10 # background label
+  }
+}

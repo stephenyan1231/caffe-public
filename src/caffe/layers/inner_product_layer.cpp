@@ -90,6 +90,24 @@ void InnerProductLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         bias_multiplier_.cpu_data(),
         this->blobs_[1]->cpu_data(), (Dtype)1., top_data);
   }
+  DLOG(WARNING)<<"InnerProductLayer<Dtype>::Forward_cpu layer name "<<this->layer_param_.name();
+
+  DLOG(WARNING)<<"fine non zero bottom data";
+  int good_bottom_c=0;
+  for(int i=0;i<bottom[0]->count();++i){
+  	if(bottom_data[i] != -128 && bottom_data[i] != 0){
+  		good_bottom_c++;
+  	}
+  }
+	DLOG(WARNING)<<"good_bottom_c "<<good_bottom_c;
+  DLOG(WARNING)<<"fine non zero top data";
+  int good_top_c=0;
+  for(int i=0;i<top[0]->count();++i){
+  	if(top_data[i] != 0){
+  		good_top_c++;
+  	}
+  }
+	DLOG(WARNING)<<"good_top_c "<<good_top_c;
 }
 
 template <typename Dtype>

@@ -105,6 +105,9 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   CHECK_EQ(4, bottom[0]->num_axes()) << "Input must have 4 axes, "
       << "corresponding to (num, channels, height, width)";
+  DLOG(WARNING)<<"BaseConvolutionLayer<Dtype>::Reshape "<<bottom[0]->shape(0)
+  		<<" "<<bottom[0]->shape(1)<<" "<<bottom[0]->shape(2)
+  		<<" "<<bottom[0]->shape(3);
   num_ = bottom[0]->num();
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();
@@ -122,6 +125,8 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   }
   // Shape the tops.
   compute_output_shape();
+  DLOG(WARNING)<<"BaseConvolutionLayer<Dtype>::Reshape "<<num_<<
+  		" "<<num_output_<<" "<<height_out_<<" "<<width_out_;
   for (int top_id = 0; top_id < top.size(); ++top_id) {
     top[top_id]->Reshape(num_, num_output_, height_out_, width_out_);
   }

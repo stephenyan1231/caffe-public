@@ -85,6 +85,12 @@ void ConcatLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
           bottom_diff + n * bottom_concat_axis * concat_input_size_);
     }
     offset_concat_axis += bottom_concat_axis;
+//    if(bottom.size() > 4 && i < 5){
+    if(bottom.size() == 4){
+			DLOG(WARNING)<<"ConcatLayer<Dtype>::Backward_cpu layer name "
+					<<this->layer_param_.name()<<" bottom[i] "<<i<<" asum_diff "
+					<<bottom[i]->asum_diff();
+    }
   }
 }
 

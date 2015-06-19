@@ -1,0 +1,65 @@
+name: "lstm_2d_model"
+input: "data"
+input_dim: 10
+input_dim: 1
+input_dim: 28
+input_dim: 28
+
+
+layer {
+  name: "lstm-2d-1"
+  type: "LSTM2D"
+  bottom: "data"
+  top: "lstm-2d-1"
+  recurrent_2d_param {
+    num_output: 25
+    patch_width: 1
+    patch_height: 1
+    weight_filler {
+      type: "gaussian"
+      mean: 0.
+      std: 0.01
+    }
+    bias_filler{
+      type: "constant"
+      value: 0.
+    }
+  }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "lstm-2d-1"
+  top: "conv1"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 11
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.01
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  bottom: "conv1"
+  top: "prob"
+  name: "prob"
+  type: "Softmax"
+}
+
