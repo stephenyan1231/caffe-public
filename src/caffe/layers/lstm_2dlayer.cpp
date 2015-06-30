@@ -421,11 +421,15 @@ void LSTM_2DLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 					Dtype* C_data_ptr = C_data + C_[dir_c]->offset(y, x);
 					for (int n = 0; n < num_; ++n) {
 						for (int d = 0; d < num_output_; ++d) {
-							C_data_ptr[d] = T1_data_ptr[d] * T1_data_ptr[num_output_ + d]
+							Dtype C_data_val = T1_data_ptr[d] * T1_data_ptr[num_output_ + d]
 									+ 0.5 * T1_data_ptr[3 * num_output_ + d]
 											* C_data[C_[dir_c]->offset(y, x - step_x, n, d)]
 									+ 0.5 * T1_data_ptr[4 * num_output_ + d]
 											* C_data[C_[dir_c]->offset(y - step_y, x, n, d)];
+							C_data_ptr[d] = C_data_val;
+							if (n == 0 && d == 0) {
+//								LOG(WARNING)<<"C data: "<<C_data_val;
+							}
 						}
 						T1_data_ptr += (5 * num_output_);
 						C_data_ptr += num_output_;
@@ -617,7 +621,6 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 						T1_data_ptr += (5 * num_output_);
 						C_data_ptr += num_output_;
 					}
-
 					// compute gradient w.r.t W = [W_i;W_c;W_o;W_f]	shape: (num_output_*4, patch_size)
 
 					// compute intermediate gradient and save into grad2 = grad1 * \hat{c}_{yx} * f1'(\hat{i}_{yx})
@@ -661,7 +664,7 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 							C_data + C_[dir_c]->offset(y - step_y, x), (Dtype) 1.,
 							param_Cx_diff);
 					// compute gradient w.r.t b_i
-					caffe_cpu_gemv<Dtype>(CblasTrans, num_output_, num_, (Dtype) 1.,
+					caffe_cpu_gemv<Dtype>(CblasTrans, num_, num_output_, (Dtype) 1.,
 							grad2_data_ptr, bias_multiplier_data, (Dtype) 1., bias_Bi_diff);
 
 					// compute intermediate gradient and save into grad3 = grad1 * i_{y,x} * f2'(\hat{\hat{c_{y,x}}})
@@ -696,7 +699,7 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 							H_data + H_[dir_c]->offset(y - step_y, x), (Dtype) 1.,
 							param_Hy_diff + num_output_ * num_output_);
 					// compute gradient w.r.t. b_c
-					caffe_cpu_gemv<Dtype>(CblasTrans, num_output_, num_, (Dtype) 1.,
+					caffe_cpu_gemv<Dtype>(CblasTrans, num_, num_output_, (Dtype) 1.,
 							grad3_data_ptr, bias_multiplier_data, (Dtype) 1., bias_Bc_diff);
 
 					// compute intermediate gradient and save into grad4 = d_h_{y,x} * f2(c_{y,x}) * f1'(\hat{o_{y,x}})
@@ -737,7 +740,7 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 							num_output_, num_, (Dtype) 1., grad4_data_ptr,
 							C_data + C_[dir_c]->offset(y, x), (Dtype) 1., param_Co_diff);
 					// compute gradients w.r.t. b_o
-					caffe_cpu_gemv<Dtype>(CblasTrans, num_output_, num_, (Dtype) 1.,
+					caffe_cpu_gemv<Dtype>(CblasTrans, num_, num_output_,  (Dtype) 1.,
 							grad4_data_ptr, bias_multiplier_data, (Dtype) 1., bias_Bo_diff);
 
 					// compute intermediate gradient and save into
@@ -805,10 +808,10 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 							C_data + C_[dir_c]->offset(y - step_y, x), (Dtype) 1.,
 							param_Cy_diff + num_output_ * num_output_);
 					// compute gradients w.r.t b^x_f
-					caffe_cpu_gemv<Dtype>(CblasTrans, num_output_, num_, (Dtype) 1.,
+					caffe_cpu_gemv<Dtype>(CblasTrans,  num_, num_output_,(Dtype) 1.,
 							grad5_data_ptr, bias_multiplier_data, (Dtype) 1., bias_Bxf_diff);
 					// compute gradients w.r.t b^y_f
-					caffe_cpu_gemv<Dtype>(CblasTrans, num_output_, num_, (Dtype) 1.,
+					caffe_cpu_gemv<Dtype>(CblasTrans,  num_, num_output_,(Dtype) 1.,
 							grad6_data_ptr, bias_multiplier_data, (Dtype) 1., bias_Byf_diff);
 
 					// update gradient w.r.t c_{y,x-step_x} and c_{y-step_y,x}
