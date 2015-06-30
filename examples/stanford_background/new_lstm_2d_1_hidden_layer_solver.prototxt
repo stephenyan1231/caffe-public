@@ -1,0 +1,17 @@
+net: "./examples/stanford_background/new_lstm_2d_1_hidden_layer_model.prototxt"
+test_iter: 1
+test_interval: 100
+base_lr: 1e-2
+lr_policy: "step"
+gamma: 0.25
+stepsize: 20000
+display: 20
+max_iter: 110000
+momentum: 0.9
+weight_decay: 0.005
+snapshot: 500
+snapshot_prefix: "./examples/stanford_background/new_lstm_2d_1_hidden_layer/new_lstm_2d_1_hidden_layer"
+solver_mode: CPU
+random_seed: 1701
+average_loss: 1
+clip_gradients: 1
