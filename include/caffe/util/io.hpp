@@ -121,6 +121,9 @@ inline bool ReadImageToDatum(const string& filename, const int label,
   return ReadImageToDatum(filename, label, 0, 0, true, encoding, datum);
 }
 
+bool ReadImageToSemanticLabelingDatum(const string& img_name, const string& label_file_name,
+    const int min_height, const int min_width, SemanticLabelingDatum* datum);
+
 bool DecodeDatumNative(Datum* datum);
 bool DecodeDatum(Datum* datum, bool is_color);
 
@@ -139,6 +142,9 @@ cv::Mat DecodeDatumToCVMatNative(const Datum& datum);
 cv::Mat DecodeDatumToCVMat(const Datum& datum, bool is_color);
 
 void CVMatToDatum(const cv::Mat& cv_img, Datum* datum);
+
+cv::Mat DecodeSemanticLabelingDatumToCVMatNative(const SemanticLabelingDatum& datum);
+
 
 template <typename Dtype>
 void hdf5_load_nd_dataset_helper(

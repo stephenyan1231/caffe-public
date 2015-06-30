@@ -60,7 +60,14 @@ protected:
 
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
+
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+
   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
   /// @brief A helper function, useful for stringifying indices (r,c).
@@ -73,7 +80,17 @@ protected:
 //  virtual void pad_image(const Blob<Dtype>* image);
 
   /// @brief prepare a grid of patches with padding for each scanning direction
-  virtual void prepare_patch_with_padding(const Blob<Dtype>* image);
+  virtual void prepare_patch_with_padding_cpu(const Blob<Dtype>* image);
+
+  virtual void prepare_patch_with_padding_gpu(const Blob<Dtype>* image);
+
+
+  /// @brief back propagate gradients from padded patches to layer input blob
+  virtual void back_propagate_grad_to_bottom_cpu(Blob<Dtype>* image);
+
+  virtual void back_propagate_grad_to_bottom_gpu(Blob<Dtype>* image);
+
+
 
   /// @brief A Net to implement the Recurrent functionality.
   shared_ptr<Net<Dtype> > unrolled_net_;
@@ -100,13 +117,18 @@ class LSTM2DLayer:public Recurrent2DLayer<Dtype> {
 public:
 	explicit LSTM2DLayer(const LayerParameter& param)
   : Recurrent2DLayer<Dtype>(param) {}
-
+	virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+	      const vector<Blob<Dtype>*>& top);
   virtual inline const char* type() const { return "LSTM2D"; }
 
 protected:
   virtual void FillUnrolledNet(NetParameter* net_param) const;
   virtual void RecurrentInputBlobNames(vector<string>* names) const;
   virtual void OutputBlobNames(vector<string>* names) const;
+
+  LSTM2DUnitParameter_ACTIVATION_FUNCTION input_activation_func_;
+  LSTM2DUnitParameter_ACTIVATION_FUNCTION output_activation_func_;
+
 };
 
 template <typename Dtype>

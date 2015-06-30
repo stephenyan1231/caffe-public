@@ -32,7 +32,7 @@ layer {
     }    
     semantic_labeling_data_param {
         source: "./examples/mnist_semantic_segmentation/test_lmdb"
-        batch_size: 10
+        batch_size: 100
         backend: LMDB
     }
 }
@@ -53,7 +53,7 @@ layer {
     }
     bias_filler{
       type: "constant"
-      value: 0.
+      value: -1.
     }
   }
 }
@@ -97,6 +97,9 @@ layer {
   softmax_param {
     axis: 1 # assume conv3_full_res shape is (1, c, h, w)
   }
+  loss_param {
+    ignore_label: 10 # background label
+  }
 }
 
 layer {
@@ -104,7 +107,6 @@ layer {
   type: "Accuracy"
   bottom: "conv1"
   bottom: "label"
-  bottom: "data"
   top: "accuracy"
   include { phase: TEST }
   accuracy_param {

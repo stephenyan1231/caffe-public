@@ -50,7 +50,6 @@ void SemanticLabelingDataLayer<Dtype>::DataLayerSetUp(
 			this->layer_param_.semantic_labeling_transform_param().crop_width();
 	int batch_size =
 			this->layer_param_.semantic_labeling_data_param().batch_size();
-	LOG(WARNING)<<"batch_size "<<batch_size;
 	if (crop_height > 0 || crop_width > 0) {
 		CHECK_GT(crop_height, 0);
 		CHECK_GT(crop_width, 0);
@@ -78,10 +77,6 @@ void SemanticLabelingDataLayer<Dtype>::DataLayerSetUp(
 			this->transformed_label_.Reshape(1, 1, datum.height(), datum.width());
 		}
 	}
-	LOG(WARNING)<< "output data size: " << top[0]->num() << ","
-	<< top[0]->channels() << "," << top[0]->height() << ","
-	<< top[0]->width();
-
 }
 
 // This function is used to create a thread that prefetches the data for scene labeling.

@@ -103,8 +103,6 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 			for (int j = 0; j < inner_num_; ++j) {
 				const int label_value = static_cast<int>(label[i * inner_num_ + j]);
 				if (has_ignore_label_ && label_value == ignore_label_) {
-					LOG(WARNING)<<"SoftmaxWithLossLayer<Dtype>::Backward_cpu ignore label "
-					<<ignore_label_;
 					for (int c = 0; c < bottom[0]->shape(softmax_axis_); ++c) {
 						bottom_diff[i * dim + c * inner_num_ + j] = 0;
 					}
@@ -114,24 +112,6 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 				}
 			}
 		}
-
-		bool asum_diff_nan = isnan(bottom[0]->asum_diff());
-		LOG(INFO)<<"asum_diff_nan "<<asum_diff_nan;
-		if(asum_diff_nan) {
-			const Dtype* bottom_data = bottom[0]->cpu_data();
-			for(int i = 0;i< bottom[0]->count();++i) {
-				if(isnan(bottom_data[i])) {
-					LOG(WARNING)<<"bottom_data[i] "<<i<<" "<<bottom_data[i];
-				}
-				if(isnan(bottom_diff[i])) {
-					LOG(WARNING)<<"bottom_diff[i] "<<i<<" "<<bottom_diff[i];
-				}
-			}
-		}
-
-		DLOG(WARNING)<<"SoftmaxWithLossLayer<Dtype>::Backward_cpu "
-				<<" bottom[0] asum_diff "<<bottom[0]->asum_diff();
-
 		// Scale gradient
 		const Dtype loss_weight = top[0]->cpu_diff()[0];
 		if (normalize_) {

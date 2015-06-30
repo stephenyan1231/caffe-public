@@ -11,6 +11,16 @@
 namespace caffe {
 
 template<typename Dtype>
+void LSTM2DLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+		const vector<Blob<Dtype>*>& top) {
+	input_activation_func_ =
+			this->layer_param_.lstm_2d_unit_param().input_activation();
+	output_activation_func_ =
+			this->layer_param_.lstm_2d_unit_param().output_activation();
+	Recurrent2DLayer<Dtype>::LayerSetUp(bottom, top);
+}
+
+template<typename Dtype>
 void LSTM2DLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
 	const int num_output = this->layer_param_.recurrent_2d_param().num_output();
 	CHECK_GT(num_output, 0);
@@ -73,18 +83,19 @@ void LSTM2DLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
 			// such as "x_{pp}_{transform}"
 			x_transform_param->set_name(x_input_blob_name + string("_transform"));
 			// such as "W_{pp}_{xc}"
-			x_transform_param->add_param()->set_name(string("W_") + scan_dir + string("_xc"));
+			x_transform_param->add_param()->set_name(
+					string("W_") + scan_dir + string("_xc"));
 			// such as "b_{pp}_c"
-			x_transform_param->add_param()->set_name(string("b_") + scan_dir + string("_c"));
+			x_transform_param->add_param()->set_name(
+					string("b_") + scan_dir + string("_c"));
 
-			x_transform_param->add_bottom(x_input_blob_name.c_str());
-			x_transform_param->add_top(x_transform_param_top_name.c_str());
+			x_transform_param->add_bottom(x_input_blob_name);
+			x_transform_param->add_top(x_transform_param_top_name);
 
 			LayerParameter* x_slice_param = net_param->add_layer();
 			x_slice_param->CopyFrom(slice_param);
-			x_slice_param->add_bottom(x_transform_param_top_name.c_str());
-			x_slice_param->set_name(
-					(x_transform_param_top_name + string("_slice")).c_str());
+			x_slice_param->add_bottom(x_transform_param_top_name);
+			x_slice_param->set_name((x_transform_param_top_name + string("_slice")));
 
 			for (int py = 0; py < this->patch_ny_ + 1; ++py) {
 				for (int px = 0; px < this->patch_nx_ + 1; ++px) {
@@ -108,9 +119,6 @@ void LSTM2DLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
 			int start_px = (j == 1 ? 1 : this->patch_nx_ - 1);
 			int end_px = (j == 1 ? this->patch_nx_ : 0);
 			int step_px = (j == 1 ? 1 : -1);
-
-			LOG(WARNING)<<"start_py "<<start_py<<" step py "<<step_py<<" start_px "
-			<<start_px<<" step_px "<<step_px;
 
 			const int min_py = step_py > 0 ? start_py : end_py;
 			const int max_py = step_py > 0 ? end_py : start_py;
@@ -138,7 +146,6 @@ void LSTM2DLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
 					string x_prev = this->coordinate_to_str(py, px - step_px);
 					string y_prev = this->coordinate_to_str(py - step_py, px);
 
-					DLOG(WARNING)<<"FillUnrolledNet tag1";
 					// compute W^{pp}_{hxc} * h^{pp}_y_{x-1}
 					string transform_xdir_top_name;
 					{
@@ -146,17 +153,17 @@ void LSTM2DLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
 						transform_xdir->CopyFrom(hidden_param);
 						// such as "transform_{pp}_xdir_y_x"
 						transform_xdir->set_name(
-								(string("transform_") + scan_dir + string("_xdir_") + cur_yx).c_str());
+								(string("transform_") + scan_dir + string("_xdir_") + cur_yx));
 						// such as "W_{pp}_hxc"
 						string param_name = string("W_") + scan_dir + string("_hxc");
-						transform_xdir->add_param()->set_name(param_name.c_str());
+						transform_xdir->add_param()->set_name(param_name);
 						// such as "h_{pp}_y_{x-1}"
 						string input_name = string("h_") + scan_dir + string("_") + x_prev;
-						transform_xdir->add_bottom(input_name.c_str());
+//						transform_xdir->mutable_inner_product_param()->set_axis(2);
+						transform_xdir->add_bottom(input_name);
 						transform_xdir_top_name = param_name + string("_") + input_name;
-						transform_xdir->add_top(transform_xdir_top_name.c_str());
+						transform_xdir->add_top(transform_xdir_top_name);
 					}
-					DLOG(WARNING)<<"FillUnrolledNet tag2";
 
 					// compute W^{pp}_{hyc} * h^{pp}_y_x
 					string transform_ydir_top_name;
@@ -165,20 +172,19 @@ void LSTM2DLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
 						transform_ydir->CopyFrom(hidden_param);
 						// such as "transform_{pp}_ydir_y_x"
 						transform_ydir->set_name(
-								(string("transform_") + scan_dir + string("_ydir_") + cur_yx).c_str());
+								(string("transform_") + scan_dir + string("_ydir_") + cur_yx));
 						// such as "W_{pp}_hyc"
 						string param_name = string("W_") + scan_dir + string("_hyc");
-						transform_ydir->add_param()->set_name(param_name.c_str());
+						transform_ydir->add_param()->set_name(param_name);
 						// such as "h_{pp}_{y-1}_x"
 						string input_name = string("h_") + scan_dir + string("_") + y_prev;
-						transform_ydir->add_bottom(input_name.c_str());
+						transform_ydir->add_bottom(input_name);
 						transform_ydir_top_name = param_name + string("_") + input_name;
-						transform_ydir->add_top(transform_ydir_top_name.c_str());
+						transform_ydir->add_top(transform_ydir_top_name);
 					}
 					// Add the outputs of the linear transformations to compute the gate input.
 					// gate^{pp}_input_y_x = W^{pp}_{hxc} * h^{pp}_y_x +  W^{pp}_{hyc} * h^{pp}_y_x + W^{pp}_{xc} * x^{pp} + b^{pp}_{xc}
 					// gate^{pp}_input_y_x = [g'^{pp}_{ij}^t i'^{pp}_{ij}^t o'^{pp}_{ij}^t f'^{pp}_{ij}_x^t f'^{pp}_{ij}_y^t]
-					DLOG(WARNING)<<"FillUnrolledNet tag3";
 
 					// such as "gate_pp_input_y_x"
 					string gate_input_top_name = string("gate_") + scan_dir
@@ -189,15 +195,14 @@ void LSTM2DLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
 						input_sum_layer->mutable_eltwise_param()->set_operation(
 								EltwiseParameter_EltwiseOp_SUM);
 						input_sum_layer->set_name(
-								(string("gate_") + scan_dir + string("_input_") + cur_yx).c_str());
+								(string("gate_") + scan_dir + string("_input_") + cur_yx));
 						input_sum_layer->add_bottom(
 								x_transform_param_top_name + string("_")
 										+ this->coordinate_to_str(py, px));
-						input_sum_layer->add_bottom(transform_xdir_top_name.c_str());
-						input_sum_layer->add_bottom(transform_ydir_top_name.c_str());
-						input_sum_layer->add_top(gate_input_top_name.c_str());
+						input_sum_layer->add_bottom(transform_xdir_top_name);
+						input_sum_layer->add_bottom(transform_ydir_top_name);
+						input_sum_layer->add_top(gate_input_top_name);
 					}
-					DLOG(WARNING)<<"FillUnrolledNet tag4";
 
 					// Add LSTM2DUnitLayer to compute the cell & hidden vectors (e.g. C^{pp}_i_j, h^{pp}_i_j)
 					// g^{pp}_{ij} = tanh(g'^{pp}_{ij})
@@ -215,31 +220,34 @@ void LSTM2DLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
 						// such as "lstm2d_unit_{pp}_y_x"
 						lstm_2d_unit_layer->set_name(
 								string("lstm2d_unit_") + scan_dir + string("_") + cur_yx);
+						lstm_2d_unit_layer->mutable_lstm_2d_unit_param()->set_input_activation(
+								input_activation_func_);
+						lstm_2d_unit_layer->mutable_lstm_2d_unit_param()->set_output_activation(
+								output_activation_func_);
 						// such as "c_{pp}_y_{x-1}"
 						lstm_2d_unit_layer->add_bottom(
-								(string("c_") + scan_dir + string("_") + x_prev).c_str());
+								(string("c_") + scan_dir + string("_") + x_prev));
 						// such as "c_{pp}_{y-1}_x"
 						lstm_2d_unit_layer->add_bottom(
-								(string("c_") + scan_dir + string("_") + y_prev).c_str());
-						lstm_2d_unit_layer->add_bottom(gate_input_top_name.c_str());
+								(string("c_") + scan_dir + string("_") + y_prev));
+						lstm_2d_unit_layer->add_bottom(gate_input_top_name);
 						// such as "c_{pp}_y_x"
 						lstm_2d_unit_layer->add_top(
 								string("c_") + scan_dir + string("_") + cur_yx);
-						lstm_2d_unit_layer->add_top(
-								lstm_2d_unit_layer_output_h_name.c_str());
+						lstm_2d_unit_layer->add_top(lstm_2d_unit_layer_output_h_name);
 					}
-					DLOG(WARNING)<<"FillUnrolledNet tag5";
 
 					// Transpose h^{pp}_y_x of shape (1, N) into h^{pp}_y_x_t of shape (N, 1)
 					// such as "h^{pp}_y_x_t"
-					string reshaped_h_name = string("h_") + scan_dir + string("_")
-							+ cur_yx + string("_t");
+					string reshaped_h_name = lstm_2d_unit_layer_output_h_name + string("_t");
 					{
 						LayerParameter* h_transpose_layer = net_param->add_layer();
 						h_transpose_layer->set_type("Reshape");
 						h_transpose_layer->set_name(
 								string("reshape_h_") + scan_dir + string("_") + cur_yx);
-						BlobShape* blobShape = h_transpose_layer->mutable_reshape_param()->mutable_shape();
+						BlobShape* blobShape =
+								h_transpose_layer->mutable_reshape_param()->mutable_shape();
+						blobShape->Clear();
 						blobShape->add_dim(this->num_);
 						blobShape->add_dim(num_output);
 						blobShape->add_dim(1);

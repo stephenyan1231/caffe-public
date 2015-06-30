@@ -549,34 +549,6 @@ class SliceLayer : public Layer<Dtype> {
   vector<int> slice_point_;
 };
 
-/**
- * @brief Transpose the input 2D blob.
- *				Currently, the shape of 2D blob is assumed to be either (1, N) or (N, 1)
- * TODO(dox): thorough documentation for Forward, Backward, and proto params.
- */
-template <typename Dtype>
-class LSTM2DTransposeLayer : public Layer<Dtype> {
- public:
-  explicit LSTM2DTransposeLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
-  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top);
-
-  virtual inline const char* type() const { return "LSTM2DTranspose"; }
-  virtual inline int ExactNumBottomBlobs() const { return 1; }
-  virtual inline int MinTopBlobs() const { return 1; }
-
- protected:
-  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top);
-  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top);
-  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
-  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
-};
-
 }  // namespace caffe
 
 #endif  // CAFFE_COMMON_LAYERS_HPP_

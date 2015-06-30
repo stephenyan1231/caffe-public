@@ -38,6 +38,19 @@ message Datum {
   optional bool encoded = 7 [default = false];
 }
 
+message SemanticLabelingDatum {
+  optional int32 channels = 1;
+  optional int32 height = 2;
+  optional int32 width = 3;
+  // the actual image data, in bytes
+  optional bytes data = 4;
+  repeated int32 label = 5;
+  // Optionally, the datum could also hold float data.
+  repeated float float_data = 6;
+  // If true data contains an encoded image that need to be decoded
+  optional bool encoded = 7 [default = false];
+}
+
 message FillerParameter {
   // The filler type.
   optional string type = 1 [default = 'constant'];
@@ -260,7 +273,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 135 (last added: recurrent_param)
+// LayerParameter next available layer-specific ID: 141 (last added: lstm_2d_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -293,6 +306,7 @@ message LayerParameter {
 
   // Parameters for data pre-processing.
   optional TransformationParameter transform_param = 100;
+  optional SemanticLabelingTransformationParameter semantic_labeling_transform_param = 138;
 
   // Parameters shared by loss layers.
   optional LossParameter loss_param = 101;
@@ -309,6 +323,7 @@ message LayerParameter {
   optional ContrastiveLossParameter contrastive_loss_param = 105;
   optional ConvolutionParameter convolution_param = 106;
   optional DataParameter data_param = 107;
+  optional SemanticLabelingDataParameter semantic_labeling_data_param = 137;  
   optional DropoutParameter dropout_param = 108;
   optional DummyDataParameter dummy_data_param = 109;
   optional EltwiseParameter eltwise_param = 110;
@@ -328,6 +343,9 @@ message LayerParameter {
   optional PReLUParameter prelu_param = 131;
   optional PythonParameter python_param = 130;
   optional RecurrentParameter recurrent_param = 134;
+  optional Recurrent2DParameter recurrent_2d_param = 135;
+  optional LSTM2DUnitParameter lstm_2d_unit_param = 139;
+  optional LSTM2DParameter lstm_2d_param = 140;
   optional ReLUParameter relu_param = 123;
   optional ReshapeParameter reshape_param = 133;
   optional SigmoidParameter sigmoid_param = 124;
@@ -336,6 +354,7 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional WindowDataParameter window_data_param = 129;
+  optional BilinearInterpolationParameter bilinear_interpolation_param = 136;
 }
 
 // Message that stores parameters used to apply transformation
@@ -351,6 +370,24 @@ message TransformationParameter {
   optional uint32 crop_size = 3 [default = 0];
   // mean_file and mean_value cannot be specified at the same time
   optional string mean_file = 4;
+  // if specified can be repeated once (would substract it from all the channels)
+  // or can be repeated the same number of times as channels
+  // (would subtract them from the corresponding channel)
+  repeated float mean_value = 5;
+}
+
+// Message that stores parameters used to apply transformation
+// to the semantic labeling data layer's data
+message SemanticLabelingTransformationParameter {
+  // For data pre-processing, we can do simple scaling and subtracting the
+  // data mean, if provided. Note that the mean subtraction is always carried
+  // out before scaling.
+  optional float scale = 1 [default = 1];
+  // Specify if we want to randomly mirror data.
+  optional bool mirror = 2 [default = false];
+  // Specify if we would like to randomly crop an image.
+  optional uint32 crop_height = 3 [default = 0];
+  optional uint32 crop_width = 4 [default = 0];
   // if specified can be repeated once (would substract it from all the channels)
   // or can be repeated the same number of times as channels
   // (would subtract them from the corresponding channel)
@@ -471,6 +508,25 @@ message DataParameter {
   // Force the encoded image to have 3 color channels
   optional bool force_encoded_color = 9 [default = false];
 }
+
+// Message that stores parameters used by DataLayer
+message SemanticLabelingDataParameter {
+  enum DB {
+    LEVELDB = 0;
+    LMDB = 1;
+  }
+  // Specify the data source.
+  optional string source = 1;
+  // Specify the batch size.
+  optional uint32 batch_size = 2;
+  // The rand_skip variable is for the data layer to skip a few data points
+  // to avoid all asynchronous sgd clients to start at the same point. The skip
+  // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
+  // be larger than the number of keys in the database.
+  optional uint32 rand_skip = 3 [default = 0];
+  optional DB backend = 4 [default = LEVELDB];
+}
+
 
 // Message that stores parameters used by DropoutLayer
 message DropoutParameter {
@@ -714,6 +770,51 @@ message RecurrentParameter {
   optional bool debug_info = 4 [default = false];
 }
 
+// Message that stores parameters used by Recurrent2DLayer
+message LSTM2DUnitParameter {
+  enum ACTIVATION_FUNCTION {
+    SIGMOID = 0;
+    TANH = 1;
+  }
+  optional ACTIVATION_FUNCTION input_activation = 1 [default = SIGMOID];
+  optional ACTIVATION_FUNCTION output_activation = 2 [default = SIGMOID];
+}
+
+
+message LSTM2DParameter {
+  // The dimension of the output (and usually hidden state) representation --
+  // must be explicitly set to non-zero.
+  optional uint32 num_output = 1 [default = 0];
+
+	optional uint32 patch_width = 2 [default = 1];
+	optional uint32 patch_height = 3 [default = 1];
+	
+  optional FillerParameter general_weight_filler = 4; // The filler for the weight
+  optional FillerParameter general_bias_filler = 5; // The filler for the bias
+  optional FillerParameter forget_gate_bias_filler = 6; // The filler for the forget gate bias
+  
+  // Whether to enable displaying debug_info in the unrolled recurrent net.
+  optional bool debug_info = 7 [default = false];
+}
+
+
+// Message that stores parameters used by Recurrent2DLayer
+message Recurrent2DParameter {
+  // The dimension of the output (and usually hidden state) representation 
+  // in each of four possible directions--
+  // must be explicitly set to non-zero.
+  optional uint32 num_output = 1 [default = 0];
+
+	optional uint32 patch_width = 2 [default = 1];
+	optional uint32 patch_height = 3 [default = 1];
+
+  optional FillerParameter weight_filler = 4; // The filler for the weight
+  optional FillerParameter bias_filler = 5; // The filler for the bias
+
+  // Whether to enable displaying debug_info in the unrolled recurrent net.
+  optional bool debug_info = 6 [default = false];
+}
+
 // Message that stores parameters used by ReLULayer
 message ReLUParameter {
   // Allow non-zero slope for negative inputs to speed up optimization
@@ -814,6 +915,11 @@ message WindowDataParameter {
   optional bool cache_images = 12 [default = false];
   // append root_folder to locate images
   optional string root_folder = 13 [default = ""];
+}
+
+// Message that stores parameters used by BilinearInterpolationLayer
+message BilinearInterpolationParameter {
+	optional uint32 interpolation_factor = 1 [default = 1];
 }
 
 // DEPRECATED: use LayerParameter.

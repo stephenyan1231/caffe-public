@@ -63,12 +63,6 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
               bottom_diff + bottom[i]->offset(n));
         }
       }
-      int bottom_diff_zero_c = 0;
-      for(int m=0;m<bottom[i]->count();++m){
-      	if(bottom_diff[m] == 0){
-      		bottom_diff_zero_c++;
-      	}
-      }
     }
   }
 }

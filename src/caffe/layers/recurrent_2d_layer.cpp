@@ -155,7 +155,7 @@ void Recurrent2DLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 template<typename Dtype>
 void Recurrent2DLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
-	prepare_patch_with_padding(bottom[0]);
+	prepare_patch_with_padding_cpu(bottom[0]);
 
 	vector<string> recurrent_input_blob_names;
 	this->RecurrentInputBlobNames(&recurrent_input_blob_names);
@@ -164,22 +164,16 @@ void Recurrent2DLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 		Blob<Dtype>* blob = unrolled_net_->blob_by_name(
 				recurrent_input_blob_names[i]).get();
 		Dtype* blob_data = blob->mutable_cpu_data();
-		caffe_memset(blob->count(), 0, blob_data);
+		caffe_memset(blob->count() * sizeof(Dtype), 0, blob_data);
 	}
-
 	unrolled_net_->ForwardPrefilled();
-
-	DLOG(WARNING)<<"Recurrent2DLayer<Dtype>::Forward_cpu";
-	const Dtype* out_data = output_blobs_[0]->cpu_data();
-	for (int i = 0; i < output_blobs_[0]->count(); ++i) {
-		DLOG(WARNING)<<out_data[i];
-	}
 }
 
 template<typename Dtype>
 void Recurrent2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 		const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
 	unrolled_net_->Backward();
+	back_propagate_grad_to_bottom_cpu(bottom[0]);
 }
 
 //template<typename Dtype>
@@ -211,10 +205,10 @@ void Recurrent2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 //}
 
 template<typename Dtype>
-void Recurrent2DLayer<Dtype>::prepare_patch_with_padding(
+void Recurrent2DLayer<Dtype>::prepare_patch_with_padding_cpu(
 		const Blob<Dtype>* image) {
 	// assume image shape [n, ch, h, w]
-	vector<int> input_blob_shape(4);
+	vector<int> input_blob_shape(5);
 	input_blob_shape[0] = (patch_ny_ + 1) * (patch_nx_ + 1);
 	input_blob_shape[1] = num_;
 	input_blob_shape[2] = channels_;
@@ -222,7 +216,6 @@ void Recurrent2DLayer<Dtype>::prepare_patch_with_padding(
 	input_blob_shape[4] = patch_w_;
 	int patch_size = channels_ * patch_h_ * patch_w_;
 
-	int zero_pad_c = 0;
 	for (int p = 0, i = 1; i >= 0; i--) {
 		for (int j = 1; j >= 0; j--, p++) {
 			x_input_blobs_[p]->Reshape(input_blob_shape);
@@ -239,7 +232,6 @@ void Recurrent2DLayer<Dtype>::prepare_patch_with_padding(
 								for (int y = 0; y < patch_h_; ++y) {
 									for (int x = 0; x < patch_w_; ++x, pix_c++) {
 										data[pix_c] = 0;
-										zero_pad_c++;
 									}
 								}
 							}
@@ -249,9 +241,6 @@ void Recurrent2DLayer<Dtype>::prepare_patch_with_padding(
 									const Dtype* image_data = image->cpu_data()
 											+ image->offset(n, c, py2 * patch_h_ + y, px2 * patch_w_);
 									for (int x = 0; x < patch_w_; ++x, pix_c++) {
-										if(image_data[x] != -128){
-//											LOG(WARNING)<<"image_data[x] "<<image_data[x];
-										}
 										data[pix_c] = image_data[x];
 									}
 								}
@@ -263,8 +252,41 @@ void Recurrent2DLayer<Dtype>::prepare_patch_with_padding(
 			}
 		}
 	}
-	DLOG(WARNING)<<"zero_pad_c "<<zero_pad_c;
+}
 
+template<typename Dtype>
+void Recurrent2DLayer<Dtype>::back_propagate_grad_to_bottom_cpu(
+		Blob<Dtype>* image) {
+	Dtype* image_diff = image->mutable_cpu_diff();
+	caffe_memset(image->count() * sizeof(Dtype), 0, image_diff);
+
+	for (int p = 0, i = 1; i >= 0; i--) {
+		for (int j = 1; j >= 0; j--, p++) {
+			const Dtype* x_input_blob_diff = x_input_blobs_[p]->cpu_diff();
+			for (int py = 0; py < patch_ny_; py++) {
+				// y coordinate in original image
+				int py2 = py - i;
+				for (int px = 0; px < patch_nx_; px++) {
+					// x coordinate in original image
+					int px2 = px - j;
+					for (int n = 0; n < num_; ++n) {
+						if (!(px2 < 0 || py2 < 0 || px2 == patch_nx_ || py2 == patch_ny_)) {
+							for (int pix_c = 0, c = 0; c < channels_; ++c) {
+								for (int y = 0; y < patch_h_; ++y) {
+									Dtype* image_diff_local = image->mutable_cpu_diff()
+											+ image->offset(n, c, py2 * patch_h_ + y, px2 * patch_w_);
+									for (int x = 0; x < patch_w_; ++x, pix_c++) {
+										image_diff_local[x] += x_input_blob_diff[pix_c];
+									}
+								}
+							}
+						}
+						x_input_blob_diff += channels_ * patch_h_ * patch_w_;
+					}
+				}
+			}
+		}
+	}
 }
 
 #ifdef CPU_ONLY

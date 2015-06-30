@@ -83,7 +83,7 @@ void BilinearInterpolationLayer<Dtype>::Backward_cpu(
 	Dtype* in_diff = bottom[0]->mutable_cpu_diff();
 	const Dtype* out_diff = top[0]->cpu_diff();
 
-	caffe_memset(bottom[0]->count(), 0, in_diff);
+	caffe_memset(bottom[0]->count() * sizeof(Dtype), 0, in_diff);
 
 	for (int n = 0; n < num; ++n) {
 		for (int h = 0; h < out_h; ++h) {
@@ -104,34 +104,20 @@ void BilinearInterpolationLayer<Dtype>::Backward_cpu(
 
 				for (int c = 0; c < ch; ++c) {
 					const Dtype out_diff_cur = out_diff[top[0]->offset(0, c, h, w)];
-					in_diff[bottom[0]->offset(0, c, prev_h, prev_w)] += pp_weight
-							* out_diff_cur;
-					in_diff[bottom[0]->offset(0, c, prev_h, next_w)] += pn_weight
-							* out_diff_cur;
-					in_diff[bottom[0]->offset(0, c, next_h, prev_w)] += np_weight
-							* out_diff_cur;
-					in_diff[bottom[0]->offset(0, c, next_h, next_w)] += nn_weight
-							* out_diff_cur;
+					in_diff[bottom[0]->offset(0, c, prev_h, prev_w)] += (pp_weight
+							* out_diff_cur);
+					in_diff[bottom[0]->offset(0, c, prev_h, next_w)] += (pn_weight
+							* out_diff_cur);
+					in_diff[bottom[0]->offset(0, c, next_h, prev_w)] += (np_weight
+							* out_diff_cur);
+					in_diff[bottom[0]->offset(0, c, next_h, next_w)] += (nn_weight
+							* out_diff_cur);
 				}
 			}
 		}
 		in_diff += bottom[0]->offset(1);
 		out_diff += top[0]->offset(1);
 	}
-
-	in_diff = bottom[0]->mutable_cpu_diff();
-	int bottom_diff_zero_c = 0;
-	for(int i=0;i<bottom[0]->count();++i){
-		if(in_diff[i]==0){
-			bottom_diff_zero_c++;
-		}
-	}
-
-
-	LOG(WARNING)<<"BilinearInterpolationLayer<Dtype>::Backward_cpu asum_diff "
-	<<bottom[0]->asum_diff()<<" bottom_diff_zero_c "<<bottom_diff_zero_c
-	<<" bottom[0] count "<<bottom[0]->count();
-
 }
 
 #ifdef CPU_ONLY
