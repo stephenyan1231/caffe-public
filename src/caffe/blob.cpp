@@ -144,6 +144,10 @@ void Blob<Dtype>::Update() {
   switch (data_->head()) {
   case SyncedMemory::HEAD_AT_CPU:
     // perform computation on CPU
+  	DLOG(INFO)<<"Blob<Dtype>::Update shape "<<
+  	this->shape_string()<<" asum data "<<
+  	this->asum_data()<<" asum diff "<<
+  	this->asum_diff()<<" ratio "<<this->asum_diff()/this->asum_data();
     caffe_axpy<Dtype>(count_, Dtype(-1),
         static_cast<const Dtype*>(diff_->cpu_data()),
         static_cast<Dtype*>(data_->mutable_cpu_data()));

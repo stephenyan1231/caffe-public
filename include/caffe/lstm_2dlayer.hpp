@@ -49,6 +49,7 @@ protected:
   int num_blobs_per_dir_;
 
   Blob<Dtype> bias_multiplier_;
+  Dtype forget_gate_scaling_factor_;
 
   vector<shared_ptr<Blob<Dtype> > > X_;
   vector<shared_ptr<Blob<Dtype> > > H_;
@@ -57,7 +58,6 @@ protected:
   vector<shared_ptr<Blob<Dtype> > > T1_;
   vector<shared_ptr<Blob<Dtype> > > T2_;
   vector<shared_ptr<Blob<Dtype> > > T3_;
-  vector<shared_ptr<Blob<Dtype> > > T4_;
 
   vector<shared_ptr<Blob<Dtype> > > grad1_;
   vector<shared_ptr<Blob<Dtype> > > grad2_;

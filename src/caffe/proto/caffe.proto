@@ -788,6 +788,7 @@ message LSTM2DParameter {
 
 	optional uint32 patch_width = 2 [default = 1];
 	optional uint32 patch_height = 3 [default = 1];
+	optional float forget_gate_scaling_factor = 8 [default = 1];
 	
   optional FillerParameter general_weight_filler = 4; // The filler for the weight
   optional FillerParameter general_bias_filler = 5; // The filler for the bias

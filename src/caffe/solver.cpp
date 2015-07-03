@@ -211,7 +211,7 @@ void Solver<Dtype>::Step(int iters) {
       losses[idx] = loss;
     }
     if (display) {
-      LOG(WARNING) << "Iteration " << iter_ << ", loss = " << smoothed_loss;
+      LOG(INFO) << "Iteration " << iter_ << ", loss = " << smoothed_loss;
       const vector<Blob<Dtype>*>& result = net_->output_blobs();
       int score_index = 0;
       for (int j = 0; j < result.size(); ++j) {
@@ -226,13 +226,14 @@ void Solver<Dtype>::Step(int iters) {
             loss_msg_stream << " (* " << loss_weight
                             << " = " << loss_weight * result_vec[k] << " loss)";
           }
-          LOG(WARNING) << "    Train net output #"
+          LOG(INFO) << "    Train net output #"
               << score_index++ << ": " << output_name << " = "
               << result_vec[k] << loss_msg_stream.str();
         }
       }
     }
     ComputeUpdateValue();
+    DLOG(INFO)<<"Net update parameter";
     net_->Update();
 
     // Save a snapshot if needed.
@@ -337,7 +338,7 @@ void Solver<Dtype>::Test(const int test_net_id) {
       loss_msg_stream << " (* " << loss_weight
                       << " = " << loss_weight * mean_score << " loss)";
     }
-    LOG(WARNING) << "    Test net output #" << i << ": " << output_name << " = "
+    LOG(INFO) << "    Test net output #" << i << ": " << output_name << " = "
         << mean_score << loss_msg_stream.str();
   }
 }

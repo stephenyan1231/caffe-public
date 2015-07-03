@@ -22,9 +22,11 @@ inline Dtype tanh(Dtype x) {
 template<typename Dtype>
 void LSTM_2DLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
+	num_output_ = this->layer_param_.lstm_2d_param().num_output();
 	patch_h_ = this->layer_param_.lstm_2d_param().patch_height();
 	patch_w_ = this->layer_param_.lstm_2d_param().patch_width();
-	num_output_ = this->layer_param_.lstm_2d_param().num_output();
+	forget_gate_scaling_factor_ =
+			this->layer_param_.lstm_2d_param().forget_gate_scaling_factor();
 
 	CHECK_EQ(bottom[0]->num_axes(), 4);
 	CHECK_EQ(bottom[0]->shape(2) % patch_h_, 0);
@@ -42,7 +44,6 @@ void LSTM_2DLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 	T1_.resize(4);
 	T2_.resize(4);
 	T3_.resize(4);
-	T4_.resize(4);
 	grad1_.resize(4);
 	grad2_.resize(4);
 	grad3_.resize(4);
@@ -99,7 +100,6 @@ void LSTM_2DLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 		T1_[i].reset(new Blob<Dtype>(T1_shape));
 		T2_[i].reset(new Blob<Dtype>(T2_shape));
 		T3_[i].reset(new Blob<Dtype>(T3_shape));
-		T4_[i].reset(new Blob<Dtype>(T4_shape));
 		grad1_[i].reset(new Blob<Dtype>(grad_shape));
 		grad2_[i].reset(new Blob<Dtype>(grad_shape));
 		grad3_[i].reset(new Blob<Dtype>(grad_shape));
@@ -108,7 +108,7 @@ void LSTM_2DLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 		grad6_[i].reset(new Blob<Dtype>(grad_shape));
 	}
 
-	num_blobs_per_dir_ = 11;
+	num_blobs_per_dir_ = 10;
 	this->blobs_.resize(4 * num_blobs_per_dir_);
 
 	// W = [W_i;W_c;W_o;W_f]	shape: (num_output_*4, patch_size)
@@ -125,10 +125,6 @@ void LSTM_2DLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 	C_shape[0] = num_output_ * 2;
 	C_shape[1] = num_output_;
 	// C^y = [C^y_i;C^y_f]	shape: (num_output_*2, num_output)
-	// C_o	shape: (num_output_, num_output_)
-	vector<int> Co_shape(2);
-	Co_shape[0] = num_output_;
-	Co_shape[1] = num_output_;
 	// b_i shape: (num_output_)
 	vector<int> b_shape(1, num_output_);
 	// b_c shape: (num_output_)
@@ -158,7 +154,7 @@ void LSTM_2DLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 			this->blobs_[dir_c * num_blobs_per_dir_ + 4].reset(
 					new Blob<Dtype>(C_shape));
 			this->blobs_[dir_c * num_blobs_per_dir_ + 5].reset(
-					new Blob<Dtype>(Co_shape));
+					new Blob<Dtype>(b_shape));
 			this->blobs_[dir_c * num_blobs_per_dir_ + 6].reset(
 					new Blob<Dtype>(b_shape));
 			this->blobs_[dir_c * num_blobs_per_dir_ + 7].reset(
@@ -167,18 +163,16 @@ void LSTM_2DLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 					new Blob<Dtype>(b_shape));
 			this->blobs_[dir_c * num_blobs_per_dir_ + 9].reset(
 					new Blob<Dtype>(b_shape));
-			this->blobs_[dir_c * num_blobs_per_dir_ + 10].reset(
-					new Blob<Dtype>(b_shape));
 
-			for (int p = 0; p < 6; ++p) {
+			for (int p = 0; p < 5; ++p) {
 				general_weight_filler->Fill(
 						this->blobs_[dir_c * num_blobs_per_dir_ + p].get());
 			}
-			for (int p = 6; p < 9; ++p) {
+			for (int p = 5; p < 8; ++p) {
 				general_bias_filler->Fill(
 						this->blobs_[dir_c * num_blobs_per_dir_ + p].get());
 			}
-			for (int p = 9; p < 11; ++p) {
+			for (int p = 8; p < 10; ++p) {
 				forget_gate_bias_filler->Fill(
 						this->blobs_[dir_c * num_blobs_per_dir_ + p].get());
 			}
@@ -203,6 +197,9 @@ void LSTM_2DLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 	caffe_set(num_, Dtype(1), bias_multiplier_.mutable_cpu_data());
 }
 
+/*
+ * implement the 2D LSTM model in paper '15 Scene Labeling with LSTM Recurrent Neural Networks'
+ * */
 template<typename Dtype>
 void LSTM_2DLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
@@ -228,7 +225,6 @@ void LSTM_2DLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 							}
 						}
 					} else {
-
 						for (int n = 0; n < num_; ++n) {
 							for (int ch = 0; ch < channels_; ++ch) {
 								for (int py = 0; py < patch_h_; py++) {
@@ -307,24 +303,21 @@ void LSTM_2DLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 			// C^y = [C^y_i;C^y_f]	shape: (num_output_*2, num_output)
 			const Dtype* param_Cy_data =
 					this->blobs_[dir_c * num_blobs_per_dir_ + 4]->cpu_data();
-			// C_o	shape: (num_output_, num_output_)
-			const Dtype* param_Co_data =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 5]->cpu_data();
 			// b_i shape: (num_output_)
 			const Dtype* bias_Bi_data =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 6]->cpu_data();
+					this->blobs_[dir_c * num_blobs_per_dir_ + 5]->cpu_data();
 			// b_c shape: (num_output_)
 			const Dtype* bias_Bc_data =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 7]->cpu_data();
+					this->blobs_[dir_c * num_blobs_per_dir_ + 6]->cpu_data();
 			// b_o shape: (num_output_)
 			const Dtype* bias_Bo_data =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 8]->cpu_data();
+					this->blobs_[dir_c * num_blobs_per_dir_ + 7]->cpu_data();
 			// b^x_f shape: (num_output_)
 			const Dtype* bias_Bxf_data =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 9]->cpu_data();
+					this->blobs_[dir_c * num_blobs_per_dir_ + 8]->cpu_data();
 			// b^y_f shape: (num_output_)
 			const Dtype* bias_Byf_data =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 10]->cpu_data();
+					this->blobs_[dir_c * num_blobs_per_dir_ + 9]->cpu_data();
 
 			Dtype* X_data = X_[dir_c]->mutable_cpu_data();
 			Dtype* H_data = H_[dir_c]->mutable_cpu_data();
@@ -332,14 +325,12 @@ void LSTM_2DLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 			Dtype* T1_data = T1_[dir_c]->mutable_cpu_data();
 			Dtype* T2_data = T2_[dir_c]->mutable_cpu_data();
 			Dtype* T3_data = T3_[dir_c]->mutable_cpu_data();
-			Dtype* T4_data = T4_[dir_c]->mutable_cpu_data();
 
 			for (int y = start_y; y >= min_y && y <= max_y; y += step_y) {
 				for (int x = start_x; x >= min_x && x <= max_x; x += step_x) {
 					Dtype* T1_data_ptr = T1_data + T1_[dir_c]->offset(y, x);
 					Dtype* T2_data_ptr = T2_data + T2_[dir_c]->offset(y, x);
 					Dtype* T3_data_ptr = T3_data + T3_[dir_c]->offset(y, x);
-					Dtype* T4_data_ptr = T4_data + T4_[dir_c]->offset(y, x);
 
 					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, num_, 4 * num_output_,
 							patch_size, (Dtype) 1., X_data + X_[dir_c]->offset(y, x),
@@ -407,51 +398,39 @@ void LSTM_2DLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 							T1_data_ptr[d] = sigmoid(T1_data_ptr[d] + bias_Bi_data[d]);	// input gate i_{y,x}
 							T1_data_ptr[num_output_ + d] = tanh(
 									T1_data_ptr[num_output_ + d] + bias_Bc_data[d]);// cell input \hat{c}_{y,x}
-							T1_data_ptr[2 * num_output_ + d] += bias_Bo_data[d]; // output gate o_{y,x}
+							T1_data_ptr[2 * num_output_ + d] = sigmoid(
+									T1_data_ptr[2 * num_output_ + d] + bias_Bo_data[d]); // output gate o_{y,x}
 							T1_data_ptr[3 * num_output_ + d] = sigmoid(
 									T1_data_ptr[3 * num_output_ + d] + bias_Bxf_data[d]); // x-direction forget gate f^x_{y,x}
 							T1_data_ptr[4 * num_output_ + d] = sigmoid(
 									T1_data_ptr[4 * num_output_ + d] + bias_Byf_data[d]); // y-direction forget gate f^y_{y,x}
+							DLOG(INFO)<<"input gate value "<<T1_data_ptr[d]<<" cell input value "<<
+							T1_data_ptr[num_output_ + d]<<" forget gate values "<<T1_data_ptr[3 * num_output_ + d]<<
+							" "<<T1_data_ptr[4 * num_output_ + d];
 						}
 						T1_data_ptr += (5 * num_output_);
 					}
 
-					// compute cell state
+							// compute cell state
 					T1_data_ptr = T1_data + T1_[dir_c]->offset(y, x);
 					Dtype* C_data_ptr = C_data + C_[dir_c]->offset(y, x);
 					for (int n = 0; n < num_; ++n) {
 						for (int d = 0; d < num_output_; ++d) {
-							Dtype C_data_val = T1_data_ptr[d] * T1_data_ptr[num_output_ + d]
-									+ 0.5 * T1_data_ptr[3 * num_output_ + d]
+							C_data_ptr[d] = T1_data_ptr[d] * T1_data_ptr[num_output_ + d]
+									+ forget_gate_scaling_factor_
+											* T1_data_ptr[3 * num_output_ + d]
 											* C_data[C_[dir_c]->offset(y, x - step_x, n, d)]
-									+ 0.5 * T1_data_ptr[4 * num_output_ + d]
+									+ forget_gate_scaling_factor_
+											* T1_data_ptr[4 * num_output_ + d]
 											* C_data[C_[dir_c]->offset(y - step_y, x, n, d)];
-							C_data_ptr[d] = C_data_val;
-							if (n == 0 && d == 0) {
-//								LOG(WARNING)<<"C data: "<<C_data_val;
-							}
+							DLOG(INFO)<<"cell state value "<<C_data_ptr[d];
 						}
+						DLOG(INFO)<<"---";
 						T1_data_ptr += (5 * num_output_);
 						C_data_ptr += num_output_;
 					}
 
-					T1_data_ptr = T1_data + T1_[dir_c]->offset(y, x);
-					// compute output gate o_{y,x}
-					// 1) compute C_o * c_{y,x}
-					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, num_, num_output_,
-							num_output_, (Dtype) 1., C_data + C_[dir_c]->offset(y, x),
-							param_Co_data, (Dtype) 0., T4_data_ptr);
-					// 2) compute o_{y,x}
-					T4_data_ptr = T4_data + T4_[dir_c]->offset(y, x);
-					for (int n = 0; n < num_; ++n) {
-						for (int d = 0; d < num_output_; ++d) {
-							T1_data_ptr[2 * num_output_ + d] = sigmoid(
-									T1_data_ptr[2 * num_output_ + d] + T4_data_ptr[d]);
-						}
-						T1_data_ptr += (5 * num_output_);
-						T4_data_ptr += num_output_;
-					}
-					// compute cell hidden output h_{y,x}
+							// compute cell hidden output h_{y,x}
 					T1_data_ptr = T1_data + T1_[dir_c]->offset(y, x);
 					C_data_ptr = C_data + C_[dir_c]->offset(y, x);
 					Dtype* H_data_ptr = H_data + H_[dir_c]->offset(y, x);
@@ -459,12 +438,15 @@ void LSTM_2DLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 						for (int d = 0; d < num_output_; ++d) {
 							H_data_ptr[d] = T1_data_ptr[2 * num_output_ + d]
 									* tanh(C_data_ptr[d]);
+							DLOG(INFO)<<"cell hidden output "<<H_data_ptr[d];
 						}
+						DLOG(INFO)<<"---";
 						T1_data_ptr += (5 * num_output_);
 						C_data_ptr += num_output_;
 						H_data_ptr += num_output_;
 					}
-					// copy cell hidden output h_{y,x} into top blob
+
+							// copy cell hidden output h_{y,x} into top blob
 					H_data_ptr = H_data + H_[dir_c]->offset(y, x);
 					for (int n = 0; n < num_; ++n) {
 						for (int d = 0; d < num_output_; ++d) {
@@ -514,63 +496,65 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 			// H^x = [H^x_i;H^x_c;H^x_o;H^x_f]	shape: (num_output_*4, num_output)
 			Dtype* param_Hx_diff =
 					this->blobs_[dir_c * num_blobs_per_dir_ + 1]->mutable_cpu_diff();
+			const Dtype* param_Hx_data =
+					this->blobs_[dir_c * num_blobs_per_dir_ + 1]->cpu_data();
 			caffe_memset(
 					this->blobs_[dir_c * num_blobs_per_dir_ + 1]->count() * sizeof(Dtype),
 					0, param_Hx_diff);
 			// H^y = [H^y_i;H^y_c;H^y_o;H^y_f]	shape: (num_output_*4, num_output)
 			Dtype* param_Hy_diff =
 					this->blobs_[dir_c * num_blobs_per_dir_ + 2]->mutable_cpu_diff();
+			const Dtype* param_Hy_data =
+					this->blobs_[dir_c * num_blobs_per_dir_ + 2]->cpu_data();
 			caffe_memset(
 					this->blobs_[dir_c * num_blobs_per_dir_ + 2]->count() * sizeof(Dtype),
 					0, param_Hy_diff);
 			// C^x = [C^x_i;C^x_f]	shape: (num_output_*2, num_output)
 			Dtype* param_Cx_diff =
 					this->blobs_[dir_c * num_blobs_per_dir_ + 3]->mutable_cpu_diff();
+			const Dtype* param_Cx_data =
+					this->blobs_[dir_c * num_blobs_per_dir_ + 3]->cpu_data();
 			caffe_memset(
 					this->blobs_[dir_c * num_blobs_per_dir_ + 3]->count() * sizeof(Dtype),
 					0, param_Cx_diff);
 			// C^y = [C^y_i;C^y_f]	shape: (num_output_*2, num_output)
 			Dtype* param_Cy_diff =
 					this->blobs_[dir_c * num_blobs_per_dir_ + 4]->mutable_cpu_diff();
+			const Dtype* param_Cy_data =
+					this->blobs_[dir_c * num_blobs_per_dir_ + 4]->cpu_data();
 			caffe_memset(
 					this->blobs_[dir_c * num_blobs_per_dir_ + 4]->count() * sizeof(Dtype),
 					0, param_Cy_diff);
-			// C_o	shape: (num_output_, num_output_)
-			Dtype* param_Co_diff =
+			// b_i shape: (num_output_)
+			Dtype* bias_Bi_diff =
 					this->blobs_[dir_c * num_blobs_per_dir_ + 5]->mutable_cpu_diff();
 			caffe_memset(
 					this->blobs_[dir_c * num_blobs_per_dir_ + 5]->count() * sizeof(Dtype),
-					0, param_Co_diff);
-			// b_i shape: (num_output_)
-			Dtype* bias_Bi_diff =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 6]->mutable_cpu_diff();
-			caffe_memset(
-					this->blobs_[dir_c * num_blobs_per_dir_ + 6]->count() * sizeof(Dtype),
 					0, bias_Bi_diff);
 			// b_c shape: (num_output_)
 			Dtype* bias_Bc_diff =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 7]->mutable_cpu_diff();
+					this->blobs_[dir_c * num_blobs_per_dir_ + 6]->mutable_cpu_diff();
 			caffe_memset(
-					this->blobs_[dir_c * num_blobs_per_dir_ + 7]->count() * sizeof(Dtype),
+					this->blobs_[dir_c * num_blobs_per_dir_ + 6]->count() * sizeof(Dtype),
 					0, bias_Bc_diff);
 			// b_o shape: (num_output_)
 			Dtype* bias_Bo_diff =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 8]->mutable_cpu_diff();
+					this->blobs_[dir_c * num_blobs_per_dir_ + 7]->mutable_cpu_diff();
 			caffe_memset(
-					this->blobs_[dir_c * num_blobs_per_dir_ + 8]->count() * sizeof(Dtype),
+					this->blobs_[dir_c * num_blobs_per_dir_ + 7]->count() * sizeof(Dtype),
 					0, bias_Bo_diff);
 			// b^x_f shape: (num_output_)
 			Dtype* bias_Bxf_diff =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 9]->mutable_cpu_diff();
+					this->blobs_[dir_c * num_blobs_per_dir_ + 8]->mutable_cpu_diff();
 			caffe_memset(
-					this->blobs_[dir_c * num_blobs_per_dir_ + 9]->count() * sizeof(Dtype),
+					this->blobs_[dir_c * num_blobs_per_dir_ + 8]->count() * sizeof(Dtype),
 					0, bias_Bxf_diff);
 			// b^y_f shape: (num_output_)
 			Dtype* bias_Byf_diff =
-					this->blobs_[dir_c * num_blobs_per_dir_ + 10]->mutable_cpu_diff();
+					this->blobs_[dir_c * num_blobs_per_dir_ + 9]->mutable_cpu_diff();
 			caffe_memset(
-					this->blobs_[dir_c * num_blobs_per_dir_ + 10]->count()
-							* sizeof(Dtype), 0, bias_Byf_diff);
+					this->blobs_[dir_c * num_blobs_per_dir_ + 9]->count() * sizeof(Dtype),
+					0, bias_Byf_diff);
 
 			const Dtype* X_data = X_[dir_c]->cpu_data();
 			const Dtype* H_data = H_[dir_c]->cpu_data();
@@ -593,15 +577,16 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
 			for (int y = end_y; y >= min_y && y <= max_y; y -= step_y) {
 				for (int x = end_x; x >= min_x && x <= max_x; x -= step_x) {
-					// copy top diff into H_diff
+					// accumulate top diff into H_diff
 					Dtype* H_diff_ptr = H_diff + H_[dir_c]->offset(y, x);
 					for (int n = 0; n < num_; ++n) {
 						for (int d = 0; d < num_output_; ++d) {
-							H_diff_ptr[d] = top_diff[top[0]->offset(n,
+							H_diff_ptr[d] += top_diff[top[0]->offset(n,
 									dir_c * num_output_ + d, y - offset_y, x - offset_x)];
 						}
 						H_diff_ptr += num_output_;
 					}
+
 					// compute intermediate and save into grad1 = d_h_{yx} * o_{yx} * f2'(c_{yx}) + d_c_{yx}
 					H_diff_ptr = H_diff + H_[dir_c]->offset(y, x);
 					Dtype* C_diff_ptr = C_diff + C_[dir_c]->offset(y, x);
@@ -610,9 +595,8 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 					const Dtype* C_data_ptr = C_data + C_[dir_c]->offset(y, x);
 					for (int n = 0; n < num_; ++n) {
 						for (int d = 0; d < num_output_; ++d) {
-							const Dtype c_yx = C_data_ptr[d];
 							grad1_data_ptr[d] = H_diff_ptr[d]
-									* T1_data_ptr[2 * num_output_ + d] * (1 - c_yx * c_yx)
+									* T1_data_ptr[2 * num_output_ + d] * (1 - C_data_ptr[d] * C_data_ptr[d])
 									+ C_diff_ptr[d];
 						}
 						H_diff_ptr += num_output_;
@@ -621,7 +605,6 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 						T1_data_ptr += (5 * num_output_);
 						C_data_ptr += num_output_;
 					}
-					// compute gradient w.r.t W = [W_i;W_c;W_o;W_f]	shape: (num_output_*4, patch_size)
 
 					// compute intermediate gradient and save into grad2 = grad1 * \hat{c}_{yx} * f1'(\hat{i}_{yx})
 					grad1_data_ptr = grad1_data + grad1_[dir_c]->offset(y, x);
@@ -629,9 +612,8 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 					T1_data_ptr = T1_data + T1_[dir_c]->offset(y, x);
 					for (int n = 0; n < num_; ++n) {
 						for (int d = 0; d < num_output_; ++d) {
-							const Dtype i_yx = T1_data_ptr[d];
 							grad2_data_ptr[d] = grad1_data_ptr[d]
-									* T1_data_ptr[num_output_ + d] * i_yx * (1.0 - i_yx);
+									* T1_data_ptr[num_output_ + d] * T1_data_ptr[d] * (1.0 - T1_data_ptr[d]);
 						}
 						grad1_data_ptr += num_output_;
 						grad2_data_ptr += num_output_;
@@ -663,7 +645,7 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 							num_output_, num_, (Dtype) 1., grad2_data_ptr,
 							C_data + C_[dir_c]->offset(y - step_y, x), (Dtype) 1.,
 							param_Cx_diff);
-					// compute gradient w.r.t b_i
+					// compute gradient w.r.t. b_i
 					caffe_cpu_gemv<Dtype>(CblasTrans, num_, num_output_, (Dtype) 1.,
 							grad2_data_ptr, bias_multiplier_data, (Dtype) 1., bias_Bi_diff);
 
@@ -681,10 +663,9 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 						grad3_data_ptr += num_output_;
 						T1_data_ptr += (5 * num_output_);
 					}
-
+					// compute gradient w.r.t. W_c
 					grad3_data_ptr = grad3_data + grad3_[dir_c]->offset(y, x);
 					X_data_ptr = X_data + X_[dir_c]->offset(y, x);
-					// compute gradient w.r.t. W_c
 					caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, num_output_,
 							patch_size, num_, (Dtype) 1., grad3_data_ptr, X_data_ptr,
 							(Dtype) 1., param_W_diff + num_output_ * patch_size);
@@ -718,10 +699,9 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 						H_diff_ptr += num_output_;
 						C_data_ptr += num_output_;
 					}
-
+					// compute gradients w.r.t. W_o
 					grad4_data_ptr = grad4_data + grad4_[dir_c]->offset(y, x);
 					X_data_ptr = X_data + X_[dir_c]->offset(y, x);
-					// compute gradients w.r.t. W_o
 					caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, num_output_,
 							patch_size, num_, (Dtype) 1., grad4_data_ptr, X_data_ptr,
 							(Dtype) 1., param_W_diff + 2 * num_output_ * patch_size);
@@ -735,17 +715,13 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 							num_output_, num_, (Dtype) 1., grad4_data_ptr,
 							H_data + H_[dir_c]->offset(y - step_y, x), (Dtype) 1.,
 							param_Hy_diff + 2 * num_output_ * num_output_);
-					// compute gradients w.r.t. C_o
-					caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, num_output_,
-							num_output_, num_, (Dtype) 1., grad4_data_ptr,
-							C_data + C_[dir_c]->offset(y, x), (Dtype) 1., param_Co_diff);
 					// compute gradients w.r.t. b_o
-					caffe_cpu_gemv<Dtype>(CblasTrans, num_, num_output_,  (Dtype) 1.,
+					caffe_cpu_gemv<Dtype>(CblasTrans, num_, num_output_, (Dtype) 1.,
 							grad4_data_ptr, bias_multiplier_data, (Dtype) 1., bias_Bo_diff);
 
 					// compute intermediate gradient and save into
-					// grad5 = 0.5 * grad1 * C_{y,x-step_x} * f1'(\hat{f^x_{y,x}})
-					// and grad6 = 0.5 * grad1 * C_{y-step_y, x} * f1'(\hat{f^y_{y,x}})
+					// grad5 = forget_gate_scaling_factor_ * grad1 * C_{y,x-step_x} * f1'(\hat{f^x_{y,x}})
+					// and grad6 = forget_gate_scaling_factor_ * grad1 * C_{y-step_y, x} * f1'(\hat{f^y_{y,x}})
 					grad1_data_ptr = grad1_data + grad1_[dir_c]->offset(y, x);
 					Dtype* grad5_data_ptr = grad5_data + grad5_[dir_c]->offset(y, x);
 					Dtype* grad6_data_ptr = grad6_data + grad6_[dir_c]->offset(y, x);
@@ -756,9 +732,9 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 						for (int d = 0; d < num_output_; ++d) {
 							const Dtype f_x_yx = T1_data_ptr[3 * num_output_ + d];
 							const Dtype f_y_yx = T1_data_ptr[4 * num_output_ + d];
-							grad5_data_ptr[d] = 0.5 * grad1_data_ptr[d] * C_data_x_ptr[d]
+							grad5_data_ptr[d] = forget_gate_scaling_factor_ * grad1_data_ptr[d] * C_data_x_ptr[d]
 									* f_x_yx * (1.0 - f_x_yx);
-							grad6_data_ptr[d] = 0.5 * grad1_data_ptr[d] * C_data_y_ptr[d]
+							grad6_data_ptr[d] = forget_gate_scaling_factor_ * grad1_data_ptr[d] * C_data_y_ptr[d]
 									* f_y_yx * (1.0 - f_y_yx);
 						}
 						grad1_data_ptr += num_output_;
@@ -808,10 +784,10 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 							C_data + C_[dir_c]->offset(y - step_y, x), (Dtype) 1.,
 							param_Cy_diff + num_output_ * num_output_);
 					// compute gradients w.r.t b^x_f
-					caffe_cpu_gemv<Dtype>(CblasTrans,  num_, num_output_,(Dtype) 1.,
+					caffe_cpu_gemv<Dtype>(CblasTrans, num_, num_output_, (Dtype) 1.,
 							grad5_data_ptr, bias_multiplier_data, (Dtype) 1., bias_Bxf_diff);
 					// compute gradients w.r.t b^y_f
-					caffe_cpu_gemv<Dtype>(CblasTrans,  num_, num_output_,(Dtype) 1.,
+					caffe_cpu_gemv<Dtype>(CblasTrans, num_, num_output_, (Dtype) 1.,
 							grad6_data_ptr, bias_multiplier_data, (Dtype) 1., bias_Byf_diff);
 
 					// update gradient w.r.t c_{y,x-step_x} and c_{y-step_y,x}
@@ -822,15 +798,82 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 					for (int n = 0; n < num_; ++n) {
 						for (int d = 0; d < num_output_; ++d) {
 							C_x_diff_ptr[d] += grad1_data_ptr[d]
-									* T1_data_ptr[3 * num_output_ + d] * 0.5;
+									* T1_data_ptr[3 * num_output_ + d] * forget_gate_scaling_factor_;
 							C_y_diff_ptr[d] += grad1_data_ptr[d]
-									* T1_data_ptr[4 * num_output_ + d] * 0.5;
+									* T1_data_ptr[4 * num_output_ + d] * forget_gate_scaling_factor_;
 						}
 						T1_data_ptr += (5 * num_output_);
 						grad1_data_ptr += num_output_;
 						C_x_diff_ptr += num_output_;
 						C_y_diff_ptr += num_output_;
 					}
+
+					grad2_data_ptr = grad2_data + grad2_[dir_c]->offset(y, x);
+					grad5_data_ptr = grad5_data + grad5_[dir_c]->offset(y, x);
+					grad6_data_ptr = grad6_data + grad6_[dir_c]->offset(y, x);
+
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad2_data_ptr, param_Cx_data,
+							(Dtype) 1., C_diff + C_[dir_c]->offset(y, x - step_x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad5_data_ptr,
+							param_Cx_data + num_output_ * num_output_, (Dtype) 1.,
+							C_diff + C_[dir_c]->offset(y, x - step_x));
+
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad2_data_ptr, param_Cy_data,
+							(Dtype) 1., C_diff + C_[dir_c]->offset(y - step_y, x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad6_data_ptr,
+							param_Cy_data + num_output_ * num_output_, (Dtype) 1.,
+							C_diff + C_[dir_c]->offset(y - step_y, x));
+
+					// update gradient w.r.t. H_{y,x-step_x} and H_{y-step_y,x}
+					grad2_data_ptr = grad2_data + grad2_[dir_c]->offset(y, x);
+					grad3_data_ptr = grad3_data + grad3_[dir_c]->offset(y, x);
+					grad4_data_ptr = grad4_data + grad4_[dir_c]->offset(y, x);
+					grad5_data_ptr = grad5_data + grad5_[dir_c]->offset(y, x);
+					grad6_data_ptr = grad6_data + grad6_[dir_c]->offset(y, x);
+
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad2_data_ptr, param_Hx_data,
+							(Dtype) 1., H_diff + H_[dir_c]->offset(y, x - step_x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad3_data_ptr,
+							param_Hx_data + num_output_ * num_output_, (Dtype) 1.,
+							H_diff + H_[dir_c]->offset(y, x - step_x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad4_data_ptr,
+							param_Hx_data + 2 * num_output_ * num_output_, (Dtype) 1.,
+							H_diff + H_[dir_c]->offset(y, x - step_x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad5_data_ptr,
+							param_Hx_data + 3 * num_output_ * num_output_, (Dtype) 1.,
+							H_diff + H_[dir_c]->offset(y, x - step_x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad6_data_ptr,
+							param_Hx_data + 3 * num_output_ * num_output_, (Dtype) 1.,
+							H_diff + H_[dir_c]->offset(y, x - step_x));
+
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad2_data_ptr, param_Hy_data,
+							(Dtype) 1., H_diff + H_[dir_c]->offset(y - step_y, x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad3_data_ptr,
+							param_Hy_data + num_output_ * num_output_, (Dtype) 1.,
+							H_diff + H_[dir_c]->offset(y - step_y, x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad4_data_ptr,
+							param_Hy_data + 2 * num_output_ * num_output_, (Dtype) 1.,
+							H_diff + H_[dir_c]->offset(y - step_y, x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad5_data_ptr,
+							param_Hy_data + 3 * num_output_ * num_output_, (Dtype) 1.,
+							H_diff + H_[dir_c]->offset(y - step_y, x));
+					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, num_output_,
+							num_output_, (Dtype) 1., grad6_data_ptr,
+							param_Hy_data + 3 * num_output_ * num_output_, (Dtype) 1.,
+							H_diff + H_[dir_c]->offset(y - step_y, x));
 
 					// compute gradients w.r.t. X
 					grad2_data_ptr = grad2_data + grad2_[dir_c]->offset(y, x);
@@ -839,7 +882,7 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 					grad5_data_ptr = grad5_data + grad5_[dir_c]->offset(y, x);
 					grad6_data_ptr = grad6_data + grad6_[dir_c]->offset(y, x);
 					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, patch_size,
-							num_output_, (Dtype) 1., grad2_data_ptr, param_W_data, (Dtype) 0.,
+							num_output_, (Dtype) 1., grad2_data_ptr, param_W_data, (Dtype) 1.,
 							X_diff + X_[dir_c]->offset(y, x));
 					caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, patch_size,
 							num_output_, (Dtype) 1., grad3_data_ptr,
@@ -882,7 +925,7 @@ void LSTM_2DLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 								for (int py = 0; py < patch_h_; ++py) {
 									for (int px = 0; px < patch_w_; ++px) {
 										bottom_diff[bottom[0]->offset(n, ch, y2 * patch_h_ + py,
-												x2 * patch_w_ + px)] += X_diff[X_diff_idx];
+												x2 * patch_w_ + px)] += X_diff[X_diff_idx++];
 									}
 								}
 							}

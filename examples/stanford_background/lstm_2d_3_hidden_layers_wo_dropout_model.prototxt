@@ -1,0 +1,259 @@
+name: "lstm_2d_model"
+layer {
+    name: "data"
+    type: "SemanticLabelingData"
+    top: "data"
+    top: "label"
+    include {
+        phase: TRAIN
+    }    
+    semantic_labeling_transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: true # mirroring is disabled for the time being
+    }    
+    semantic_labeling_data_param {
+        source: "./examples/stanford_background/train_0_lmdb"
+        batch_size: 2
+        backend: LMDB
+    }
+}
+
+layer {
+    name: "data"
+    type: "SemanticLabelingData"
+    top: "data"
+    top: "label"
+    include {
+        phase: TEST
+    }    
+    semantic_labeling_transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: true
+    }    
+    semantic_labeling_data_param {
+        source: "./examples/stanford_background/test_0_lmdb"
+        batch_size: 100
+        backend: LMDB
+    }
+}
+
+layer {
+  name: "lstm-2d-1"
+  type: "LSTM_2D"
+  bottom: "data"
+  top: "lstm-2d-1"
+  lstm_2d_param {
+    num_output: 5
+    patch_width: 3
+    patch_height: 3
+    forget_gate_scaling_factor: 0.5
+    general_weight_filler {
+      type: "uniform"
+      min: -0.002
+      max: 0.002
+    }
+    general_bias_filler{
+      type: "constant"
+      value: 0.0001
+    }
+    forget_gate_bias_filler{
+      type: "constant"
+      value: 2.
+    }    
+  }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "lstm-2d-1"
+  top: "conv1"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 10
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.01
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "tanh1"
+  type: "TanH"
+  bottom: "conv1"
+  top: "conv1"
+}
+
+layer {
+  name: "lstm-2d-2"
+  type: "LSTM_2D"
+  bottom: "conv1"
+  top: "lstm-2d-2"
+  lstm_2d_param {
+    num_output: 10
+    patch_width: 1
+    patch_height: 1
+    forget_gate_scaling_factor: 0.5
+    general_weight_filler {
+      type: "uniform"
+      min: -0.002
+      max: 0.002
+    }
+    general_bias_filler{
+      type: "constant"
+      value: 0.0001
+    }
+    forget_gate_bias_filler{
+      type: "constant"
+      value: 2.
+    }    
+  }
+}
+
+layer {
+  name: "conv2"
+  type: "Convolution"
+  bottom: "lstm-2d-2"
+  top: "conv2"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 15
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.01
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "tanh2"
+  type: "TanH"
+  bottom: "conv2"
+  top: "conv2"
+}
+
+layer {
+  name: "lstm-2d-3"
+  type: "LSTM_2D"
+  bottom: "conv2"
+  top: "lstm-2d-3"
+  lstm_2d_param {
+    num_output: 20
+    patch_width: 1
+    patch_height: 1
+    forget_gate_scaling_factor: 0.5
+    general_weight_filler {
+      type: "uniform"
+      min: -0.002
+      max: 0.002
+    }
+    general_bias_filler{
+      type: "constant"
+      value: 0.0001
+    }
+    forget_gate_bias_filler{
+      type: "constant"
+      value: 2.
+    }    
+  }
+}
+
+layer {
+  name: "conv3"
+  type: "Convolution"
+  bottom: "lstm-2d-3"
+  top: "conv3"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 9
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "bilinear_interpolation"
+  type: "BilinearInterpolation"
+  bottom: "conv3"
+  top: "conv3_full_res"
+  bilinear_interpolation_param {
+    interpolation_factor: 3
+  }
+}
+
+layer {
+  name: "cross_entropy_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv3_full_res"
+  bottom: "label"
+  top: "cross_entropy_loss"
+  loss_weight: 1
+  softmax_param {
+    axis: 1
+  }
+}
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "conv3_full_res"
+  bottom: "label"
+  top: "accuracy"
+  include { phase: TEST }
+  accuracy_param {
+    axis: 1
+  }
+}
