@@ -65,6 +65,21 @@ protected:
   vector<shared_ptr<Blob<Dtype> > > grad4_;
   vector<shared_ptr<Blob<Dtype> > > grad5_;
   vector<shared_ptr<Blob<Dtype> > > grad6_;
+
+  vector<shared_ptr<Blob<Dtype> > > X_Hx_Hy_;
+
+  vector<shared_ptr<Blob<Dtype> > > gi_;
+  vector<shared_ptr<Blob<Dtype> > > ci_;
+  vector<shared_ptr<Blob<Dtype> > > go_;
+  vector<shared_ptr<Blob<Dtype> > > gfx_;
+  vector<shared_ptr<Blob<Dtype> > > gfy_;
+  vector<shared_ptr<Blob<Dtype> > > cstate_;
+  vector<shared_ptr<Blob<Dtype> > > hidden_;
+
+
+
+
+
 };
 
 } // namespace caffe
