@@ -39,22 +39,27 @@ layer {
 
 layer {
   name: "lstm-2d-1"
-  type: "LSTM2D"
+  type: "LSTM_2D"
   bottom: "data"
   top: "lstm-2d-1"
-  recurrent_2d_param {
-    num_output: 25
+  lstm_2d_param {
+    num_output: 40
     patch_width: 1
     patch_height: 1
-    weight_filler {
-      type: "gaussian"
-      mean: 0.
-      std: 0.01
+    forget_gate_scaling_factor: 0.5
+    general_weight_filler {
+      type: "uniform"
+      min: -0.02
+      max: 0.02
     }
-    bias_filler{
+    general_bias_filler{
       type: "constant"
-      value: -1.
+      value: 0.0
     }
+    forget_gate_bias_filler{
+      type: "constant"
+      value: 1.
+    }    
   }
 }
 
@@ -97,9 +102,9 @@ layer {
   softmax_param {
     axis: 1 # assume conv3_full_res shape is (1, c, h, w)
   }
-  loss_param {
-    ignore_label: 10 # background label
-  }
+#  loss_param {
+#    ignore_label: 10 # background label
+#  }
 }
 
 layer {
@@ -111,6 +116,6 @@ layer {
   include { phase: TEST }
   accuracy_param {
     axis: 1
-    ignore_label: 10 # background label
+ #   ignore_label: 10 # background label
   }
 }
