@@ -1,0 +1,139 @@
+name: "lstm_2d_model"
+layer {
+    name: "data"
+    type: "ImageSegUniformSizeData"
+    top: "data"
+    top: "label"
+    include {
+        phase: TRAIN
+    }    
+    transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: true
+        scale: 0.00390625
+    }    
+    data_param {
+        source: "./examples/stanford_background/train_0_lmdb"
+        batch_size: 50
+        backend: LMDB
+    }
+}
+
+layer {
+    name: "data"
+    type: "ImageSegUniformSizeData"
+    top: "data"
+    top: "label"
+    include {
+        phase: TEST
+    }    
+    transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: false
+        scale: 0.00390625
+    }    
+    data_param {
+        source: "./examples/stanford_background/test_0_lmdb"
+        batch_size: 10
+        backend: LMDB
+    }
+}
+
+layer {
+  name: "lstm-2d-1"
+  type: "LSTM_2D"
+  bottom: "data"
+  top: "lstm-2d-1"
+  lstm_2d_param {
+    num_output: 10
+    patch_width: 3
+    patch_height: 3
+    forget_gate_scaling_factor: 0.5
+    general_weight_filler {
+      type: "uniform"
+      min: -0.005
+      max: 0.005
+    }
+    general_bias_filler{
+      type: "constant"
+      value: 0.0
+    }
+    forget_gate_bias_filler{
+      type: "constant"
+      value: 1.
+    }    
+  }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "lstm-2d-1"
+  top: "conv1"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 9 # 9 semantic labels
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.01
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+
+layer {
+  name: "bilinear_interpolation"
+  type: "BilinearInterpolation"
+  bottom: "conv1"
+  top: "conv1_full_res"
+  bilinear_interpolation_param {
+    interpolation_factor: 3
+  }
+}
+
+layer {
+  name: "cross_entropy_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv1_full_res"
+  bottom: "label"
+  top: "cross_entropy_loss"
+  loss_weight: 1
+  softmax_param {
+    weight_source: "./examples/stanford_background/label_weights.txt"  
+    axis: 1 # assume conv3_full_res shape is (1, c, h, w)
+  }
+}
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "conv1_full_res"
+  bottom: "label"
+  top: "accuracy"
+  include { phase: TEST }
+  accuracy_param {
+    axis: 1
+  }
+}

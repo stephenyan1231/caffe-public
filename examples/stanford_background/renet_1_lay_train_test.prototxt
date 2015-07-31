@@ -1,0 +1,163 @@
+name: "ReNet 1 layer"
+layer {
+  name: "data"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+    transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: true
+        scale: 0.00390625
+    }    
+    data_param {
+        source: "examples/stanford_background/train_0_lmdb"
+        batch_size: 20
+        backend: LMDB
+    }
+}
+layer {
+  name: "data"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+  }
+    transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: false
+        scale: 0.00390625
+    }    
+    data_param {
+        source: "examples/stanford_background/test_0_lmdb"
+        batch_size: 10
+        backend: LMDB
+    }
+}
+
+layer {
+  name: "renet_lstm_1_vertical"
+  type: "ReNetLSTM"
+  bottom: "data"
+  top: "renet_lstm_1_vertical"
+  renet_lstm_param {
+    direction: Y_DIR
+    num_output: 8
+    patch_width: 3
+    patch_height: 3
+    general_weight_filler {
+      type: "uniform"
+      min: -0.02
+      max: 0.02      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 1.
+    }
+  }
+}
+
+layer {
+  name: "renet_lstm_1_horizontal"
+  type: "ReNetLSTM"
+  bottom: "renet_lstm_1_vertical"
+  top: "renet_lstm_1_horizontal"
+  renet_lstm_param {
+    direction: X_DIR
+    num_output: 8
+    patch_width: 1
+    patch_height: 1
+    general_weight_filler {
+      type: "uniform"
+      min: -0.02
+      max: 0.02      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 1.
+    }
+  }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "renet_lstm_1_horizontal"
+  top: "conv1"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 9
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.01
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "bilinear_interpolation"
+  type: "BilinearInterpolation"
+  bottom: "conv1"
+  top: "conv1_full_res"
+  bilinear_interpolation_param {
+    interpolation_factor: 3
+  }
+}
+
+layer {
+  name: "cross_entropy_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv1_full_res"
+  bottom: "label"
+  top: "cross_entropy_loss"
+  loss_weight: 1
+  softmax_param {
+    weight_source: "examples/stanford_background/label_weights.txt"
+    axis: 1
+  }
+}
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "conv1_full_res"
+  bottom: "label"
+  top: "accuracy"
+  include { phase: TEST }
+  accuracy_param {
+    axis: 1
+  }
+}
