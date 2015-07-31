@@ -27,6 +27,34 @@ void SoftmaxWithLossLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 		ignore_label_ = this->layer_param_.loss_param().ignore_label();
 	}
 	normalize_ = this->layer_param_.loss_param().normalize();
+
+	vector<int> loss_weights_shape(1, prob_.channels());
+	loss_weights_.Reshape(loss_weights_shape);
+	Dtype *loss_weights_data = loss_weights_.mutable_cpu_data();
+  if (this->layer_param_.softmax_param().has_weight_source()) {
+    const string& weight_source =
+        this->layer_param_.softmax_param().weight_source();
+    LOG(INFO) << "Opening file " << weight_source;
+    std::fstream infile(weight_source.c_str(), std::fstream::in);
+    CHECK(infile.is_open());
+    vector<Dtype> weights_vec;
+    Dtype weight;
+    while (infile >> weight) {
+      CHECK_GE(weight, 0) << "Weights cannot be negative";
+      weights_vec.push_back(weight);
+      LOG(INFO)<<"Read label weight "<<weight;
+    }
+    infile.close();
+    CHECK_EQ(weights_vec.size(), prob_.channels());
+    for(int i = 0; i < weights_vec.size(); ++i) {
+      loss_weights_data[i] = weights_vec[i];
+    }
+  } else {
+    LOG(INFO) << "Weight_Loss file is not provided. Assign all one to it.";
+    for(int i = 0; i < prob_.channels(); ++i) {
+      loss_weights_data[i] = 1.0;
+    }
+  }
 }
 
 template<typename Dtype>
@@ -59,8 +87,9 @@ void SoftmaxWithLossLayer<Dtype>::Forward_cpu(
 	const Dtype* prob_data = prob_.cpu_data();
 	const Dtype* label = bottom[1]->cpu_data();
 	int dim = prob_.count() / outer_num_;
-	int count = 0;
 	Dtype loss = 0;
+	Dtype batch_weight = 0;
+	const Dtype *loss_weights_data = loss_weights_.cpu_data();
 	for (int i = 0; i < outer_num_; ++i) {
 		for (int j = 0; j < inner_num_; j++) {
 			const int label_value = static_cast<int>(label[i * inner_num_ + j]);
@@ -69,14 +98,14 @@ void SoftmaxWithLossLayer<Dtype>::Forward_cpu(
 			}
 			CHECK_GE(label_value, 0);
 			CHECK_LT(label_value, prob_.shape(softmax_axis_));
-			loss -= log(
+			batch_weight += loss_weights_data[label_value];
+			loss -= loss_weights_data[label_value] * log(
 					std::max(prob_data[i * dim + label_value * inner_num_ + j],
 							Dtype(FLT_MIN)));
-			++count;
 		}
 	}
 	if (normalize_) {
-		top[0]->mutable_cpu_data()[0] = loss / count;
+		top[0]->mutable_cpu_data()[0] = loss / batch_weight;
 	} else {
 		top[0]->mutable_cpu_data()[0] = loss / outer_num_;
 	}
@@ -93,12 +122,14 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 		<< " Layer cannot backpropagate to label inputs.";
 	}
 	if (propagate_down[0]) {
+	  const Dtype *loss_weights_data = loss_weights_.cpu_data();
 		Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
 		const Dtype* prob_data = prob_.cpu_data();
-		caffe_copy(prob_.count(), prob_data, bottom_diff);
+    // We need to do *weighted* copy, so we defer that for the loop
+    // caffe_copy(prob_.count(), prob_data, bottom_diff);
 		const Dtype* label = bottom[1]->cpu_data();
 		int dim = prob_.count() / outer_num_;
-		int count = 0;
+		Dtype batch_weight = 0;
 		for (int i = 0; i < outer_num_; ++i) {
 			for (int j = 0; j < inner_num_; ++j) {
 				const int label_value = static_cast<int>(label[i * inner_num_ + j]);
@@ -107,15 +138,24 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 						bottom_diff[i * dim + c * inner_num_ + j] = 0;
 					}
 				} else {
-					bottom_diff[i * dim + label_value * inner_num_ + j] -= 1;
-					++count;
+					batch_weight += loss_weights_data[label_value];
+          for (int c = 0; c < bottom[0]->shape(softmax_axis_); ++c) {
+            bottom_diff[i * dim + c * inner_num_ + j] =
+                loss_weights_data[label_value]
+                * prob_data[i * dim + c * inner_num_ + j];
+          }
+          bottom_diff[i * dim + label_value * inner_num_ + j] -=
+              loss_weights_data[label_value];
 				}
 			}
 		}
 		// Scale gradient
+		if(batch_weight == 0){
+			batch_weight = 1;
+		}
 		const Dtype loss_weight = top[0]->cpu_diff()[0];
 		if (normalize_) {
-			caffe_scal(prob_.count(), loss_weight / count, bottom_diff);
+			caffe_scal(prob_.count(), loss_weight / batch_weight, bottom_diff);
 		} else {
 			caffe_scal(prob_.count(), loss_weight / outer_num_, bottom_diff);
 		}

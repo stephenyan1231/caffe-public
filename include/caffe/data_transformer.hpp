@@ -87,6 +87,38 @@ class DataTransformer {
    */
   void Transform(Blob<Dtype>* input_blob, Blob<Dtype>* transformed_blob);
 
+  /**
+   * @brief Applies the transformation defined in the data layer's
+   * transform_param block to the data.
+   *
+   * @param datum
+   *    Datum containing the data to be transformed.
+   * @param transformed_blob
+   *    This is destination blob. It can be part of top blob's data if
+   *    set_cpu_data() is used. See data_layer.cpp for an example.
+   * @param transformed_label
+   *    This is destination blob. It can be part of top blob's data if
+   *    set_cpu_data() is used.
+   */
+  void TransformImgAndSegUniformSize(const Datum& datum, Blob<Dtype>* transformed_blob,
+      Blob<Dtype>* transformed_label);
+
+  /**
+   * @brief Applies the transformation defined in the data layer's
+   * transform_param block to a cv::Mat
+   *
+   * @param cv_img
+   *    cv::Mat containing the data to be transformed.
+   * @param transformed_blob
+   *    This is destination blob. It can be part of top blob's data if
+   *    set_cpu_data() is used.
+   * @param transformed_label
+   *    This is destination blob. It can be part of top blob's data if
+   *    set_cpu_data() is used.
+   */
+  void TransformImgAndSegUniformSize(const Datum& datum, const cv::Mat& cv_img,
+      Blob<Dtype>* transformed_blob, Blob<Dtype>* transformed_label);
+
  protected:
    /**
    * @brief Generates a random integer from Uniform({0, 1, ..., n-1}).

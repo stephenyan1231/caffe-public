@@ -10,8 +10,7 @@ namespace caffe {
 template <typename Dtype>
 BaseDataLayer<Dtype>::BaseDataLayer(const LayerParameter& param)
     : Layer<Dtype>(param),
-      transform_param_(param.transform_param()),
-      semantic_labeling_transform_param_(param.semantic_labeling_transform_param()){
+      transform_param_(param.transform_param()) {
 }
 
 template <typename Dtype>
@@ -27,9 +26,6 @@ void BaseDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   data_transformer_.reset(
       new DataTransformer<Dtype>(transform_param_, this->phase_));
   data_transformer_->InitRand();
-  semantic_labeling_data_transformer_.reset(
-  		new SemanticLabelingDataTransformer<Dtype>(semantic_labeling_transform_param_, this->phase_));
-  semantic_labeling_data_transformer_->InitRand();
 }
 
 template <typename Dtype>

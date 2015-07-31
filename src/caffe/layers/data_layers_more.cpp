@@ -17,13 +17,21 @@
 namespace caffe {
 
 template<typename Dtype>
+SemanticLabelingDataLayer<Dtype>::SemanticLabelingDataLayer(const LayerParameter& param) :
+		BasePrefetchingDataLayer<Dtype>(param), semantic_labeling_transform_param_(param.semantic_labeling_transform_param()) {
+
+}
+
+template<typename Dtype>
 SemanticLabelingDataLayer<Dtype>::~SemanticLabelingDataLayer() {
 	this->JoinPrefetchThread();
 }
 
 template<typename Dtype>
-void SemanticLabelingDataLayer<Dtype>::DataLayerSetUp(
-		const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+void SemanticLabelingDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+	semantic_labeling_data_transformer_.reset(
+			new SemanticLabelingDataTransformer<Dtype>(semantic_labeling_transform_param_, this->phase_));
+	semantic_labeling_data_transformer_->InitRand();
 	// Initialize DB
 	db_.reset(
 			db::GetDB(this->layer_param_.semantic_labeling_data_param().backend()));
@@ -34,7 +42,7 @@ void SemanticLabelingDataLayer<Dtype>::DataLayerSetUp(
 	// Check if we should randomly skip a few data points
 	if (this->layer_param_.semantic_labeling_data_param().rand_skip()) {
 		unsigned int skip = caffe_rng_rand()
-				% this->layer_param_.semantic_labeling_data_param().rand_skip();
+		% this->layer_param_.semantic_labeling_data_param().rand_skip();
 		LOG(INFO)<< "Skipping first " << skip << " data points.";
 		while (skip-- > 0) {
 			cursor_->Next();
@@ -45,11 +53,11 @@ void SemanticLabelingDataLayer<Dtype>::DataLayerSetUp(
 	datum.ParseFromString(cursor_->value());
 
 	int crop_height =
-			this->layer_param_.semantic_labeling_transform_param().crop_height();
+	this->layer_param_.semantic_labeling_transform_param().crop_height();
 	int crop_width =
-			this->layer_param_.semantic_labeling_transform_param().crop_width();
+	this->layer_param_.semantic_labeling_transform_param().crop_width();
 	int batch_size =
-			this->layer_param_.semantic_labeling_data_param().batch_size();
+	this->layer_param_.semantic_labeling_data_param().batch_size();
 	if (crop_height > 0 || crop_width > 0) {
 		CHECK_GT(crop_height, 0);
 		CHECK_GT(crop_width, 0);
@@ -77,6 +85,7 @@ void SemanticLabelingDataLayer<Dtype>::DataLayerSetUp(
 			this->transformed_label_.Reshape(1, 1, datum.height(), datum.width());
 		}
 	}
+
 }
 
 // This function is used to create a thread that prefetches the data for scene labeling.
@@ -97,8 +106,7 @@ void SemanticLabelingDataLayer<Dtype>::InternalThreadEntry() {
 		top_label = this->prefetch_label_.mutable_cpu_data();
 	}
 
-	const int batch_size =
-			this->layer_param_.semantic_labeling_data_param().batch_size();
+	const int batch_size = this->layer_param_.semantic_labeling_data_param().batch_size();
 	for (int item_id = 0; item_id < batch_size; ++item_id) {
 		timer.Start();
 		// get a blob
@@ -127,20 +135,16 @@ void SemanticLabelingDataLayer<Dtype>::InternalThreadEntry() {
 		}
 		if (datum.encoded()) {
 			if (this->output_labels_) {
-				this->semantic_labeling_data_transformer_->Transform(datum, cv_img,
-						&(this->transformed_data_), &(this->transformed_label_));
+				this->semantic_labeling_data_transformer_->Transform(datum, cv_img, &(this->transformed_data_), &(this->transformed_label_));
 			} else {
-				this->semantic_labeling_data_transformer_->Transform(datum, cv_img,
-						&(this->transformed_data_), NULL);
+				this->semantic_labeling_data_transformer_->Transform(datum, cv_img, &(this->transformed_data_), NULL);
 			}
 
 		} else {
 			if (this->output_labels_) {
-				this->semantic_labeling_data_transformer_->Transform(datum,
-						&(this->transformed_data_), &(this->transformed_label_));
+				this->semantic_labeling_data_transformer_->Transform(datum, &(this->transformed_data_), &(this->transformed_label_));
 			} else {
-				this->semantic_labeling_data_transformer_->Transform(datum,
-						&(this->transformed_data_), NULL);
+				this->semantic_labeling_data_transformer_->Transform(datum, &(this->transformed_data_), NULL);
 			}
 		}
 		trans_time += timer.MicroSeconds();
@@ -155,6 +159,38 @@ void SemanticLabelingDataLayer<Dtype>::InternalThreadEntry() {
 	DLOG(INFO)<< "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
 	DLOG(INFO)<< "     Read time: " << read_time / 1000 << " ms.";
 	DLOG(INFO)<< "Transform time: " << trans_time / 1000 << " ms.";
+}
+
+//template<typename Dtype>
+//void SemanticLabelingDataLayer<Dtype>::Fill_label_weight_map(const Blob<Dtype> &label_map, Blob<Dtype> &label_weight_map) {
+//	CHECK_EQ(label_map.shape(0), label_weight_map.shape(0));
+//	CHECK_EQ(label_map.shape(2), label_weight_map.shape(2));
+//	CHECK_EQ(label_map.shape(3), label_weight_map.shape(3));
+//	const Dtype *label_data = label_map.cpu_data();
+//	Dtype* label_weight_data = label_weight_map.mutable_cpu_data();
+//	for (int i = 0; i < label_map.count(); ++i) {
+//		int label = static_cast<int>(label_data[i]);
+//		CHECK(label < label_weights_.size());
+//		label_weight_data[i] = label_weights_[label];
+//	}
+//}
+
+template<typename Dtype>
+void SemanticLabelingDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+	// First, join the thread
+	this->JoinPrefetchThread();
+	DLOG(INFO)<< "Thread joined";
+	// Reshape to loaded data.
+	top[0]->Reshape(this->prefetch_data_.num(), this->prefetch_data_.channels(), this->prefetch_data_.height(), this->prefetch_data_.width());
+	// Copy the data
+	caffe_copy(this->prefetch_data_.count(), this->prefetch_data_.cpu_data(), top[0]->mutable_cpu_data());
+	DLOG(INFO)<< "Prefetch copied";
+	if (this->output_labels_) {
+		caffe_copy(this->prefetch_label_.count(), this->prefetch_label_.cpu_data(), top[1]->mutable_cpu_data());
+	}
+	// Start a new prefetch thread
+	DLOG(INFO)<< "CreatePrefetchThread";
+	this->CreatePrefetchThread();
 }
 
 INSTANTIATE_CLASS(SemanticLabelingDataLayer);

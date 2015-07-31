@@ -11,7 +11,6 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/data_transformer.hpp"
-#include "caffe/semantic_labeling_data_transformer.hpp"
 #include "caffe/filler.hpp"
 #include "caffe/internal_thread.hpp"
 #include "caffe/layer.hpp"
@@ -50,8 +49,6 @@ class BaseDataLayer : public Layer<Dtype> {
  protected:
   TransformationParameter transform_param_;
   shared_ptr<DataTransformer<Dtype> > data_transformer_;
-  SemanticLabelingTransformationParameter semantic_labeling_transform_param_;
-  shared_ptr<SemanticLabelingDataTransformer<Dtype> > semantic_labeling_data_transformer_;
   bool output_labels_;
 };
 
@@ -82,7 +79,6 @@ class BasePrefetchingDataLayer :
   Blob<Dtype> prefetch_data_;
   Blob<Dtype> prefetch_label_;
   Blob<Dtype> transformed_data_;
-  Blob<Dtype> transformed_label_;
 };
 
 template <typename Dtype>

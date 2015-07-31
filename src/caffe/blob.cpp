@@ -144,7 +144,7 @@ void Blob<Dtype>::Update() {
   switch (data_->head()) {
   case SyncedMemory::HEAD_AT_CPU:
     // perform computation on CPU
-  	DLOG(INFO)<<"Blob<Dtype>::Update shape "<<
+    LOG_FIRST_N(INFO, 100)<<"Blob<Dtype>::Update shape "<<
   	this->shape_string()<<" asum data "<<
   	this->asum_data()<<" asum diff "<<
   	this->asum_diff()<<" ratio "<<this->asum_diff()/this->asum_data();
@@ -156,6 +156,10 @@ void Blob<Dtype>::Update() {
   case SyncedMemory::SYNCED:
 #ifndef CPU_ONLY
     // perform computation on GPU
+    LOG_FIRST_N(INFO, 100)<<"Blob<Dtype>::Update shape "<<
+    this->shape_string()<<" asum data "<<
+    this->asum_data()<<" asum diff "<<
+    this->asum_diff()<<" ratio "<<this->asum_diff()/this->asum_data();
     caffe_gpu_axpy<Dtype>(count_, Dtype(-1),
         static_cast<const Dtype*>(diff_->gpu_data()),
         static_cast<Dtype*>(data_->mutable_gpu_data()));

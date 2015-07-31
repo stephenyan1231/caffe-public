@@ -101,8 +101,7 @@ void SemanticLabelingDataTransformer<Dtype>::Transform(
 	const int crop_height = param_.crop_height();
 	const int crop_width = param_.crop_width();
 	const Dtype scale = param_.scale();
-//  const bool do_mirror = param_.mirror() && Rand(2);
-	const bool do_mirror = false;  // disable mirroring for the time being
+  const bool do_mirror = param_.mirror() && Rand(2);
 
 	const bool has_mean_values = mean_values_.size() > 0;
 
@@ -203,8 +202,7 @@ void SemanticLabelingDataTransformer<Dtype>::Transform(
 	const int crop_height = param_.crop_height();
 	const int crop_width = param_.crop_width();
 	const Dtype scale = param_.scale();
-//  const bool do_mirror = param_.mirror() && Rand(2);
-	const bool do_mirror = false;  // disable mirroring for the time being
+  const bool do_mirror = param_.mirror() && Rand(2);
 	const bool has_uint8 = data.size() > 0;
 	const bool has_mean_values = mean_values_.size() > 0;
 

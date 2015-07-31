@@ -740,6 +740,7 @@ void Net<Dtype>::ToProto(NetParameter* param, bool write_diff) const {
 
 template <typename Dtype>
 void Net<Dtype>::Update() {
+	DLOG(INFO)<<"Net<Dtype>::Update()";
   // Update only the owned parameters.
   for (int i = 0; i < params_.size(); ++i) {
     if (param_owners_[i] >= 0) { continue; }

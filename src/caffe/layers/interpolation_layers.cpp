@@ -18,9 +18,6 @@ void BilinearInterpolationLayer<Dtype>::Reshape(
 	topShape[1] = bottom[0]->shape(1);
 	topShape[2] = bottom[0]->shape(2) * interpolation_factor_;
 	topShape[3] = bottom[0]->shape(3) * interpolation_factor_;
-	DLOG(WARNING)<<"BilinearInterpolationLayer<Dtype>::Reshape "<<
-	topShape[0]<<" "<<topShape[1]<<" "<<topShape[2]<<
-	" "<<topShape[3];
 
 	top[0]->Reshape(topShape);
 }
@@ -121,7 +118,7 @@ void BilinearInterpolationLayer<Dtype>::Backward_cpu(
 }
 
 #ifdef CPU_ONLY
-	STUB_GPU(BilinearSamplingLayer);
+	STUB_GPU(BilinearInterpolationLayer);
 #endif
 
 INSTANTIATE_CLASS(BilinearInterpolationLayer);
