@@ -10,7 +10,6 @@
 #include "caffe/layer.hpp"
 #include "caffe/net.hpp"
 #include "caffe/proto/caffe.pb.h"
-#include "caffe/internal_thread.hpp"
 
 namespace caffe {
 /* implement the ReNet layer in paper
@@ -62,6 +61,8 @@ protected:
       Blob<Dtype>* top);
   void ComputeCellDiff_cpu(int dir_num, int step_id, int step_start,
       int step_end);
+  void ComputeCellDiff_gpu(int dir_num, int step_id, int step_start,
+      int step_end);
   void Compute_X_H_Diff_cpu(int dir_num, int step_id, int step_start,
       Blob<Dtype>* bottom);
   void Compute_X_H_Diff_gpu(int dir_num, int step_id, int step_start,
@@ -69,6 +70,7 @@ protected:
   void ComputeParamDiff_cpu(int dir_num, int step_id, int step_start);
   void ComputeParamDiff_gpu(int dir_num, int step_id, int step_start);
 
+  bool peephole_;
   int patch_h_;
   int patch_w_;
   int num_output_;
@@ -86,10 +88,10 @@ protected:
   Blob<Dtype> bias_multiplier_;
 
   vector<shared_ptr<Blob<Dtype> > > X_H_data_, X_H_diff_;
-  vector<shared_ptr<Blob<Dtype> > > gi_data_, gi_diff_;
+  vector<shared_ptr<Blob<Dtype> > > gi_data_, gi_diff_, gi_next_diff_;
   vector<shared_ptr<Blob<Dtype> > > ci_data_, ci_diff_;
   vector<shared_ptr<Blob<Dtype> > > go_data_, go_diff_;
-  vector<shared_ptr<Blob<Dtype> > > gf_data_, gf_diff_;
+  vector<shared_ptr<Blob<Dtype> > > gf_data_, gf_diff_, gf_next_diff_;
   vector<shared_ptr<Blob<Dtype> > > cstate_data_, cstate_diff_,
       cstate_next_diff_;
   vector<shared_ptr<Blob<Dtype> > > hidden_data_, hidden_diff_;

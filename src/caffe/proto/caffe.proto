@@ -276,7 +276,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 142 (last added: renet_lstm_param)
+// LayerParameter next available layer-specific ID: 144 (last added: dimension_transpose_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -330,9 +330,11 @@ message LayerParameter {
   optional SemanticLabelingDataParameter semantic_labeling_data_param = 137;  
   optional DropoutParameter dropout_param = 108;
   optional DummyDataParameter dummy_data_param = 109;
+  optional DimensionTransposeParameter dimension_transpose_param = 143;  
   optional EltwiseParameter eltwise_param = 110;
   optional EmbedParameter embed_param = 132;
   optional ExpParameter exp_param = 111;
+  optional GridLSTM3DParameter grid_lstm_3d_param = 142;
   optional HDF5DataParameter hdf5_data_param = 112;
   optional HDF5OutputParameter hdf5_output_param = 113;
   optional HingeLossParameter hinge_loss_param = 114;
@@ -562,6 +564,15 @@ message DummyDataParameter {
   repeated uint32 width = 5;
 }
 
+// Message that stores parameters used by DominantChannelLayer
+message DimensionTransposeParameter {
+  enum Direction{
+    NUM_FIRST_TO_HEIGHT_FIRST = 1;
+    HEIGHT_FIRST_TO_NUM_FIRST = 2;
+  }
+  optional Direction direction = 1 [default = NUM_FIRST_TO_HEIGHT_FIRST];
+}
+
 // Message that stores parameters used by EltwiseLayer
 message EltwiseParameter {
   enum EltwiseOp {
@@ -603,6 +614,29 @@ message ExpParameter {
   optional float base = 1 [default = -1.0];
   optional float scale = 2 [default = 1.0];
   optional float shift = 3 [default = 0.0];
+}
+
+// Message that stores parameters used by GridLSTM3DLayer
+message GridLSTM3DParameter {
+  enum Direction {
+    POSITIVE = 1;
+    NEGATIVE = 2;
+  }
+  optional Direction x_direction = 1 [default = POSITIVE];
+  optional Direction y_direction = 2 [default = POSITIVE];
+  optional uint32 num_output = 3 [default = 1];
+  optional bool peephole = 4 [default = true];
+  // The filler for the weight
+  optional FillerParameter general_weight_filler = 5;
+  // The filler for the general bias
+  // The filler for the cell input bias
+  optional FillerParameter cell_input_bias_filler = 6;
+  // The filler for the forget gate bias
+  optional FillerParameter forget_gate_bias_filler = 7;
+  // The filler for the input gate bias
+  optional FillerParameter input_gate_bias_filler = 8;
+  // The filler for the output gate bias
+  optional FillerParameter output_gate_bias_filler = 9;  
 }
 
 // Message that stores parameters used by HDF5DataLayer
@@ -800,12 +834,21 @@ message LSTM2DParameter {
 	optional uint32 patch_height = 3 [default = 1];
 	optional float forget_gate_scaling_factor = 8 [default = 1];
 	
-  optional FillerParameter general_weight_filler = 4; // The filler for the weight
-  optional FillerParameter general_bias_filler = 5; // The filler for the bias
-  optional FillerParameter forget_gate_bias_filler = 6; // The filler for the forget gate bias
-  
+  // The filler for the weight
+  optional FillerParameter general_weight_filler = 4;
+  // The filler for the general bias
+  // for legacy reason, it is acutally used for cell input bias
+  optional FillerParameter general_bias_filler = 5;
+  // The filler for the forget gate bias
+  optional FillerParameter forget_gate_bias_filler = 6;
+  // The filler for the input gate bias
+  optional FillerParameter input_gate_bias_filler = 9;
+  // The filler for the output gate bias
+  optional FillerParameter output_gate_bias_filler = 10;
   // Whether to enable displaying debug_info in the unrolled recurrent net.
   optional bool debug_info = 7 [default = false];
+  // enable peephole connections ?
+  optional bool peephole = 11 [default = true];
 }
 
 
@@ -844,19 +887,26 @@ message ReLUParameter {
 // Message that stores parameters used by ReNetLSTMLayer
 message ReNetLSTMParameter {
   enum Direction {
-  	X_DIR = 0;
-  	Y_DIR = 1;
-	}
-	optional Direction direction = 1 [default = X_DIR];
+    X_DIR = 0;
+    Y_DIR = 1;
+  }
+  optional Direction direction = 1 [default = X_DIR];
   optional uint32 num_output = 2 [default = 0];
   optional uint32 patch_width = 3 [default = 1];
   optional uint32 patch_height = 4 [default = 1];
   // The filler for the weight
   optional FillerParameter general_weight_filler = 5;
-  // The filler for the bias
+  // The filler for the general bias
+  // for legacy reason, it is acutally used for cell input bias
   optional FillerParameter general_bias_filler = 6;
   // The filler for the forget gate bias
   optional FillerParameter forget_gate_bias_filler = 7;
+  // The filler for the input gate bias
+  optional FillerParameter input_gate_bias_filler = 8;
+  // The filler for the output gate bias
+  optional FillerParameter output_gate_bias_filler = 9;
+  // Enable peephole connections?
+  optional bool peephole = 10 [default = true];
 }
 
 // Message that stores parameters used by SigmoidLayer

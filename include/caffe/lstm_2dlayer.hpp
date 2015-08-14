@@ -87,6 +87,7 @@ protected:
 
   int patch_h_;
   int patch_w_;
+  bool peephole_;
   int num_output_;
   int num_;
   int channels_;
@@ -99,11 +100,11 @@ protected:
 
   vector<shared_ptr< Blob<Dtype> > > X_Hx_Hy_data_, X_Hx_Hy_same_row_diff_,
   X_Hx_Hy_next_row_diff_;
-  vector<shared_ptr< Blob<Dtype> > > gi_data_, gi_diff_;
+  vector<shared_ptr< Blob<Dtype> > > gi_data_, gi_same_row_diff_, gi_next_row_diff_;
   vector<shared_ptr< Blob<Dtype> > > ci_data_, ci_diff_;
   vector<shared_ptr< Blob<Dtype> > > go_data_, go_diff_;
-  vector<shared_ptr< Blob<Dtype> > > gfx_data_, gfx_diff_;
-  vector<shared_ptr< Blob<Dtype> > > gfy_data_, gfy_diff_;
+  vector<shared_ptr< Blob<Dtype> > > gfx_data_, gfx_same_row_diff_;
+  vector<shared_ptr< Blob<Dtype> > > gfy_data_, gfy_same_row_diff_, gfy_next_row_diff_;
   vector<shared_ptr< Blob<Dtype> > > cstate_data_, cstate_same_row_diff_,
   cstate_next_row_diff_;
   vector<shared_ptr< Blob<Dtype> > > hidden_same_row_data_,

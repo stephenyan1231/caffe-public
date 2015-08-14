@@ -1,7 +1,7 @@
 #!/bin/bash
 
-IMAGE_DIR=/usr/local/google/home/zyan/data/stanford_background/images/
-LABEL_DIR=/usr/local/google/home/zyan/data/stanford_background/labels/
+IMAGE_DIR=/home/zyan3/data/stanford_background/images/
+LABEL_DIR=/home/zyan3/data/stanford_background/labels/
 TRAIN_FILE_LIST=./examples/stanford_background/train_0.txt
 TEST_FILE_LIST=./examples/stanford_background/test_0.txt
 TRAIN_DB_NAME=./examples/stanford_background/train_0_lmdb
