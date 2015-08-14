@@ -1,0 +1,344 @@
+name: "ReNet"
+layer {
+  name: "mnist"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+  transform_param {
+    mean_value: 128
+    mirror: false
+    scale: 0.0078125
+  }
+  data_param {
+    source: "/cns/ok-d/home/zyan/caffe/examples/mnist_segmentation/mnist_segmentation_train.sstable"
+    batch_size: 100
+    backend: SSTABLE
+  }
+}
+layer {
+  name: "mnist"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+  }
+  transform_param {
+    mean_value: 128
+    mirror: false
+    scale: 0.0078125
+  }
+  data_param {
+    source: "/cns/ok-d/home/zyan/caffe/examples/mnist_segmentation/mnist_segmentation_test.sstable"
+    batch_size: 100
+    backend: SSTABLE
+  }
+}
+
+layer {
+  name: "conv1_state"
+  type: "Convolution"
+  bottom: "data"
+  top: "conv1_state"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 32
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "conv1_state_dimension_transpose"
+  type: "DimensionTranspose"
+  bottom: "conv1_state"
+  top: "conv1_state_dimension_transpose"
+  dimension_transpose_param {
+    direction: NUM_FIRST_TO_HEIGHT_FIRST       
+  }
+}
+
+layer {
+  name: "conv1_hidden"
+  type: "Convolution"
+  bottom: "data"
+  top: "conv1_hidden"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 32
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "conv1_hidden_dimension_transpose"
+  type: "DimensionTranspose"
+  bottom: "conv1_hidden"
+  top: "conv1_hidden_dimension_transpose"
+  dimension_transpose_param {
+    direction: NUM_FIRST_TO_HEIGHT_FIRST       
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_posy_posx"
+  type: "GridLSTM3D"
+  bottom: "conv1_state_dimension_transpose"
+  bottom: "conv1_hidden_dimension_transpose"
+  top: "grid_lstm_3d_1_posy_posx_state"
+  top: "grid_lstm_3d_1_posy_posx_hidden"
+  grid_lstm_3d_param {
+    x_direction: POSITIVE
+    y_direction: POSITIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_posy_negx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_1_posy_posx_state"
+  bottom: "grid_lstm_3d_1_posy_posx_hidden"
+  top: "grid_lstm_3d_1_posy_negx_state"
+  top: "grid_lstm_3d_1_posy_negx_hidden"
+  grid_lstm_3d_param {
+    x_direction: NEGATIVE
+    y_direction: POSITIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_negy_posx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_1_posy_negx_state"
+  bottom: "grid_lstm_3d_1_posy_negx_hidden"
+  top: "grid_lstm_3d_1_negy_posx_state"
+  top: "grid_lstm_3d_1_negy_posx_hidden"
+  grid_lstm_3d_param {
+    x_direction: POSITIVE
+    y_direction: NEGATIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_negy_negx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_1_negy_posx_state"
+  bottom: "grid_lstm_3d_1_negy_posx_hidden"
+  top: "grid_lstm_3d_1_negy_negx_state"
+  top: "grid_lstm_3d_1_negy_negx_hidden"
+  grid_lstm_3d_param {
+    x_direction: NEGATIVE
+    y_direction: NEGATIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_negy_negx_state_dimension_transpose"
+  type: "DimensionTranspose"
+  bottom: "grid_lstm_3d_1_negy_negx_state"
+  top: "grid_lstm_3d_1_negy_negx_state_dimension_transpose"
+  dimension_transpose_param {
+    direction: HEIGHT_FIRST_TO_NUM_FIRST       
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_negy_negx_hidden_dimension_transpose"
+  type: "DimensionTranspose"
+  bottom: "grid_lstm_3d_1_negy_negx_hidden"
+  top: "grid_lstm_3d_1_negy_negx_hidden_dimension_transpose"
+  dimension_transpose_param {
+    direction: HEIGHT_FIRST_TO_NUM_FIRST       
+  }
+}
+
+layer {
+  name: "concat_state_hidden"
+  type: "Concat"
+  bottom: "grid_lstm_3d_1_negy_negx_state_dimension_transpose"
+  bottom: "grid_lstm_3d_1_negy_negx_hidden_dimension_transpose"
+  top: "concat_state_hidden"
+  concat_param {
+    axis: 1       
+  }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "concat_state_hidden"
+  top: "conv1"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 11
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "conv1"
+  bottom: "label"
+  top: "accuracy"
+  include {
+    phase: TEST
+  }
+}
+
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv1"
+  bottom: "label"
+  top: "loss"
+  softmax_param {
+    axis: 1
+  }  
+}

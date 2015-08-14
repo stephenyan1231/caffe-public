@@ -1,0 +1,145 @@
+name: "ReNet"
+layer {
+  name: "mnist"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+  transform_param {
+    mean_value: 128
+    mirror: false
+    scale: 0.0078125
+  }
+  data_param {
+    source: "/cns/ok-d/home/zyan/caffe/examples/mnist_segmentation/mnist_segmentation_train.sstable"
+    batch_size: 100
+    backend: SSTABLE
+  }
+}
+layer {
+  name: "mnist"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+  }
+  transform_param {
+    mean_value: 128
+    mirror: false
+    scale: 0.0078125
+  }
+  data_param {
+    source: "/cns/ok-d/home/zyan/caffe/examples/mnist_segmentation/mnist_segmentation_test.sstable"
+    batch_size: 100
+    backend: SSTABLE
+  }
+}
+
+layer {
+  name: "renet_lstm_1_vertical"
+  type: "ReNetLSTM"
+  bottom: "data"
+  top: "renet_lstm_1_vertical"
+  renet_lstm_param {
+    direction: Y_DIR
+    num_output: 128
+    patch_width: 1
+    patch_height: 1
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+  }
+}
+
+layer {
+  name: "renet_lstm_1_horizontal"
+  type: "ReNetLSTM"
+  bottom: "renet_lstm_1_vertical"
+  top: "renet_lstm_1_horizontal"
+  renet_lstm_param {
+    direction: X_DIR
+    num_output: 128
+    patch_width: 1
+    patch_height: 1
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+  }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "renet_lstm_1_horizontal"
+  top: "conv1"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 11
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "conv1"
+  bottom: "label"
+  top: "accuracy"
+  include {
+    phase: TEST
+  }
+}
+
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv1"
+  bottom: "label"
+  top: "loss"
+  softmax_param {
+    axis: 1
+  }  
+}

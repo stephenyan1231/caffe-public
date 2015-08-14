@@ -1,0 +1,197 @@
+name: "lstm_2d_model"
+layer {
+    name: "data"
+    type: "ImageSegUniformSizeData"
+    top: "data"
+    top: "label"
+    include {
+        phase: TRAIN
+    }    
+    transform_param {
+        mean_value: 128
+        mirror: false
+        scale: 0.0078125
+    }
+    data_param {
+        source: "/cns/ok-d/home/zyan/caffe/examples/mnist_segmentation/mnist_segmentation_train.sstable"
+        batch_size: 100
+        backend: SSTABLE
+    }
+}
+
+layer {
+    name: "data"
+    type: "ImageSegUniformSizeData"
+    top: "data"
+    top: "label"
+    include {
+        phase: TEST
+    }    
+    transform_param {
+        mean_value: 128
+        mirror: false
+        scale: 0.0078125
+    }    
+    data_param {
+        source: "/cns/ok-d/home/zyan/caffe/examples/mnist_segmentation/mnist_segmentation_test.sstable"
+        batch_size: 100
+        backend: SSTABLE
+    }
+}
+
+layer {
+  name: "lstm-2d-1"
+  type: "LSTM_2D"
+  bottom: "data"
+  top: "lstm-2d-1"
+  lstm_2d_param {
+    num_output: 40
+    patch_width: 1
+    patch_height: 1
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2
+    }
+    general_bias_filler{
+      type: "constant"
+      value: 0.0
+    }
+    forget_gate_bias_filler{
+      type: "constant"
+      value: 0.0
+    }
+    input_gate_bias_filler{
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler{
+      type: "constant"
+      value: 0.
+    }    
+  }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "lstm-2d-1"
+  top: "conv1"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 120
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "tanh1"
+  type: "TanH"
+  bottom: "conv1"
+  top: "conv1"
+}
+
+layer {
+  name: "lstm-2d-2"
+  type: "LSTM_2D"
+  bottom: "conv1"
+  top: "lstm-2d-2"
+  lstm_2d_param {
+    num_output: 60
+    patch_width: 1
+    patch_height: 1
+    peephole: false    
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2
+    }
+    general_bias_filler{
+      type: "constant"
+      value: 0.0
+    }
+    forget_gate_bias_filler{
+      type: "constant"
+      value: 0.0
+    }
+    input_gate_bias_filler{
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler{
+      type: "constant"
+      value: 0.
+    }    
+  }
+}
+
+layer {
+  name: "conv2"
+  type: "Convolution"
+  bottom: "lstm-2d-2"
+  top: "conv2"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 11
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "cross_entropy_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv2"
+  bottom: "label"
+  top: "cross_entropy_loss"
+  loss_weight: 1
+  softmax_param {
+    axis: 1
+  }
+}
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "conv2"
+  bottom: "label"
+  top: "accuracy"
+  include { phase: TEST }
+  accuracy_param {
+    axis: 1
+  }
+}
