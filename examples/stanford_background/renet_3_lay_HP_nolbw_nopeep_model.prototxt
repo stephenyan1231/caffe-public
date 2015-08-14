@@ -1,0 +1,349 @@
+name: "ReNet 2 layer"
+layer {
+  name: "mnist"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+    transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: true
+        scale: 0.0078125
+    }    
+    data_param {
+        source: "/cns/ok-d/home/zyan/caffe/examples/stanford_background/train_0.sstable"
+        batch_size: 20
+        backend: SSTABLE
+    }
+}
+layer {
+  name: "mnist"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+  }
+    transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: false
+        scale: 0.0078125
+    }    
+    data_param {
+        source: "/cns/ok-d/home/zyan/caffe/examples/stanford_background/test_0.sstable"
+        batch_size: 20
+        backend: SSTABLE
+    }
+}
+
+layer {
+  name: "renet_lstm_1_vertical"
+  type: "ReNetLSTM"
+  bottom: "data"
+  top: "renet_lstm_1_vertical"
+  renet_lstm_param {
+    direction: Y_DIR
+    num_output: 40
+    patch_width: 3
+    patch_height: 3
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+  }
+}
+
+layer {
+  name: "renet_lstm_1_horizontal"
+  type: "ReNetLSTM"
+  bottom: "renet_lstm_1_vertical"
+  top: "renet_lstm_1_horizontal"
+  renet_lstm_param {
+    direction: X_DIR
+    num_output: 40
+    patch_width: 1
+    patch_height: 1
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+  }
+}
+
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "renet_lstm_1_horizontal"
+  top: "conv1"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 80
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "tanh1"
+  type: "TanH"
+  bottom: "conv1"
+  top: "conv1"
+}
+
+layer {
+  name: "renet_lstm_2_vertical"
+  type: "ReNetLSTM"
+  bottom: "conv1"
+  top: "renet_lstm_2_vertical"
+  renet_lstm_param {
+    direction: Y_DIR
+    num_output: 60
+    patch_width: 1
+    patch_height: 1
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+  }
+}
+
+layer {
+  name: "renet_lstm_2_horizontal"
+  type: "ReNetLSTM"
+  bottom: "renet_lstm_2_vertical"
+  top: "renet_lstm_2_horizontal"
+  renet_lstm_param {
+    direction: X_DIR
+    num_output: 60
+    patch_width: 1
+    patch_height: 1
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+  }
+}
+
+layer {
+  name: "conv2"
+  type: "Convolution"
+  bottom: "renet_lstm_2_horizontal"
+  top: "conv2"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 120
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "tanh1"
+  type: "TanH"
+  bottom: "conv2"
+  top: "conv2"
+}
+
+layer {
+  name: "renet_lstm_3_vertical"
+  type: "ReNetLSTM"
+  bottom: "conv2"
+  top: "renet_lstm_3_vertical"
+  renet_lstm_param {
+    direction: Y_DIR
+    num_output: 60
+    patch_width: 1
+    patch_height: 1
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+  }
+}
+
+layer {
+  name: "renet_lstm_3_horizontal"
+  type: "ReNetLSTM"
+  bottom: "renet_lstm_3_vertical"
+  top: "renet_lstm_3_horizontal"
+  renet_lstm_param {
+    direction: X_DIR
+    num_output: 60
+    patch_width: 1
+    patch_height: 1
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    general_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+  }
+}
+
+layer {
+  name: "conv3"
+  type: "Convolution"
+  bottom: "renet_lstm_3_horizontal"
+  top: "conv3"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 9
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "bilinear_interpolation"
+  type: "BilinearInterpolation"
+  bottom: "conv3"
+  top: "conv3_full_res"
+  bilinear_interpolation_param {
+    interpolation_factor: 3
+  }
+}
+
+layer {
+  name: "cross_entropy_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv3_full_res"
+  bottom: "label"
+  top: "cross_entropy_loss"
+  loss_weight: 1
+  softmax_param {
+    axis: 1
+  }
+  loss_param {
+    ignore_label: 0
+  }
+}
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "conv3_full_res"
+  bottom: "label"
+  top: "accuracy"
+  include { phase: TEST }
+  accuracy_param {
+    axis: 1
+    ignore_label: 0
+  }
+}

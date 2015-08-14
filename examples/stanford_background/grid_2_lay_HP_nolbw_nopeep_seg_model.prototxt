@@ -1,0 +1,1339 @@
+name: "Grid LSTM 3D"
+layer {
+  name: "data"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+    transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: true
+        scale: 0.0078125
+    }    
+    data_param {
+        source: "/cns/ok-d/home/zyan/caffe/examples/stanford_background/train_0.sstable"
+        batch_size: 10
+        backend: SSTABLE
+    }
+}
+layer {
+  name: "data"
+  type: "ImageSegUniformSizeData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+  }
+    transform_param {
+        crop_height: 240
+        crop_width: 321
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: false
+        scale: 0.0078125
+    }    
+    data_param {
+        source: "/cns/ok-d/home/zyan/caffe/examples/stanford_background/test_0.sstable"
+        batch_size: 10
+        backend: SSTABLE
+    }
+}
+
+layer {
+  name: "conv1_state"
+  type: "Convolution"
+  bottom: "data"
+  top: "conv1_state"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 32
+    kernel_size: 3
+    stride: 3
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "conv1_state_dimension_transpose"
+  type: "DimensionTranspose"
+  bottom: "conv1_state"
+  top: "conv1_state_dimension_transpose"
+  dimension_transpose_param {
+    direction: NUM_FIRST_TO_HEIGHT_FIRST       
+  }
+}
+
+layer {
+  name: "conv1_hidden"
+  type: "Convolution"
+  bottom: "data"
+  top: "conv1_hidden"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 32
+    kernel_size: 3
+    stride: 3
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "conv1_hidden_dimension_transpose"
+  type: "DimensionTranspose"
+  bottom: "conv1_hidden"
+  top: "conv1_hidden_dimension_transpose"
+  dimension_transpose_param {
+    direction: NUM_FIRST_TO_HEIGHT_FIRST       
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_posy_posx"
+  type: "GridLSTM3D"
+  bottom: "conv1_state_dimension_transpose"
+  bottom: "conv1_hidden_dimension_transpose"
+  top: "grid_lstm_3d_1_posy_posx_state"
+  top: "grid_lstm_3d_1_posy_posx_hidden"
+
+  param {
+    name: "pp_X_W_i"
+  }
+  param {
+    name: "pp_X_W_c"
+  }
+  param {
+    name: "pp_X_W_o"
+  }
+  param {
+    name: "pp_X_W_f"
+  }
+  param {
+    name: "pp_X_W_ic"
+  }
+  param {
+    name: "pp_X_W_oc"
+  }
+  param {
+    name: "pp_X_W_fc"
+  }
+  param {
+    name: "pp_X_b_i"
+  }
+  param {
+    name: "pp_X_b_c"
+  }
+  param {
+    name: "pp_X_b_o"
+  }
+  param {
+    name: "pp_X_b_f"
+  }
+
+  param {
+    name: "pp_Y_W_i"
+  }
+  param {
+    name: "pp_Y_W_c"
+  }
+  param {
+    name: "pp_Y_W_o"
+  }
+  param {
+    name: "pp_Y_W_f"
+  }
+  param {
+    name: "pp_Y_W_ic"
+  }
+  param {
+    name: "pp_Y_W_oc"
+  }
+  param {
+    name: "pp_Y_W_fc"
+  }
+  param {
+    name: "pp_Y_b_i"
+  }
+  param {
+    name: "pp_Y_b_c"
+  }
+  param {
+    name: "pp_Y_b_o"
+  }
+  param {
+    name: "pp_Y_b_f"
+  }
+
+  param {
+    name: "pp_Z_W_i"
+  }
+  param {
+    name: "pp_Z_W_c"
+  }
+  param {
+    name: "pp_Z_W_o"
+  }
+  param {
+    name: "pp_Z_W_f"
+  }
+  param {
+    name: "pp_Z_W_ic"
+  }
+  param {
+    name: "pp_Z_W_oc"
+  }
+  param {
+    name: "pp_Z_W_fc"
+  }
+  param {
+    name: "pp_Z_b_i"
+  }
+  param {
+    name: "pp_Z_b_c"
+  }
+  param {
+    name: "pp_Z_b_o"
+  }
+  param {
+    name: "pp_Z_b_f"
+  }
+
+  grid_lstm_3d_param {
+    x_direction: POSITIVE
+    y_direction: POSITIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_posy_negx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_1_posy_posx_state"
+  bottom: "grid_lstm_3d_1_posy_posx_hidden"
+  top: "grid_lstm_3d_1_posy_negx_state"
+  top: "grid_lstm_3d_1_posy_negx_hidden"
+  
+  param {
+    name: "pn_X_W_i"
+  }
+  param {
+    name: "pn_X_W_c"
+  }
+  param {
+    name: "pn_X_W_o"
+  }
+  param {
+    name: "pn_X_W_f"
+  }
+  param {
+    name: "pn_X_W_ic"
+  }
+  param {
+    name: "pn_X_W_oc"
+  }
+  param {
+    name: "pn_X_W_fc"
+  }
+  param {
+    name: "pn_X_b_i"
+  }
+  param {
+    name: "pn_X_b_c"
+  }
+  param {
+    name: "pn_X_b_o"
+  }
+  param {
+    name: "pn_X_b_f"
+  }
+
+  param {
+    name: "pn_Y_W_i"
+  }
+  param {
+    name: "pn_Y_W_c"
+  }
+  param {
+    name: "pn_Y_W_o"
+  }
+  param {
+    name: "pn_Y_W_f"
+  }
+  param {
+    name: "pn_Y_W_ic"
+  }
+  param {
+    name: "pn_Y_W_oc"
+  }
+  param {
+    name: "pn_Y_W_fc"
+  }
+  param {
+    name: "pn_Y_b_i"
+  }
+  param {
+    name: "pn_Y_b_c"
+  }
+  param {
+    name: "pn_Y_b_o"
+  }
+  param {
+    name: "pn_Y_b_f"
+  }
+
+  param {
+    name: "pn_Z_W_i"
+  }
+  param {
+    name: "pn_Z_W_c"
+  }
+  param {
+    name: "pn_Z_W_o"
+  }
+  param {
+    name: "pn_Z_W_f"
+  }
+  param {
+    name: "pn_Z_W_ic"
+  }
+  param {
+    name: "pn_Z_W_oc"
+  }
+  param {
+    name: "pn_Z_W_fc"
+  }
+  param {
+    name: "pn_Z_b_i"
+  }
+  param {
+    name: "pn_Z_b_c"
+  }
+  param {
+    name: "pn_Z_b_o"
+  }
+  param {
+    name: "pn_Z_b_f"
+  }
+
+  grid_lstm_3d_param {
+    x_direction: NEGATIVE
+    y_direction: POSITIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_negy_posx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_1_posy_negx_state"
+  bottom: "grid_lstm_3d_1_posy_negx_hidden"
+  top: "grid_lstm_3d_1_negy_posx_state"
+  top: "grid_lstm_3d_1_negy_posx_hidden"
+
+  
+  param {
+    name: "np_X_W_i"
+  }
+  param {
+    name: "np_X_W_c"
+  }
+  param {
+    name: "np_X_W_o"
+  }
+  param {
+    name: "np_X_W_f"
+  }
+  param {
+    name: "np_X_W_ic"
+  }
+  param {
+    name: "np_X_W_oc"
+  }
+  param {
+    name: "np_X_W_fc"
+  }
+  param {
+    name: "np_X_b_i"
+  }
+  param {
+    name: "np_X_b_c"
+  }
+  param {
+    name: "np_X_b_o"
+  }
+  param {
+    name: "np_X_b_f"
+  }
+
+  param {
+    name: "np_Y_W_i"
+  }
+  param {
+    name: "np_Y_W_c"
+  }
+  param {
+    name: "np_Y_W_o"
+  }
+  param {
+    name: "np_Y_W_f"
+  }
+  param {
+    name: "np_Y_W_ic"
+  }
+  param {
+    name: "np_Y_W_oc"
+  }
+  param {
+    name: "np_Y_W_fc"
+  }
+  param {
+    name: "np_Y_b_i"
+  }
+  param {
+    name: "np_Y_b_c"
+  }
+  param {
+    name: "np_Y_b_o"
+  }
+  param {
+    name: "np_Y_b_f"
+  }
+
+  param {
+    name: "np_Z_W_i"
+  }
+  param {
+    name: "np_Z_W_c"
+  }
+  param {
+    name: "np_Z_W_o"
+  }
+  param {
+    name: "np_Z_W_f"
+  }
+  param {
+    name: "np_Z_W_ic"
+  }
+  param {
+    name: "np_Z_W_oc"
+  }
+  param {
+    name: "np_Z_W_fc"
+  }
+  param {
+    name: "np_Z_b_i"
+  }
+  param {
+    name: "np_Z_b_c"
+  }
+  param {
+    name: "np_Z_b_o"
+  }
+  param {
+    name: "np_Z_b_f"
+  }
+
+  grid_lstm_3d_param {
+    x_direction: POSITIVE
+    y_direction: NEGATIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_1_negy_negx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_1_negy_posx_state"
+  bottom: "grid_lstm_3d_1_negy_posx_hidden"
+  top: "grid_lstm_3d_1_negy_negx_state"
+  top: "grid_lstm_3d_1_negy_negx_hidden"
+
+  
+  param {
+    name: "nn_X_W_i"
+  }
+  param {
+    name: "nn_X_W_c"
+  }
+  param {
+    name: "nn_X_W_o"
+  }
+  param {
+    name: "nn_X_W_f"
+  }
+  param {
+    name: "nn_X_W_ic"
+  }
+  param {
+    name: "nn_X_W_oc"
+  }
+  param {
+    name: "nn_X_W_fc"
+  }
+  param {
+    name: "nn_X_b_i"
+  }
+  param {
+    name: "nn_X_b_c"
+  }
+  param {
+    name: "nn_X_b_o"
+  }
+  param {
+    name: "nn_X_b_f"
+  }
+
+  param {
+    name: "nn_Y_W_i"
+  }
+  param {
+    name: "nn_Y_W_c"
+  }
+  param {
+    name: "nn_Y_W_o"
+  }
+  param {
+    name: "nn_Y_W_f"
+  }
+  param {
+    name: "nn_Y_W_ic"
+  }
+  param {
+    name: "nn_Y_W_oc"
+  }
+  param {
+    name: "nn_Y_W_fc"
+  }
+  param {
+    name: "nn_Y_b_i"
+  }
+  param {
+    name: "nn_Y_b_c"
+  }
+  param {
+    name: "nn_Y_b_o"
+  }
+  param {
+    name: "nn_Y_b_f"
+  }
+
+  param {
+    name: "nn_Z_W_i"
+  }
+  param {
+    name: "nn_Z_W_c"
+  }
+  param {
+    name: "nn_Z_W_o"
+  }
+  param {
+    name: "nn_Z_W_f"
+  }
+  param {
+    name: "nn_Z_W_ic"
+  }
+  param {
+    name: "nn_Z_W_oc"
+  }
+  param {
+    name: "nn_Z_W_fc"
+  }
+  param {
+    name: "nn_Z_b_i"
+  }
+  param {
+    name: "nn_Z_b_c"
+  }
+  param {
+    name: "nn_Z_b_o"
+  }
+  param {
+    name: "nn_Z_b_f"
+  }
+
+  grid_lstm_3d_param {
+    x_direction: NEGATIVE
+    y_direction: NEGATIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_2_posy_posx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_1_negy_negx_state"
+  bottom: "grid_lstm_3d_1_negy_negx_hidden"
+  top: "grid_lstm_3d_2_posy_posx_state"
+  top: "grid_lstm_3d_2_posy_posx_hidden"
+
+  param {
+    name: "pp_X_W_i"
+  }
+  param {
+    name: "pp_X_W_c"
+  }
+  param {
+    name: "pp_X_W_o"
+  }
+  param {
+    name: "pp_X_W_f"
+  }
+  param {
+    name: "pp_X_W_ic"
+  }
+  param {
+    name: "pp_X_W_oc"
+  }
+  param {
+    name: "pp_X_W_fc"
+  }
+  param {
+    name: "pp_X_b_i"
+  }
+  param {
+    name: "pp_X_b_c"
+  }
+  param {
+    name: "pp_X_b_o"
+  }
+  param {
+    name: "pp_X_b_f"
+  }
+
+  param {
+    name: "pp_Y_W_i"
+  }
+  param {
+    name: "pp_Y_W_c"
+  }
+  param {
+    name: "pp_Y_W_o"
+  }
+  param {
+    name: "pp_Y_W_f"
+  }
+  param {
+    name: "pp_Y_W_ic"
+  }
+  param {
+    name: "pp_Y_W_oc"
+  }
+  param {
+    name: "pp_Y_W_fc"
+  }
+  param {
+    name: "pp_Y_b_i"
+  }
+  param {
+    name: "pp_Y_b_c"
+  }
+  param {
+    name: "pp_Y_b_o"
+  }
+  param {
+    name: "pp_Y_b_f"
+  }
+
+  param {
+    name: "pp_Z_W_i"
+  }
+  param {
+    name: "pp_Z_W_c"
+  }
+  param {
+    name: "pp_Z_W_o"
+  }
+  param {
+    name: "pp_Z_W_f"
+  }
+  param {
+    name: "pp_Z_W_ic"
+  }
+  param {
+    name: "pp_Z_W_oc"
+  }
+  param {
+    name: "pp_Z_W_fc"
+  }
+  param {
+    name: "pp_Z_b_i"
+  }
+  param {
+    name: "pp_Z_b_c"
+  }
+  param {
+    name: "pp_Z_b_o"
+  }
+  param {
+    name: "pp_Z_b_f"
+  }
+
+  grid_lstm_3d_param {
+    x_direction: POSITIVE
+    y_direction: POSITIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_2_posy_negx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_2_posy_posx_state"
+  bottom: "grid_lstm_3d_2_posy_posx_hidden"
+  top: "grid_lstm_3d_2_posy_negx_state"
+  top: "grid_lstm_3d_2_posy_negx_hidden"
+
+  param {
+    name: "pn_X_W_i"
+  }
+  param {
+    name: "pn_X_W_c"
+  }
+  param {
+    name: "pn_X_W_o"
+  }
+  param {
+    name: "pn_X_W_f"
+  }
+  param {
+    name: "pn_X_W_ic"
+  }
+  param {
+    name: "pn_X_W_oc"
+  }
+  param {
+    name: "pn_X_W_fc"
+  }
+  param {
+    name: "pn_X_b_i"
+  }
+  param {
+    name: "pn_X_b_c"
+  }
+  param {
+    name: "pn_X_b_o"
+  }
+  param {
+    name: "pn_X_b_f"
+  }
+
+  param {
+    name: "pn_Y_W_i"
+  }
+  param {
+    name: "pn_Y_W_c"
+  }
+  param {
+    name: "pn_Y_W_o"
+  }
+  param {
+    name: "pn_Y_W_f"
+  }
+  param {
+    name: "pn_Y_W_ic"
+  }
+  param {
+    name: "pn_Y_W_oc"
+  }
+  param {
+    name: "pn_Y_W_fc"
+  }
+  param {
+    name: "pn_Y_b_i"
+  }
+  param {
+    name: "pn_Y_b_c"
+  }
+  param {
+    name: "pn_Y_b_o"
+  }
+  param {
+    name: "pn_Y_b_f"
+  }
+
+  param {
+    name: "pn_Z_W_i"
+  }
+  param {
+    name: "pn_Z_W_c"
+  }
+  param {
+    name: "pn_Z_W_o"
+  }
+  param {
+    name: "pn_Z_W_f"
+  }
+  param {
+    name: "pn_Z_W_ic"
+  }
+  param {
+    name: "pn_Z_W_oc"
+  }
+  param {
+    name: "pn_Z_W_fc"
+  }
+  param {
+    name: "pn_Z_b_i"
+  }
+  param {
+    name: "pn_Z_b_c"
+  }
+  param {
+    name: "pn_Z_b_o"
+  }
+  param {
+    name: "pn_Z_b_f"
+  }
+
+  grid_lstm_3d_param {
+    x_direction: NEGATIVE
+    y_direction: POSITIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_2_negy_posx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_2_posy_negx_state"
+  bottom: "grid_lstm_3d_2_posy_negx_hidden"
+  top: "grid_lstm_3d_2_negy_posx_state"
+  top: "grid_lstm_3d_2_negy_posx_hidden"
+
+  
+  param {
+    name: "np_X_W_i"
+  }
+  param {
+    name: "np_X_W_c"
+  }
+  param {
+    name: "np_X_W_o"
+  }
+  param {
+    name: "np_X_W_f"
+  }
+  param {
+    name: "np_X_W_ic"
+  }
+  param {
+    name: "np_X_W_oc"
+  }
+  param {
+    name: "np_X_W_fc"
+  }
+  param {
+    name: "np_X_b_i"
+  }
+  param {
+    name: "np_X_b_c"
+  }
+  param {
+    name: "np_X_b_o"
+  }
+  param {
+    name: "np_X_b_f"
+  }
+
+  param {
+    name: "np_Y_W_i"
+  }
+  param {
+    name: "np_Y_W_c"
+  }
+  param {
+    name: "np_Y_W_o"
+  }
+  param {
+    name: "np_Y_W_f"
+  }
+  param {
+    name: "np_Y_W_ic"
+  }
+  param {
+    name: "np_Y_W_oc"
+  }
+  param {
+    name: "np_Y_W_fc"
+  }
+  param {
+    name: "np_Y_b_i"
+  }
+  param {
+    name: "np_Y_b_c"
+  }
+  param {
+    name: "np_Y_b_o"
+  }
+  param {
+    name: "np_Y_b_f"
+  }
+
+  param {
+    name: "np_Z_W_i"
+  }
+  param {
+    name: "np_Z_W_c"
+  }
+  param {
+    name: "np_Z_W_o"
+  }
+  param {
+    name: "np_Z_W_f"
+  }
+  param {
+    name: "np_Z_W_ic"
+  }
+  param {
+    name: "np_Z_W_oc"
+  }
+  param {
+    name: "np_Z_W_fc"
+  }
+  param {
+    name: "np_Z_b_i"
+  }
+  param {
+    name: "np_Z_b_c"
+  }
+  param {
+    name: "np_Z_b_o"
+  }
+  param {
+    name: "np_Z_b_f"
+  }
+
+  grid_lstm_3d_param {
+    x_direction: POSITIVE
+    y_direction: NEGATIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_2_negy_negx"
+  type: "GridLSTM3D"
+  bottom: "grid_lstm_3d_2_negy_posx_state"
+  bottom: "grid_lstm_3d_2_negy_posx_hidden"
+  top: "grid_lstm_3d_2_negy_negx_state"
+  top: "grid_lstm_3d_2_negy_negx_hidden"
+
+  
+  param {
+    name: "nn_X_W_i"
+  }
+  param {
+    name: "nn_X_W_c"
+  }
+  param {
+    name: "nn_X_W_o"
+  }
+  param {
+    name: "nn_X_W_f"
+  }
+  param {
+    name: "nn_X_W_ic"
+  }
+  param {
+    name: "nn_X_W_oc"
+  }
+  param {
+    name: "nn_X_W_fc"
+  }
+  param {
+    name: "nn_X_b_i"
+  }
+  param {
+    name: "nn_X_b_c"
+  }
+  param {
+    name: "nn_X_b_o"
+  }
+  param {
+    name: "nn_X_b_f"
+  }
+
+  param {
+    name: "nn_Y_W_i"
+  }
+  param {
+    name: "nn_Y_W_c"
+  }
+  param {
+    name: "nn_Y_W_o"
+  }
+  param {
+    name: "nn_Y_W_f"
+  }
+  param {
+    name: "nn_Y_W_ic"
+  }
+  param {
+    name: "nn_Y_W_oc"
+  }
+  param {
+    name: "nn_Y_W_fc"
+  }
+  param {
+    name: "nn_Y_b_i"
+  }
+  param {
+    name: "nn_Y_b_c"
+  }
+  param {
+    name: "nn_Y_b_o"
+  }
+  param {
+    name: "nn_Y_b_f"
+  }
+
+  param {
+    name: "nn_Z_W_i"
+  }
+  param {
+    name: "nn_Z_W_c"
+  }
+  param {
+    name: "nn_Z_W_o"
+  }
+  param {
+    name: "nn_Z_W_f"
+  }
+  param {
+    name: "nn_Z_W_ic"
+  }
+  param {
+    name: "nn_Z_W_oc"
+  }
+  param {
+    name: "nn_Z_W_fc"
+  }
+  param {
+    name: "nn_Z_b_i"
+  }
+  param {
+    name: "nn_Z_b_c"
+  }
+  param {
+    name: "nn_Z_b_o"
+  }
+  param {
+    name: "nn_Z_b_f"
+  }
+
+  grid_lstm_3d_param {
+    x_direction: NEGATIVE
+    y_direction: NEGATIVE
+    num_output: 32
+    peephole: false
+    general_weight_filler {
+      type: "uniform"
+      min: -0.2
+      max: 0.2      
+    }
+    cell_input_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    forget_gate_bias_filler {
+      type: "constant"
+      value: 2.
+    }
+    input_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }
+    output_gate_bias_filler {
+      type: "constant"
+      value: 0.
+    }        
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_2_negy_negx_state_dimension_transpose"
+  type: "DimensionTranspose"
+  bottom: "grid_lstm_3d_2_negy_negx_state"
+  top: "grid_lstm_3d_2_negy_negx_state_dimension_transpose"
+  dimension_transpose_param {
+    direction: HEIGHT_FIRST_TO_NUM_FIRST       
+  }
+}
+
+layer {
+  name: "grid_lstm_3d_2_negy_negx_hidden_dimension_transpose"
+  type: "DimensionTranspose"
+  bottom: "grid_lstm_3d_2_negy_negx_hidden"
+  top: "grid_lstm_3d_2_negy_negx_hidden_dimension_transpose"
+  dimension_transpose_param {
+    direction: HEIGHT_FIRST_TO_NUM_FIRST       
+  }
+}
+
+layer {
+  name: "concat_state_hidden"
+  type: "Concat"
+  bottom: "grid_lstm_3d_2_negy_negx_state_dimension_transpose"
+  bottom: "grid_lstm_3d_2_negy_negx_hidden_dimension_transpose"
+  top: "concat_state_hidden"
+  concat_param {
+    axis: 1       
+  }
+}
+
+layer {
+  name: "conv2"
+  type: "Convolution"
+  bottom: "concat_state_hidden"
+  top: "conv2"
+  param {
+      lr_mult: 1
+      decay_mult: 1
+  }
+  param {
+      lr_mult: 2
+      decay_mult: 0
+  }
+  convolution_param {
+    num_output: 11
+    kernel_size: 1
+    stride: 1
+    weight_filler {
+        type: "gaussian"
+        mean: 0.
+        std: 0.1
+    }
+    bias_filler {
+        type: "constant"
+        value: 0.
+    }
+  }
+}
+
+layer {
+  name: "bilinear_interpolation"
+  type: "BilinearInterpolation"
+  bottom: "conv2"
+  top: "conv2_full_res"
+  bilinear_interpolation_param {
+    interpolation_factor: 3
+  }
+}
+
+layer {
+  name: "cross_entropy_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv2_full_res"
+  bottom: "label"
+  top: "cross_entropy_loss"
+  loss_weight: 1
+  softmax_param {
+    axis: 1
+  }
+  loss_param {
+    ignore_label: 0
+  }  
+}
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "conv2_full_res"
+  bottom: "label"
+  top: "accuracy"
+  include { phase: TEST }
+  accuracy_param {
+    axis: 1
+    ignore_label: 0
+  }
+}

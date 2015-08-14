@@ -1,0 +1,29 @@
+# The train/test net protocol buffer definition
+net: "/cns/ok-d/home/zyan/caffe/examples/stanford_background/renet_1_lay_HP_nolbw_nopeep_model.prototxt"
+# test_iter specifies how many forward passes the test should carry out.
+# In the case of MNIST, we have test batch size 100 and 100 test iterations,
+# covering the full 10,000 testing images.
+test_iter: 5
+# Carry out testing every 500 training iterations.
+test_interval: 500
+# The base learning rate, momentum and the weight decay of the network.
+base_lr: 5e-2
+momentum: 0.9
+weight_decay: 0.0005
+# The learning rate policy
+# lr_policy: "inv"
+# gamma: 0.0001
+# power: 0.75
+#lr_policy: "fixed"
+lr_policy: "step"
+gamma: 0.1
+stepsize: 6000
+# Display every 100 iterations
+display: 50
+# The maximum number of iterations
+max_iter: 18000
+# snapshot intermediate results
+snapshot: 500
+snapshot_prefix: "/cns/ok-d/home/zyan/caffe/examples/stanford_background/renet_1_lay/renet_1_lay_HP_nolbw_nopeep_lr5e-2"
+# solver mode: CPU or GPU
+solver_mode: GPU

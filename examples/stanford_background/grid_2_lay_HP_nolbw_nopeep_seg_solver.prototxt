@@ -1,0 +1,17 @@
+net: "/cns/ok-d/home/zyan/caffe/examples/stanford_background/grid_2_lay_HP_nolbw_nopeep_seg_model.prototxt"
+test_iter: 5
+test_interval: 250
+base_lr: 2e-2
+lr_policy: "step"
+gamma: 0.1
+stepsize: 10000
+display: 50
+max_iter: 25000
+momentum: 0.9
+weight_decay: 0.0005
+snapshot: 500
+snapshot_prefix: "/cns/ok-d/home/zyan/caffe/examples/stanford_background/grid_lstm_3d_2_lay/grid_2_lay_HP_nolbw_nopeep_seg_lr2e-2"
+solver_mode: GPU
+random_seed: 1701
+average_loss: 1
+clip_gradients: 500
