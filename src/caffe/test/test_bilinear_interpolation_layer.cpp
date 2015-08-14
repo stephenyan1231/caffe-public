@@ -79,4 +79,5 @@ TYPED_TEST(BilinearInterpolationLayerTest, TestGradient5X){
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_);
 }
+
 }  // namespace caffe
