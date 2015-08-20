@@ -1,0 +1,561 @@
+name: "imagenet_nin4-small_new_version_train"
+layer {
+    name: "data"
+    type: "Data"
+    top: "data"
+    top: "label"
+    include {
+        phase: TRAIN
+    }    
+    transform_param {
+        crop_size: 224
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: true
+        resize_size: 256
+    }    
+    data_param {
+		source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_train_encoded_lmdb"
+		batch_size: 100
+        backend: LMDB
+	selective_list: "/home/zyan3/proj/caffe_private_hdcnn/data/ilsvrc12/cluster_confusion_mat_89clusters_nin_imagenet/v2.0/selective_list_cluster04_train.txt"
+    }
+}
+layer {
+    name: "data"
+    type: "Data"
+    top: "data"
+    top: "label"
+    include {
+        phase: TEST
+    }    
+    transform_param {
+        crop_size: 224
+        mean_value: 104
+        mean_value: 117
+        mean_value: 123
+        mirror: false
+        resize_size: 256
+    }    
+    data_param {
+		source: "/home/zyan3/local/data/imagenet/ilsvrc12/ilsvrc12_val_encoded_lmdb"
+		batch_size: 50
+        backend: LMDB
+	selective_list: "/home/zyan3/proj/caffe_private_hdcnn/data/ilsvrc12/cluster_confusion_mat_89clusters_nin_imagenet/v2.0/selective_list_cluster04_val.txt"
+    }
+}
+
+layer {
+    bottom: "data"
+    top: "conv1"
+    name: "conv1"
+    type: "Convolution"
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }        
+    convolution_param {
+        num_output: 96
+        kernel_size: 11
+        stride: 4
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.01
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+     }
+}
+layer {
+  bottom: "conv1"
+  top: "conv1"
+  name: "relu0"
+  type: "ReLU"
+}
+layer {
+    bottom: "conv1"
+    top: "cccp1"
+    name: "cccp1"
+    type: "Convolution"
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }    
+    convolution_param {
+        num_output: 96
+        kernel_size: 1
+        stride: 1
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+   }
+}
+layer {
+    bottom: "cccp1"
+    top: "cccp1"
+    name: "relu1"
+    type: "ReLU"
+}
+layer {
+    bottom: "cccp1"
+    top: "cccp2"
+    name: "cccp2"
+    type: "Convolution"
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }    
+    convolution_param {
+        num_output: 96
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+    }
+}
+layer {
+    bottom: "cccp2"
+    top: "cccp2"
+    name: "relu2"
+    type: "ReLU"
+}
+layer {
+    bottom: "cccp2"
+    top: "pool0"
+    name: "pool0"
+    type: "Pooling" 
+    pooling_param {
+        pool: MAX
+        kernel_size: 3
+        stride: 2
+    }
+}
+layer {
+    bottom: "pool0"
+    top: "conv2"
+    name: "conv2"
+    type: "Convolution"
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    convolution_param {
+        num_output: 256
+        kernel_size: 5
+        pad: 2
+        stride: 1
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+    }
+}
+layer {
+    bottom: "conv2"
+    top: "conv2"
+    name: "relu3"
+    type: "ReLU"
+}
+layer {
+    bottom: "conv2"
+    top: "cccp3"
+    name: "cccp3"
+    type: "Convolution"
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    convolution_param {
+        num_output: 256
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+    }
+}
+layer {
+    bottom: "cccp3"
+    top: "cccp3"
+    name: "relu5"
+    type: "ReLU"
+}
+layer {
+    bottom: "cccp3"
+    top: "cccp4"
+    name: "cccp4"
+    type: "Convolution"
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    convolution_param {
+        num_output: 256
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+    }
+}
+layer {
+    bottom: "cccp4"
+    top: "cccp4"
+    name: "relu6"
+    type: "ReLU"
+}
+layer {
+    bottom: "cccp4"
+    top: "pool2"
+    name: "pool2"
+    type: "Pooling"
+    pooling_param {
+        pool: MAX
+        kernel_size: 3
+        stride: 2
+    }
+}
+layer {
+    bottom: "pool2"
+    top: "conv3"
+    name: "conv3"
+    type: "Convolution"
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    convolution_param {
+        num_output: 384
+        kernel_size: 3
+        pad: 1
+        stride: 1
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.01
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+    }
+}
+layer {
+  bottom: "conv3"
+  top: "conv3"
+  name: "relu7"
+  type: "ReLU"
+}
+layer {
+    name: "cccp5"
+    type: "Convolution"
+    bottom: "conv3"
+    top: "cccp5"
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    convolution_param {
+        num_output: 384
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+    }
+}
+layer {
+  bottom: "cccp5"
+  top: "cccp5"
+  name: "relu8"
+  type: "ReLU"
+}
+layer {
+    bottom: "cccp5"
+    top: "cccp6"
+    name: "cccp6"
+    type: "Convolution"
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    param {
+        lr_mult: 0.00
+        decay_mult: 0.00
+    }
+    convolution_param {
+        num_output: 384
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+   }
+}
+layer {
+  bottom: "cccp6"
+  top: "cccp6"
+  name: "relu9"
+  type: "ReLU"
+}
+layer {
+    bottom: "cccp6"
+    top: "pool3"
+    name: "pool3"
+    type: "Pooling"
+    pooling_param {
+        pool: MAX
+        kernel_size: 3
+        stride: 2
+    }
+}
+layer {
+    bottom: "pool3"
+    top: "pool3"
+    name: "drop"
+    type: "Dropout"
+    dropout_param {
+        dropout_ratio: 0.5
+    }
+}
+layer {
+    bottom: "pool3"
+    top: "cluster04_conv4-1024"
+    name: "cluster04_conv4-1024"
+    type: "Convolution"
+    param {
+        lr_mult: 1
+        decay_mult: 1
+    }
+    param {
+        lr_mult: 2
+        decay_mult: 0
+    }
+    convolution_param {
+        num_output: 1024
+        kernel_size: 3
+        pad: 1
+        stride: 1
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 128
+        quantization_num_segment: 1152
+		quantization_kmean_cluster_centers_file: "models/nin_imagenet/89clusters/89clusters_v2.0/iter_40000/cluster04_conv4-1024_128_1152_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/nin_imagenet/89clusters/89clusters_v2.0/iter_40000/cluster04_conv4-1024_128_1152_kmean_cluster_indices.binaryproto"
+    }
+	conserve_gpu_memory_test: true
+}
+layer {
+    bottom: "cluster04_conv4-1024"
+    top: "cluster04_conv4-1024"
+    name: "cluster04_relu10"
+    type: "ReLU"
+}
+layer {
+    bottom: "cluster04_conv4-1024"
+    top: "cluster04_cccp7-1024"
+    name: "cluster04_cccp7-1024"
+    type: "Convolution"
+    param {
+        lr_mult: 1
+        decay_mult: 1
+    }
+    param {
+        lr_mult: 2
+        decay_mult: 0
+    }
+    convolution_param {
+        num_output: 1024
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 256
+        quantization_num_segment: 512
+		quantization_kmean_cluster_centers_file: "models/nin_imagenet/89clusters/89clusters_v2.0/iter_40000/cluster04_cccp7-1024_256_512_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/nin_imagenet/89clusters/89clusters_v2.0/iter_40000/cluster04_cccp7-1024_256_512_kmean_cluster_indices.binaryproto"
+    }
+	conserve_gpu_memory_test: true
+}
+layer {
+    bottom: "cluster04_cccp7-1024"
+    top: "cluster04_cccp7-1024"
+    name: "cluster04_relu11"
+    type: "ReLU"
+}
+layer {
+    bottom: "cluster04_cccp7-1024"
+    top: "cluster04_cccp8-1024_compact"
+    name: "cluster04_cccp8-1024_compact"
+    type: "Convolution"
+    param {
+        lr_mult: 1
+        decay_mult: 1
+    }
+    param {
+        lr_mult: 2
+        decay_mult: 0
+    }
+    convolution_param {
+				num_output: 71
+        kernel_size: 1
+        stride: 1           
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.01
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }        
+    }
+}
+layer {
+  bottom: "cluster04_cccp8-1024_compact"
+  top: "cluster04_cccp8-1024_compact"
+  name: "cluster04_relu12"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster04_cccp8-1024_compact"
+    top: "cluster04_pool4"
+    name: "cluster04_pool4"
+    type: "Pooling"
+    pooling_param {
+        pool: AVE
+        kernel_size: 6
+        stride: 1
+    }
+}
+
+layer {
+  name: "accuracy_top1"
+  type: "Accuracy"
+  bottom: "cluster04_pool4"
+  bottom: "label"
+  top: "accuracy_top1"
+  include {
+    phase: TEST
+  }
+  accuracy_param {
+    top_k: 1
+  }  
+}
+
+layer {
+  name: "accuracy_top5"
+  type: "Accuracy"
+  bottom: "cluster04_pool4"
+  bottom: "label"
+  top: "accuracy_top5"
+  include {
+    phase: TEST
+  }
+  accuracy_param {
+    top_k: 5
+  }  
+}
+
+layer {
+    name: "loss"
+    type: "SoftmaxWithLoss"
+    bottom: "cluster04_pool4"
+    bottom: "label"
+    top: "loss" 
+  include {
+    phase: TRAIN
+  }       
+}
