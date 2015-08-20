@@ -1528,18 +1528,10 @@ template<typename Dtype>
 void NetThread<Dtype>::clear_blobs_gpu() {
 	for (int i = 0; i < blobs_.size(); ++i) {
 		if(blobs_[i]->count() > 0){
-			LOG(INFO)<<"blob size "<<blobs_[i]->num()<<" "
-					<<blobs_[i]->channels()<<" "
-					<<blobs_[i]->height()<<" "
-					<<blobs_[i]->width();
 			for(std::map<std::string, int>::iterator it = blob_names_index_.begin();
 					it != blob_names_index_.end(); ++it){
-				if(it->second == i){
-					LOG(INFO)<<"non-empty blob "<<it->first;
-				}
 			}
 		}
-
 		blobs_[i]->ReshapeForceMemoryFree(0, 0, 0, 0);
 	}
 }

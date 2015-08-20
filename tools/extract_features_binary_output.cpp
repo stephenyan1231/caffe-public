@@ -183,7 +183,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 					feature_blob_data = feature_blob->cpu_data() +
 							feature_blob->offset(n);
 
-					int length = snprintf(key_str, kMaxKeyStrLength, "%d",
+					snprintf(key_str, kMaxKeyStrLength, "%d",
 							image_indices[i]);
 
 				  std::ofstream metafile;

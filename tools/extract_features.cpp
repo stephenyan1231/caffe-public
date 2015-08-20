@@ -154,6 +154,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	LOG(ERROR)<< "Extracting Features";
 
 	int replica_num = Caffe::GetReplicasNum();
+	LOG(INFO)<<"replica_num:"<<replica_num;
 	Datum datum;
 	const int kMaxKeyStrLength = 1024;
 	char key_str[kMaxKeyStrLength];
@@ -196,9 +197,12 @@ int feature_extraction_pipeline(int argc, char** argv) {
 					string out;
 					CHECK(datum.SerializeToString(&out));
 					txns.at(i)->Put(std::string(key_str, length), out);
+
 					++image_indices[i];
 					if (image_indices[i] % commit_frequency == 0) {
+						LOG(INFO)<<"commit";
 						txns.at(i)->Commit();
+						LOG(INFO)<<"commit:completed";
 						txns.at(i).reset(feature_dbs.at(i)->NewTransaction());
 						LOG(ERROR)<< "Extracted features of " << image_indices[i] <<
 						" query images for feature blob " << blob_names[i];

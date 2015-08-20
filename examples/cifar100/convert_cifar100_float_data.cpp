@@ -57,7 +57,6 @@ void convert_dataset(const string& input_folder, const string& output_folder,
 		std::ifstream labels_file((input_folder + "/" + labels_of_interest).c_str(), std::ios::in);
 		string line;
 		if(labels_file.is_open()){
-			int new_label = 0;
 			while(getline(labels_file, line)){
 				std::stringstream ss(line);
 				ss>>label_inte;
@@ -83,7 +82,7 @@ void convert_dataset(const string& input_folder, const string& output_folder,
 	options.create_if_missing = true;
 	options.error_if_exists = true;
 	// Data buffer
-	int coarse_label, fine_label;
+	int fine_label;
 	char str_buffer[kCIFARImageNBytes];
 	float float_buffer[kCIFARImageNBytes];
 	string value;
@@ -130,7 +129,7 @@ void convert_dataset(const string& input_folder, const string& output_folder,
 				datum.SerializeToString(&value);
 				int length = snprintf(str_buffer, kCIFARImageNBytes, "%d", itemid);
 				tr_img_list<<itemid<<" "<<new_label<<std::endl;
-				LOG(INFO)<<"key "<<str_buffer<<" length "<<length;
+				DLOG(INFO)<<"key "<<str_buffer<<" length "<<length;
 				train_txn->Put(string(str_buffer, length), value);
 //				train_db->Put(leveldb::WriteOptions(), string(str_buffer), value);
 			}
