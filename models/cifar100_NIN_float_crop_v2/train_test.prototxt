@@ -36,7 +36,8 @@ layer {
     source: "examples/cifar100/cifar100-float-lmdb/cifar100-test-lmdb"
     batch_size: 100
     backend: LMDB
-    selective_list: ""    
+    selective_list: "data/cifar100/test.txt"
+    selective_list_shuffle: false
   }
 }
 

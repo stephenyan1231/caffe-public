@@ -1,0 +1,3790 @@
+name: "hdcnn_CIFAR100_NIN_float_crop_v2_deploy"
+input: "data"
+input_dim: 100
+input_dim: 3
+input_dim: 26
+input_dim: 26
+
+
+
+layer {
+  bottom: "data"
+  top: "conv1"
+  name: "conv1"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+    bottom: "conv1"
+    top: "cccp1"
+    name: "cccp1"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 160
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+   }
+}
+layer {
+  bottom: "cccp1"
+  top: "cccp1"
+  name: "relu1"
+  type: "ReLU"
+} 
+layer {
+    bottom: "cccp1"
+    top: "cccp2"
+    name: "cccp2"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 96
+        kernel_size: 1
+        stride: 1            
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+   }
+}
+layer {
+  bottom: "cccp2"
+  top: "cccp2"
+  name: "relu2"
+  type: "ReLU"
+}
+layer {
+  bottom: "cccp2"
+  top: "pool1"
+  name: "pool1"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+
+layer {
+  bottom: "pool1"
+  top: "pool1"
+  name: "drop1"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "pool1"
+  top: "conv2"
+  name: "conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "conv2"
+    top: "cccp3"
+    name: "cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cccp3"
+  top: "cccp3"
+  name: "relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cccp3"
+    top: "cccp4"
+    name: "cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cccp4"
+  top: "cccp4"
+  name: "relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cccp4"
+  top: "pool2"
+  name: "pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "pool2"
+  top: "pool2"
+  name: "drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "pool2"
+  top: "conv3"
+  name: "conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "conv3"
+    top: "cccp5"
+    name: "cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cccp5"
+  top: "cccp5"
+  name: "relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cccp5"
+    top: "cccp6"
+    name: "cccp6"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 100
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cccp6"
+  top: "cccp6"
+  name: "relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cccp6"
+  top: "poolg"
+  name: "poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "fine_branch_prob"
+	type: "Softmax"
+	bottom: "poolg"
+	top: "fine_branch_prob"
+}
+layer {
+	name: "coarse_branch_prob"
+	type: "Fine2MultiCoarseProb"
+	bottom: "fine_branch_prob"
+	top: "coarse_branch_prob"
+	fine2multicoarse_prob_layer_param{
+		num_coarse: 9
+		fine2multicoarse_param{
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 6
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 6
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 3
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 6
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 6
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+		}
+		fine2multicoarse_param{
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 6
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 7
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 5
+			coarse_id: 6
+			coarse_id: 7
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 6
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 6
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 6
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 5
+			coarse_id: 6
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 5
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 4
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 5
+		}
+		fine2multicoarse_param{
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 7
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 5
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 5
+			coarse_id: 7
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 7
+		}
+		fine2multicoarse_param{
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 5
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 7
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 5
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 6
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 4
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 5
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 7
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 8
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 6
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 5
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 7
+		}
+		fine2multicoarse_param{
+			coarse_id: 3
+			coarse_id: 5
+		}
+		fine2multicoarse_param{
+			coarse_id: 2
+			coarse_id: 3
+		}
+		fine2multicoarse_param{
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+		}
+		fine2multicoarse_param{
+			coarse_id: 0
+			coarse_id: 1
+			coarse_id: 2
+			coarse_id: 3
+			coarse_id: 4
+			coarse_id: 7
+		}
+	}
+}
+layer {
+  bottom: "pool1"
+  top: "cluster00_conv2"
+  name: "cluster00_conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster00_conv2"
+    top: "cluster00_cccp3"
+    name: "cluster00_cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster00_cccp3"
+  top: "cluster00_cccp3"
+  name: "cluster00_relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster00_cccp3"
+    top: "cluster00_cccp4"
+    name: "cluster00_cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster00_cccp4"
+  top: "cluster00_cccp4"
+  name: "cluster00_relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cluster00_cccp4"
+  top: "cluster00_pool2"
+  name: "cluster00_pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "cluster00_pool2"
+  top: "cluster00_pool2"
+  name: "cluster00_drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "cluster00_pool2"
+  top: "cluster00_conv3"
+  name: "cluster00_conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster00_conv3"
+    top: "cluster00_cccp5"
+    name: "cluster00_cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster00_cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster00_cccp5"
+  top: "cluster00_cccp5"
+  name: "cluster00_relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster00_cccp5"
+    top: "cluster00_cccp6_compact"
+    name: "cluster00_cccp6_compact"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+		num_output: 25
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cluster00_cccp6_compact"
+  top: "cluster00_cccp6_compact"
+  name: "cluster00_relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cluster00_cccp6_compact"
+  top: "cluster00_poolg"
+  name: "cluster00_poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "cluster00_prob_compact"
+	type: "Softmax"
+	bottom: "cluster00_poolg"
+	top: "cluster00_prob_compact"
+}
+layer {
+  bottom: "pool1"
+  top: "cluster01_conv2"
+  name: "cluster01_conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster01_conv2"
+    top: "cluster01_cccp3"
+    name: "cluster01_cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster01_cccp3"
+  top: "cluster01_cccp3"
+  name: "cluster01_relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster01_cccp3"
+    top: "cluster01_cccp4"
+    name: "cluster01_cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster01_cccp4"
+  top: "cluster01_cccp4"
+  name: "cluster01_relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cluster01_cccp4"
+  top: "cluster01_pool2"
+  name: "cluster01_pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "cluster01_pool2"
+  top: "cluster01_pool2"
+  name: "cluster01_drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "cluster01_pool2"
+  top: "cluster01_conv3"
+  name: "cluster01_conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster01_conv3"
+    top: "cluster01_cccp5"
+    name: "cluster01_cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster01_cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster01_cccp5"
+  top: "cluster01_cccp5"
+  name: "cluster01_relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster01_cccp5"
+    top: "cluster01_cccp6_compact"
+    name: "cluster01_cccp6_compact"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+		num_output: 51
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cluster01_cccp6_compact"
+  top: "cluster01_cccp6_compact"
+  name: "cluster01_relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cluster01_cccp6_compact"
+  top: "cluster01_poolg"
+  name: "cluster01_poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "cluster01_prob_compact"
+	type: "Softmax"
+	bottom: "cluster01_poolg"
+	top: "cluster01_prob_compact"
+}
+layer {
+  bottom: "pool1"
+  top: "cluster02_conv2"
+  name: "cluster02_conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster02_conv2"
+    top: "cluster02_cccp3"
+    name: "cluster02_cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster02_cccp3"
+  top: "cluster02_cccp3"
+  name: "cluster02_relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster02_cccp3"
+    top: "cluster02_cccp4"
+    name: "cluster02_cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster02_cccp4"
+  top: "cluster02_cccp4"
+  name: "cluster02_relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cluster02_cccp4"
+  top: "cluster02_pool2"
+  name: "cluster02_pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "cluster02_pool2"
+  top: "cluster02_pool2"
+  name: "cluster02_drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "cluster02_pool2"
+  top: "cluster02_conv3"
+  name: "cluster02_conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster02_conv3"
+    top: "cluster02_cccp5"
+    name: "cluster02_cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster02_cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster02_cccp5"
+  top: "cluster02_cccp5"
+  name: "cluster02_relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster02_cccp5"
+    top: "cluster02_cccp6_compact"
+    name: "cluster02_cccp6_compact"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+		num_output: 80
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cluster02_cccp6_compact"
+  top: "cluster02_cccp6_compact"
+  name: "cluster02_relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cluster02_cccp6_compact"
+  top: "cluster02_poolg"
+  name: "cluster02_poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "cluster02_prob_compact"
+	type: "Softmax"
+	bottom: "cluster02_poolg"
+	top: "cluster02_prob_compact"
+}
+layer {
+  bottom: "pool1"
+  top: "cluster03_conv2"
+  name: "cluster03_conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster03_conv2"
+    top: "cluster03_cccp3"
+    name: "cluster03_cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster03_cccp3"
+  top: "cluster03_cccp3"
+  name: "cluster03_relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster03_cccp3"
+    top: "cluster03_cccp4"
+    name: "cluster03_cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster03_cccp4"
+  top: "cluster03_cccp4"
+  name: "cluster03_relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cluster03_cccp4"
+  top: "cluster03_pool2"
+  name: "cluster03_pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "cluster03_pool2"
+  top: "cluster03_pool2"
+  name: "cluster03_drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "cluster03_pool2"
+  top: "cluster03_conv3"
+  name: "cluster03_conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster03_conv3"
+    top: "cluster03_cccp5"
+    name: "cluster03_cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster03_cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster03_cccp5"
+  top: "cluster03_cccp5"
+  name: "cluster03_relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster03_cccp5"
+    top: "cluster03_cccp6_compact"
+    name: "cluster03_cccp6_compact"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+		num_output: 80
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cluster03_cccp6_compact"
+  top: "cluster03_cccp6_compact"
+  name: "cluster03_relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cluster03_cccp6_compact"
+  top: "cluster03_poolg"
+  name: "cluster03_poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "cluster03_prob_compact"
+	type: "Softmax"
+	bottom: "cluster03_poolg"
+	top: "cluster03_prob_compact"
+}
+layer {
+  bottom: "pool1"
+  top: "cluster04_conv2"
+  name: "cluster04_conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster04_conv2"
+    top: "cluster04_cccp3"
+    name: "cluster04_cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster04_cccp3"
+  top: "cluster04_cccp3"
+  name: "cluster04_relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster04_cccp3"
+    top: "cluster04_cccp4"
+    name: "cluster04_cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster04_cccp4"
+  top: "cluster04_cccp4"
+  name: "cluster04_relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cluster04_cccp4"
+  top: "cluster04_pool2"
+  name: "cluster04_pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "cluster04_pool2"
+  top: "cluster04_pool2"
+  name: "cluster04_drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "cluster04_pool2"
+  top: "cluster04_conv3"
+  name: "cluster04_conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster04_conv3"
+    top: "cluster04_cccp5"
+    name: "cluster04_cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster04_cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster04_cccp5"
+  top: "cluster04_cccp5"
+  name: "cluster04_relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster04_cccp5"
+    top: "cluster04_cccp6_compact"
+    name: "cluster04_cccp6_compact"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+		num_output: 36
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cluster04_cccp6_compact"
+  top: "cluster04_cccp6_compact"
+  name: "cluster04_relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cluster04_cccp6_compact"
+  top: "cluster04_poolg"
+  name: "cluster04_poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "cluster04_prob_compact"
+	type: "Softmax"
+	bottom: "cluster04_poolg"
+	top: "cluster04_prob_compact"
+}
+layer {
+  bottom: "pool1"
+  top: "cluster05_conv2"
+  name: "cluster05_conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster05_conv2"
+    top: "cluster05_cccp3"
+    name: "cluster05_cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster05_cccp3"
+  top: "cluster05_cccp3"
+  name: "cluster05_relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster05_cccp3"
+    top: "cluster05_cccp4"
+    name: "cluster05_cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster05_cccp4"
+  top: "cluster05_cccp4"
+  name: "cluster05_relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cluster05_cccp4"
+  top: "cluster05_pool2"
+  name: "cluster05_pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "cluster05_pool2"
+  top: "cluster05_pool2"
+  name: "cluster05_drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "cluster05_pool2"
+  top: "cluster05_conv3"
+  name: "cluster05_conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster05_conv3"
+    top: "cluster05_cccp5"
+    name: "cluster05_cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster05_cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster05_cccp5"
+  top: "cluster05_cccp5"
+  name: "cluster05_relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster05_cccp5"
+    top: "cluster05_cccp6_compact"
+    name: "cluster05_cccp6_compact"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+		num_output: 25
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cluster05_cccp6_compact"
+  top: "cluster05_cccp6_compact"
+  name: "cluster05_relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cluster05_cccp6_compact"
+  top: "cluster05_poolg"
+  name: "cluster05_poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "cluster05_prob_compact"
+	type: "Softmax"
+	bottom: "cluster05_poolg"
+	top: "cluster05_prob_compact"
+}
+layer {
+  bottom: "pool1"
+  top: "cluster06_conv2"
+  name: "cluster06_conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster06_conv2"
+    top: "cluster06_cccp3"
+    name: "cluster06_cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster06_cccp3"
+  top: "cluster06_cccp3"
+  name: "cluster06_relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster06_cccp3"
+    top: "cluster06_cccp4"
+    name: "cluster06_cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster06_cccp4"
+  top: "cluster06_cccp4"
+  name: "cluster06_relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cluster06_cccp4"
+  top: "cluster06_pool2"
+  name: "cluster06_pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "cluster06_pool2"
+  top: "cluster06_pool2"
+  name: "cluster06_drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "cluster06_pool2"
+  top: "cluster06_conv3"
+  name: "cluster06_conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster06_conv3"
+    top: "cluster06_cccp5"
+    name: "cluster06_cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster06_cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster06_cccp5"
+  top: "cluster06_cccp5"
+  name: "cluster06_relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster06_cccp5"
+    top: "cluster06_cccp6_compact"
+    name: "cluster06_cccp6_compact"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+		num_output: 27
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cluster06_cccp6_compact"
+  top: "cluster06_cccp6_compact"
+  name: "cluster06_relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cluster06_cccp6_compact"
+  top: "cluster06_poolg"
+  name: "cluster06_poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "cluster06_prob_compact"
+	type: "Softmax"
+	bottom: "cluster06_poolg"
+	top: "cluster06_prob_compact"
+}
+layer {
+  bottom: "pool1"
+  top: "cluster07_conv2"
+  name: "cluster07_conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster07_conv2"
+    top: "cluster07_cccp3"
+    name: "cluster07_cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster07_cccp3"
+  top: "cluster07_cccp3"
+  name: "cluster07_relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster07_cccp3"
+    top: "cluster07_cccp4"
+    name: "cluster07_cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster07_cccp4"
+  top: "cluster07_cccp4"
+  name: "cluster07_relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cluster07_cccp4"
+  top: "cluster07_pool2"
+  name: "cluster07_pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "cluster07_pool2"
+  top: "cluster07_pool2"
+  name: "cluster07_drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "cluster07_pool2"
+  top: "cluster07_conv3"
+  name: "cluster07_conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster07_conv3"
+    top: "cluster07_cccp5"
+    name: "cluster07_cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster07_cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster07_cccp5"
+  top: "cluster07_cccp5"
+  name: "cluster07_relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster07_cccp5"
+    top: "cluster07_cccp6_compact"
+    name: "cluster07_cccp6_compact"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+		num_output: 27
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cluster07_cccp6_compact"
+  top: "cluster07_cccp6_compact"
+  name: "cluster07_relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cluster07_cccp6_compact"
+  top: "cluster07_poolg"
+  name: "cluster07_poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "cluster07_prob_compact"
+	type: "Softmax"
+	bottom: "cluster07_poolg"
+	top: "cluster07_prob_compact"
+}
+layer {
+  bottom: "pool1"
+  top: "cluster08_conv2"
+  name: "cluster08_conv2"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 2
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 1200
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_conv2_64_1200_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_conv2_64_1200_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster08_conv2"
+    top: "cluster08_cccp3"
+    name: "cluster08_cccp3"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1        
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_cccp3_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_cccp3_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster08_cccp3"
+  top: "cluster08_cccp3"
+  name: "cluster08_relu3"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster08_cccp3"
+    top: "cluster08_cccp4"
+    name: "cluster08_cccp4"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_cccp4_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_cccp4_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster08_cccp4"
+  top: "cluster08_cccp4"
+  name: "cluster08_relu4"
+  type: "ReLU"
+}
+
+
+layer {
+  bottom: "cluster08_cccp4"
+  top: "cluster08_pool2"
+  name: "cluster08_pool2"
+  type: "Pooling"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  bottom: "cluster08_pool2"
+  top: "cluster08_pool2"
+  name: "cluster08_drop2"
+  type: "Dropout"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  bottom: "cluster08_pool2"
+  top: "cluster08_conv3"
+  name: "cluster08_conv3"
+  type: "Convolution"
+    param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 192
+    pad: 1
+    kernel_size: 3
+    stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.05
+    }
+    bias_filler {
+      type: "constant"
+    }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 576
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_conv3_64_576_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_conv3_64_576_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+
+layer {
+    bottom: "cluster08_conv3"
+    top: "cluster08_cccp5"
+    name: "cluster08_cccp5"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+        num_output: 192
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }
+		quantization_kmean_num_cluster: 64
+		quantization_num_segment: 96
+		quantization_kmean_cluster_centers_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_cccp5_64_96_kmean_cluster_centers.binaryproto"
+		quantization_kmean_cluster_indices_file: "models/cifar100_NIN_float_crop_v2/9clusters/9clusters_v0.0/iter_25000/cluster08_cccp5_64_96_kmean_cluster_indices.binaryproto"
+  }
+	conserve_gpu_memory_test: false
+	parameter_compress: false
+}
+layer {
+  bottom: "cluster08_cccp5"
+  top: "cluster08_cccp5"
+  name: "cluster08_relu5"
+  type: "ReLU"
+}
+layer {
+    bottom: "cluster08_cccp5"
+    top: "cluster08_cccp6_compact"
+    name: "cluster08_cccp6_compact"
+    type: "Convolution"
+      param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+    convolution_param {
+		num_output: 43
+        kernel_size: 1
+        stride: 1         
+        weight_filler {
+            type: "gaussian"
+            mean: 0.
+            std: 0.05
+        }
+        bias_filler {
+            type: "constant"
+            value: 0.
+        }   
+  }
+}
+layer {
+  bottom: "cluster08_cccp6_compact"
+  top: "cluster08_cccp6_compact"
+  name: "cluster08_relu6"
+  type: "ReLU"
+}
+
+layer {
+  bottom: "cluster08_cccp6_compact"
+  top: "cluster08_poolg"
+  name: "cluster08_poolg"
+  type: "Pooling"
+  pooling_param {
+    pool: AVE
+    kernel_size: 6
+    stride: 1
+  }
+}
+layer {
+	name: "cluster08_prob_compact"
+	type: "Softmax"
+	bottom: "cluster08_poolg"
+	top: "cluster08_prob_compact"
+}
+layer {
+	name: "compact_probabilistic_average_prob"
+	type: "CompactProbabilisticAverageProb"
+	bottom: "cluster00_prob_compact"
+	bottom: "cluster01_prob_compact"
+	bottom: "cluster02_prob_compact"
+	bottom: "cluster03_prob_compact"
+	bottom: "cluster04_prob_compact"
+	bottom: "cluster05_prob_compact"
+	bottom: "cluster06_prob_compact"
+	bottom: "cluster07_prob_compact"
+	bottom: "cluster08_prob_compact"
+	bottom: "coarse_branch_prob"
+	top: "compact_probabilistic_average_prob"
+	compact_probabilistic_average_prob_layer_param{
+		num_class:100
+		compact_classify_layer_param{
+			class_id:5
+			class_id:20
+			class_id:25
+			class_id:84
+			class_id:87
+			class_id:94
+			class_id:40
+			class_id:16
+			class_id:86
+			class_id:12
+			class_id:10
+			class_id:58
+			class_id:28
+			class_id:13
+			class_id:9
+			class_id:65
+			class_id:76
+			class_id:81
+			class_id:46
+			class_id:37
+			class_id:89
+			class_id:99
+			class_id:39
+			class_id:2
+			class_id:22
+		}
+		compact_classify_layer_param{
+			class_id:9
+			class_id:10
+			class_id:16
+			class_id:22
+			class_id:28
+			class_id:39
+			class_id:40
+			class_id:61
+			class_id:69
+			class_id:76
+			class_id:86
+			class_id:99
+			class_id:87
+			class_id:25
+			class_id:78
+			class_id:94
+			class_id:84
+			class_id:65
+			class_id:5
+			class_id:72
+			class_id:98
+			class_id:57
+			class_id:12
+			class_id:18
+			class_id:46
+			class_id:44
+			class_id:41
+			class_id:20
+			class_id:73
+			class_id:32
+			class_id:1
+			class_id:67
+			class_id:66
+			class_id:49
+			class_id:51
+			class_id:14
+			class_id:71
+			class_id:90
+			class_id:64
+			class_id:93
+			class_id:45
+			class_id:50
+			class_id:37
+			class_id:85
+			class_id:7
+			class_id:54
+			class_id:11
+			class_id:77
+			class_id:26
+			class_id:2
+			class_id:75
+		}
+		compact_classify_layer_param{
+			class_id:1
+			class_id:6
+			class_id:7
+			class_id:14
+			class_id:18
+			class_id:24
+			class_id:26
+			class_id:27
+			class_id:30
+			class_id:44
+			class_id:45
+			class_id:73
+			class_id:77
+			class_id:78
+			class_id:79
+			class_id:82
+			class_id:91
+			class_id:95
+			class_id:99
+			class_id:93
+			class_id:67
+			class_id:72
+			class_id:55
+			class_id:74
+			class_id:80
+			class_id:29
+			class_id:51
+			class_id:32
+			class_id:50
+			class_id:10
+			class_id:4
+			class_id:40
+			class_id:54
+			class_id:64
+			class_id:65
+			class_id:63
+			class_id:38
+			class_id:66
+			class_id:22
+			class_id:3
+			class_id:62
+			class_id:83
+			class_id:48
+			class_id:25
+			class_id:39
+			class_id:92
+			class_id:84
+			class_id:61
+			class_id:34
+			class_id:19
+			class_id:46
+			class_id:12
+			class_id:86
+			class_id:97
+			class_id:33
+			class_id:69
+			class_id:41
+			class_id:71
+			class_id:70
+			class_id:89
+			class_id:42
+			class_id:23
+			class_id:75
+			class_id:43
+			class_id:56
+			class_id:11
+			class_id:28
+			class_id:98
+			class_id:57
+			class_id:2
+			class_id:76
+			class_id:87
+			class_id:5
+			class_id:16
+			class_id:90
+			class_id:49
+			class_id:85
+			class_id:20
+			class_id:8
+			class_id:88
+		}
+		compact_classify_layer_param{
+			class_id:3
+			class_id:4
+			class_id:15
+			class_id:19
+			class_id:29
+			class_id:31
+			class_id:32
+			class_id:34
+			class_id:36
+			class_id:38
+			class_id:42
+			class_id:43
+			class_id:50
+			class_id:51
+			class_id:55
+			class_id:63
+			class_id:64
+			class_id:65
+			class_id:66
+			class_id:67
+			class_id:72
+			class_id:74
+			class_id:75
+			class_id:80
+			class_id:88
+			class_id:93
+			class_id:97
+			class_id:77
+			class_id:44
+			class_id:27
+			class_id:73
+			class_id:21
+			class_id:78
+			class_id:95
+			class_id:26
+			class_id:46
+			class_id:14
+			class_id:33
+			class_id:7
+			class_id:18
+			class_id:30
+			class_id:91
+			class_id:10
+			class_id:45
+			class_id:2
+			class_id:1
+			class_id:6
+			class_id:79
+			class_id:99
+			class_id:25
+			class_id:85
+			class_id:12
+			class_id:40
+			class_id:11
+			class_id:35
+			class_id:22
+			class_id:92
+			class_id:49
+			class_id:98
+			class_id:84
+			class_id:90
+			class_id:23
+			class_id:41
+			class_id:54
+			class_id:17
+			class_id:24
+			class_id:28
+			class_id:37
+			class_id:89
+			class_id:9
+			class_id:61
+			class_id:57
+			class_id:86
+			class_id:16
+			class_id:8
+			class_id:96
+			class_id:56
+			class_id:69
+			class_id:5
+			class_id:71
+		}
+		compact_classify_layer_param{
+			class_id:2
+			class_id:8
+			class_id:11
+			class_id:21
+			class_id:35
+			class_id:46
+			class_id:98
+			class_id:32
+			class_id:3
+			class_id:48
+			class_id:31
+			class_id:22
+			class_id:36
+			class_id:50
+			class_id:72
+			class_id:38
+			class_id:16
+			class_id:65
+			class_id:64
+			class_id:80
+			class_id:86
+			class_id:19
+			class_id:55
+			class_id:40
+			class_id:9
+			class_id:4
+			class_id:45
+			class_id:26
+			class_id:87
+			class_id:79
+			class_id:28
+			class_id:14
+			class_id:89
+			class_id:99
+			class_id:10
+			class_id:78
+		}
+		compact_classify_layer_param{
+			class_id:33
+			class_id:47
+			class_id:52
+			class_id:56
+			class_id:59
+			class_id:96
+			class_id:79
+			class_id:49
+			class_id:17
+			class_id:37
+			class_id:29
+			class_id:51
+			class_id:70
+			class_id:45
+			class_id:60
+			class_id:12
+			class_id:85
+			class_id:23
+			class_id:93
+			class_id:18
+			class_id:71
+			class_id:89
+			class_id:26
+			class_id:42
+			class_id:6
+		}
+		compact_classify_layer_param{
+			class_id:0
+			class_id:53
+			class_id:54
+			class_id:57
+			class_id:62
+			class_id:70
+			class_id:83
+			class_id:92
+			class_id:45
+			class_id:14
+			class_id:10
+			class_id:6
+			class_id:82
+			class_id:51
+			class_id:77
+			class_id:1
+			class_id:22
+			class_id:28
+			class_id:7
+			class_id:26
+			class_id:41
+			class_id:18
+			class_id:84
+			class_id:9
+			class_id:39
+			class_id:16
+			class_id:40
+		}
+		compact_classify_layer_param{
+			class_id:23
+			class_id:48
+			class_id:49
+			class_id:60
+			class_id:68
+			class_id:71
+			class_id:12
+			class_id:8
+			class_id:33
+			class_id:89
+			class_id:41
+			class_id:90
+			class_id:95
+			class_id:69
+			class_id:76
+			class_id:73
+			class_id:37
+			class_id:26
+			class_id:17
+			class_id:18
+			class_id:59
+			class_id:27
+			class_id:67
+			class_id:16
+			class_id:99
+			class_id:55
+			class_id:25
+		}
+		compact_classify_layer_param{
+			class_id:12
+			class_id:13
+			class_id:17
+			class_id:37
+			class_id:41
+			class_id:58
+			class_id:81
+			class_id:85
+			class_id:89
+			class_id:90
+			class_id:25
+			class_id:87
+			class_id:5
+			class_id:33
+			class_id:84
+			class_id:76
+			class_id:15
+			class_id:48
+			class_id:29
+			class_id:16
+			class_id:59
+			class_id:68
+			class_id:39
+			class_id:40
+			class_id:49
+			class_id:8
+			class_id:22
+			class_id:32
+			class_id:27
+			class_id:78
+			class_id:71
+			class_id:9
+			class_id:69
+			class_id:19
+			class_id:10
+			class_id:45
+			class_id:86
+			class_id:18
+			class_id:72
+			class_id:65
+			class_id:91
+			class_id:75
+			class_id:79
+		}
+	}
+}

@@ -72,7 +72,6 @@ int main(int argc, char** argv) {
 
   const bool is_color = !FLAGS_gray;
   const bool check_size = FLAGS_check_size;
-  const bool encoded = FLAGS_encoded;
 
   std::ifstream infile(argv[2]);
   std::vector<std::pair<string, int> > lines;
