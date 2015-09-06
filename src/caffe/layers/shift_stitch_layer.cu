@@ -30,7 +30,7 @@ void ShiftStitchLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 	int iter_out_num = num_;
 	int iter_out_height = height_;
 	int iter_out_width = width_;
-	Blob<Dtype> *src_blob, *tgt_blob;
+	Blob<Dtype> *src_blob = NULL, *tgt_blob = NULL;
 	const int count = top[0]->count();
 
 	for (int i = 0; i < iter_; ++i) {
@@ -105,11 +105,14 @@ __global__ void ShiftStitchBackward(const int nthreads, Dtype *src_diff,
 template<typename Dtype>
 void ShiftStitchLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
 		const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+  if (!propagate_down[0]) {
+    return;
+  }
 	int iter_in_num = out_num_;
 	int iter_in_height = out_height_;
 	int iter_in_width = out_width_;
 	const int count = bottom[0]->count();
-	Blob<Dtype> *src_blob, *tgt_blob;
+	Blob<Dtype> *src_blob = NULL, *tgt_blob = NULL;
 	for (int i = iter_ - 1; i >= 0; --i) {
 		iter_in_num *= (stride_h_[i] * stride_w_[i]);
 		iter_in_height /= stride_h_[i];

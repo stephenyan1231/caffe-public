@@ -5,7 +5,7 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/vision_layers.hpp"
 #include "caffe/shift_pooling_layer.hpp"
-#include "caffe/shift_stitch_layer.hpp"
+//#include "caffe/shift_stitch_layer.hpp"
 
 namespace caffe {
 
