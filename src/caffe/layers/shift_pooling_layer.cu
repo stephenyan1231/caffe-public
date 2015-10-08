@@ -99,7 +99,7 @@ __global__ void ShiftAvePoolForward(const int nthreads,
 template<typename Dtype>
 void ShiftPoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
-	nvtxMarkA("ShiftPoolingLayer<Dtype>::Forward_gpu");
+//	nvtxMarkA("ShiftPoolingLayer<Dtype>::Forward_gpu");
 
 	const Dtype* bottom_data = bottom[0]->gpu_data();
 	Dtype* top_data = top[0]->mutable_gpu_data();

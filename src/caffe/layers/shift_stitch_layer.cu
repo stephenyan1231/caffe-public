@@ -28,7 +28,7 @@ __global__ void ShiftStitchForward(const int nthreads, const Dtype *src_data,
 template<typename Dtype>
 void ShiftStitchLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 		const vector<Blob<Dtype>*>& top) {
-	nvtxMarkA("ShiftStitchLayer<Dtype>::Forward_gpu");
+//	nvtxMarkA("ShiftStitchLayer<Dtype>::Forward_gpu");
 	int iter_out_num = num_;
 	int iter_out_height = height_;
 	int iter_out_width = width_;

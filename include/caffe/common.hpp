@@ -17,10 +17,10 @@
 #include <vector>
 
 #include "caffe/util/device_alternate.hpp"
-#include "cuda_profiler_api.h"
-#include "nvToolsExt.h"
-#include "nvToolsExtCuda.h"
-#include "nvToolsExtCudaRt.h"
+//#include "cuda_profiler_api.h"
+//#include "nvToolsExt.h"
+//#include "nvToolsExtCuda.h"
+//#include "nvToolsExtCudaRt.h"
 
 // gflags 2.1 issue: namespace google was changed to gflags without warning.
 // Luckily we will be able to use GFLAGS_GFAGS_H_ to detect if it is version
